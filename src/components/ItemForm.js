@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
-function ItemForm({ API_URL, onSuccess }) {
+// 💡 Props に「sellerId」を追加して、親からログインIDを受け取れるようにします
+function ItemForm({ API_URL, sellerId, onSuccess }) {
   // フォーム専用のローカル状態
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -18,7 +19,7 @@ function ItemForm({ API_URL, onSuccess }) {
       description: description,
       price: parseInt(price),
       image_url: "https://example.com/images/default.jpg",
-      seller_id: 1,
+      seller_id: sellerId, // 🌟 1固定だったのをログインユーザーのID（2とか）に動的変更！
     };
 
     fetch(API_URL, {

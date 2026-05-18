@@ -152,7 +152,11 @@ function App() {
             <div
               style={{ display: "flex", flexDirection: "column", gap: "40px" }}
             >
-              <ItemForm API_URL={`${API_URL}/items`} onSuccess={fetchItems} />
+              <ItemForm
+                API_URL={`${API_URL}/items`}
+                sellerId={myAppId}
+                onSuccess={fetchItems}
+              />
               <ItemList items={items} handlePurchaseItem={handlePurchaseItem} />
             </div>
           ) : (
