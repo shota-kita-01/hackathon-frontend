@@ -43,10 +43,11 @@ function LoginForm() {
   return (
     <div
       style={{
-        background: "#2d3748",
-        padding: "30px",
-        borderRadius: "12px",
-        boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+        background: "#ffffff", // 🔥 黒から「純白」へ
+        padding: "35px 30px",
+        borderRadius: "16px", // 他のコンポーネントに合わせて少し丸く
+        boxShadow: "0 4px 16px rgba(0,0,0,0.06)", // 上品で優しいシャドウ
+        border: "1px solid #eeeeee",
         width: "100%",
         maxWidth: "400px",
         margin: "40px auto",
@@ -54,18 +55,20 @@ function LoginForm() {
     >
       <h2
         style={{
-          margin: "0 0 20px 0",
-          borderBottom: "2px solid #61dafb",
-          paddingBottom: "10px",
-          fontSize: "22px",
+          margin: "0 0 25px 0",
+          borderBottom: "2px solid #ff4d4d", // 🔥 メルカリレッドのアクセント
+          paddingBottom: "12px",
+          fontSize: "20px",
           textAlign: "center",
+          color: "#333333",
+          fontWeight: "bold",
         }}
       >
         {isRegisterMode ? "📝 新規アカウント登録" : "🔑 ログインして始める"}
       </h2>
       <form
         onSubmit={handleSubmit}
-        style={{ display: "flex", flexDirection: "column", gap: "15px" }}
+        style={{ display: "flex", flexDirection: "column", gap: "18px" }}
       >
         <div
           style={{
@@ -75,7 +78,12 @@ function LoginForm() {
           }}
         >
           <label
-            style={{ fontSize: "14px", marginBottom: "5px", color: "#cbd5e0" }}
+            style={{
+              fontSize: "14px",
+              marginBottom: "6px",
+              color: "#555555",
+              fontWeight: "500",
+            }}
           >
             メールアドレス
           </label>
@@ -85,14 +93,16 @@ function LoginForm() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="example@email.com"
             style={{
-              padding: "10px",
-              borderRadius: "6px",
-              border: "none",
-              backgroundColor: "#4a5568",
-              color: "white",
+              padding: "12px",
+              borderRadius: "8px",
+              border: "1px solid #dddddd",
+              backgroundColor: "#f9fafb", // ほんのりグレーで今風のインプットに
+              color: "#333333",
+              fontSize: "15px",
             }}
           />
         </div>
+
         <div
           style={{
             display: "flex",
@@ -101,7 +111,12 @@ function LoginForm() {
           }}
         >
           <label
-            style={{ fontSize: "14px", marginBottom: "5px", color: "#cbd5e0" }}
+            style={{
+              fontSize: "14px",
+              marginBottom: "6px",
+              color: "#555555",
+              fontWeight: "500",
+            }}
           >
             パスワード (6文字以上)
           </label>
@@ -111,26 +126,30 @@ function LoginForm() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
             style={{
-              padding: "10px",
-              borderRadius: "6px",
-              border: "none",
-              backgroundColor: "#4a5568",
-              color: "white",
+              padding: "12px",
+              borderRadius: "8px",
+              border: "1px solid #dddddd",
+              backgroundColor: "#f9fafb",
+              color: "#333333",
+              fontSize: "15px",
             }}
           />
         </div>
+
         <button
           type="submit"
           style={{
-            backgroundColor: "#61dafb",
-            color: "#1e222b",
+            backgroundColor: "#ff4d4d", // 🔥 メルカリレッド
+            color: "white",
             border: "none",
-            padding: "12px",
-            borderRadius: "6px",
+            padding: "14px",
+            borderRadius: "25px", // 丸ボタンにして親しみやすさアップ
             fontSize: "16px",
             fontWeight: "bold",
             cursor: "pointer",
             marginTop: "10px",
+            boxShadow: "0 4px 12px rgba(255, 77, 77, 0.15)",
+            transition: "all 0.2s",
           }}
         >
           {isRegisterMode ? "新規登録する" : "ログインする"}
@@ -139,10 +158,10 @@ function LoginForm() {
 
       <p
         style={{
-          marginTop: "20px",
+          marginTop: "25px",
           textAlign: "center",
           fontSize: "14px",
-          color: "#a0aec0",
+          color: "#777777",
         }}
       >
         {isRegisterMode
@@ -153,11 +172,12 @@ function LoginForm() {
           style={{
             background: "none",
             border: "none",
-            color: "#61dafb",
+            color: "#ff4d4d", // 🔥 リンクテキストも赤に統一
             cursor: "pointer",
             textDecoration: "underline",
             marginLeft: "5px",
             fontSize: "14px",
+            fontWeight: "bold",
           }}
         >
           {isRegisterMode ? "ログイン画面へ" : "新規登録画面へ"}

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 
-// 💡 Props に「sellerId」を追加して、親からログインIDを受け取れるようにします
 function ItemForm({ API_URL, sellerId, onSuccess }) {
   // フォーム専用のローカル状態
   const [name, setName] = useState("");
@@ -19,7 +18,7 @@ function ItemForm({ API_URL, sellerId, onSuccess }) {
       description: description,
       price: parseInt(price),
       image_url: "https://example.com/images/default.jpg",
-      seller_id: sellerId, // 🌟 1固定だったのをログインユーザーのID（2とか）に動的変更！
+      seller_id: sellerId,
     };
 
     fetch(API_URL, {
@@ -34,7 +33,7 @@ function ItemForm({ API_URL, sellerId, onSuccess }) {
           setName("");
           setDescription("");
           setPrice("");
-          onSuccess(); // 親（App.js）のfetchItemsを呼び出してリストを更新
+          onSuccess();
         }
       })
       .catch((error) => console.error("エラー:", error));
@@ -43,18 +42,21 @@ function ItemForm({ API_URL, sellerId, onSuccess }) {
   return (
     <section
       style={{
-        background: "#2d3748",
+        background: "#ffffff", // 🔥 黒から「純白」へ
         padding: "25px",
-        borderRadius: "12px",
-        boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+        borderRadius: "16px", // 角を少し丸くして今風に
+        boxShadow: "0 4px 16px rgba(0,0,0,0.04)", // 優しい影
+        border: "1px solid #eee",
       }}
     >
       <h2
         style={{
           margin: "0 0 20px 0",
-          borderBottom: "2px solid #61dafb",
+          borderBottom: "2px solid #ff4d4d", // 🔥 メルカリレッドのアクセント線
           paddingBottom: "10px",
-          fontSize: "20px",
+          fontSize: "18px",
+          color: "#333333", // 文字を読みやすい濃いグレーに
+          fontWeight: "bold",
         }}
       >
         タイムラインに出品する
@@ -71,7 +73,12 @@ function ItemForm({ API_URL, sellerId, onSuccess }) {
           }}
         >
           <label
-            style={{ fontSize: "14px", marginBottom: "5px", color: "#cbd5e0" }}
+            style={{
+              fontSize: "14px",
+              marginBottom: "5px",
+              color: "#555555",
+              fontWeight: "500",
+            }}
           >
             商品名
           </label>
@@ -81,14 +88,16 @@ function ItemForm({ API_URL, sellerId, onSuccess }) {
             onChange={(e) => setName(e.target.value)}
             placeholder="例: 手作りクッキー"
             style={{
-              padding: "10px",
-              borderRadius: "6px",
-              border: "none",
-              backgroundColor: "#4a5568",
-              color: "white",
+              padding: "12px",
+              borderRadius: "8px",
+              border: "1px solid #dddddd",
+              backgroundColor: "#f9fafb", // 入力欄をほんのりグレーにして立体感を出す
+              color: "#333333",
+              fontSize: "15px",
             }}
           />
         </div>
+
         <div
           style={{
             display: "flex",
@@ -97,7 +106,12 @@ function ItemForm({ API_URL, sellerId, onSuccess }) {
           }}
         >
           <label
-            style={{ fontSize: "14px", marginBottom: "5px", color: "#cbd5e0" }}
+            style={{
+              fontSize: "14px",
+              marginBottom: "5px",
+              color: "#555555",
+              fontWeight: "500",
+            }}
           >
             商品の説明
           </label>
@@ -106,15 +120,18 @@ function ItemForm({ API_URL, sellerId, onSuccess }) {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="例: チョコチップ入りです！"
             style={{
-              padding: "10px",
-              borderRadius: "6px",
-              border: "none",
-              backgroundColor: "#4a5568",
-              color: "white",
-              minHeight: "60px",
+              padding: "12px",
+              borderRadius: "8px",
+              border: "1px solid #dddddd",
+              backgroundColor: "#f9fafb",
+              color: "#333333",
+              minHeight: "80px",
+              fontSize: "15px",
+              fontFamily: "inherit",
             }}
           />
         </div>
+
         <div
           style={{
             display: "flex",
@@ -123,7 +140,12 @@ function ItemForm({ API_URL, sellerId, onSuccess }) {
           }}
         >
           <label
-            style={{ fontSize: "14px", marginBottom: "5px", color: "#cbd5e0" }}
+            style={{
+              fontSize: "14px",
+              marginBottom: "5px",
+              color: "#555555",
+              fontWeight: "500",
+            }}
           >
             価格 (円)
           </label>
@@ -133,26 +155,30 @@ function ItemForm({ API_URL, sellerId, onSuccess }) {
             onChange={(e) => setPrice(e.target.value)}
             placeholder="例: 500"
             style={{
-              padding: "10px",
-              borderRadius: "6px",
-              border: "none",
-              backgroundColor: "#4a5568",
-              color: "white",
+              padding: "12px",
+              borderRadius: "8px",
+              border: "1px solid #dddddd",
+              backgroundColor: "#f9fafb",
+              color: "#333333",
+              fontSize: "15px",
             }}
           />
         </div>
+
         <button
           type="submit"
           style={{
-            backgroundColor: "#61dafb",
-            color: "#1e222b",
+            backgroundColor: "#ff4d4d", // 🔥 メルカリレッド
+            color: "white",
             border: "none",
-            padding: "12px",
-            borderRadius: "6px",
+            padding: "14px",
+            borderRadius: "25px", // ボタンを丸っこくして親しみやすく
             fontSize: "16px",
             fontWeight: "bold",
             cursor: "pointer",
             marginTop: "10px",
+            boxShadow: "0 4px 12px rgba(255, 77, 77, 0.2)", // ボタンにも華やかな影を
+            transition: "all 0.2s",
           }}
         >
           この内容で出品する
