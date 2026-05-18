@@ -4,7 +4,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { fireAuth } from "./firebase";
 import ItemForm from "./components/ItemForm";
 import ItemList from "./components/ItemList";
-import LoginForm from "./components/LoginForm"; // 👈 追加
+import LoginForm from "./components/LoginForm";
 
 function App() {
   const [items, setItems] = useState([]);
@@ -19,11 +19,8 @@ function App() {
     const unsubscribe = onAuthStateChanged(fireAuth, (user) => {
       if (user) {
         setLoginUser(user);
-
-        // メール認証の場合、初期の名前はメールの@の前の文字列を仮として使用します
         const dummyName = user.displayName || user.email.split("@")[0];
 
-        // 💡 ログイン成功したら、バックエンドにUIDを送ってMySQLの整数IDを照合・取得する
         fetch(`${API_URL}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -36,7 +33,7 @@ function App() {
           .then((res) => res.json())
           .then((data) => {
             if (data.status === "success") {
-              setMyAppId(data.id); // 🌟 MySQLの整数IDを状態に保存！
+              setMyAppId(data.id);
             }
           })
           .catch((err) => console.error("ユーザー照合エラー:", err));
@@ -61,7 +58,7 @@ function App() {
     fetchItems();
   }, []);
 
-  // --- 3. 購入処理（ログイン中の自分のIDをバックエンドに送る） ---
+  // --- 3. 購入処理 ---
   const handlePurchaseItem = (itemId) => {
     if (!myAppId) {
       alert("ログインが必要です！");
@@ -72,7 +69,7 @@ function App() {
     fetch(`${API_URL}/items/${itemId}/purchase`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ buyer_id: myAppId }), // 🌟 1固定だったのをログインユーザーのIDに変更！
+      body: JSON.stringify({ buyer_id: myAppId }),
     })
       .then((response) => response.json())
       .then((data) => {
@@ -97,74 +94,86 @@ function App() {
   };
 
   return (
-    <div className="App">
+    <div
+      className="App"
+      style={{ backgroundColor: "#f5f6f8", minHeight: "100vh" }}
+    >
+      {/* 🚪 ヘッダーエリア（白ベースにシャドウで今風に） */}
       <header
-        className="App-header"
         style={{
-          backgroundColor: "#1e222b",
-          minHeight: "100vh",
-          color: "white",
-          padding: "40px 20px",
+          backgroundColor: "white",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+          padding: "15px 20px",
+          position: "sticky",
+          top: 0,
+          zIndex: 100,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
-        {/* 🚪 ログインしている時だけログアウトボタンを右上に表示 */}
+        <h1
+          style={{
+            color: "#ff4d4d", // 🔥 メルカリ風の鮮やかなレッド
+            margin: 0,
+            fontSize: "24px",
+            fontWeight: "bold",
+            letterSpacing: "1px",
+          }}
+        >
+          フリマアプリ
+        </h1>
+
         {loginUser && (
           <div
             style={{
-              textAlign: "right",
-              maxWidth: "600px",
-              margin: "0 auto 20px auto",
+              display: "flex",
+              alignItems: "center",
+              gap: "15px",
               fontSize: "14px",
+              color: "#333",
             }}
           >
-            <span>👤 {loginUser.email} でログイン中 </span>
+            <span style={{ fontWeight: "500" }}>👤 {loginUser.email}</span>
             <button
               onClick={handleLogout}
               style={{
                 padding: "6px 12px",
-                backgroundColor: "#e53e3e",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
+                backgroundColor: "#f5f6f8",
+                color: "#666",
+                border: "1px solid #ddd",
+                borderRadius: "20px", // 丸っこく親しみやすいデザインに
                 cursor: "pointer",
-                marginLeft: "10px",
+                fontSize: "12px",
                 fontWeight: "bold",
+                transition: "all 0.2s",
               }}
             >
               ログアウト
             </button>
           </div>
         )}
-
-        <h1
-          style={{
-            color: "#61dafb",
-            marginBottom: "30px",
-            textAlign: "center",
-          }}
-        >
-          フリマアプリ
-        </h1>
-
-        <div style={{ width: "100%", maxWidth: "600px", margin: "0 auto" }}>
-          {myAppId ? (
-            // 🌟 ログインに成功し、MySQLのIDが取れたらメインのフリマ画面を出す
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "40px" }}
-            >
-              <ItemForm
-                API_URL={`${API_URL}/items`}
-                sellerId={myAppId}
-                onSuccess={fetchItems}
-              />
-              <ItemList items={items} handlePurchaseItem={handlePurchaseItem} />
-            </div>
-          ) : (
-            // 🔒 ログインしていない時は、ログイン/新規登録フォームだけを見せる（認可制御）
-            <LoginForm />
-          )}
-        </div>
       </header>
+
+      {/* メインコンテンツエリア */}
+      <main
+        style={{ padding: "40px 20px", maxWidth: "600px", margin: "0 auto" }}
+      >
+        {myAppId ? (
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "35px" }}
+          >
+            <ItemForm
+              API_URL={`${API_URL}/items`}
+              sellerId={myAppId}
+              onSuccess={fetchItems}
+            />
+            <ItemList items={items} handlePurchaseItem={handlePurchaseItem} />
+          </div>
+        ) : (
+          <LoginForm />
+        )}
+      </main>
     </div>
   );
 }
