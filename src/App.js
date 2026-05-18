@@ -7,6 +7,9 @@ import ItemList from "./components/ItemList";
 import LoginForm from "./components/LoginForm";
 import AiRecommendForm from "./components/AiRecommendForm";
 import ItemDetailModal from "./components/ItemDetailModal";
+import Header from "./components/Header";
+import Navigation from "./components/Navigation";
+import LikesTab from "./components/LikesTab";
 
 function App() {
   const [items, setItems] = useState([]);
@@ -19,10 +22,10 @@ function App() {
   const [recommendMode, setRecommendMode] = useState("both");
 
   // 🗺️ 画面遷移・モーダル・履歴用の状態（State）
-  const [currentTab, setCurrentTab] = useState("home"); // "home" or "sell" or "likes"
+  const [currentTab, setCurrentTab] = useState("home");
   const [selectedItem, setSelectedItem] = useState(null);
   const [visibleCount, setVisibleCount] = useState(40);
-  const [userLikes, setUserLikes] = useState([]); // 🆕 ユーザーがいいねしている商品リスト
+  const [userLikes, setUserLikes] = useState([]);
 
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
@@ -47,7 +50,7 @@ function App() {
           .then((data) => {
             if (data.status === "success") {
               setMyAppId(data.id);
-              fetchUserLikes(data.id); // 🆕 ログイン成功時にいいね一覧もロード
+              fetchUserLikes(data.id);
             }
           })
           .catch((err) => console.error("ユーザー照合エラー:", err));
@@ -69,7 +72,7 @@ function App() {
       .catch((error) => console.error("データの取得に失敗しました:", error));
   };
 
-  // 🆕 ユーザーのいいね一覧をバックエンドから取得する関数
+  // ユーザーのいいね一覧をバックエンドから取得する関数
   const fetchUserLikes = (userId) => {
     if (!userId) return;
     fetch(`${API_URL}/users/${userId}/likes`)
@@ -150,7 +153,7 @@ function App() {
           alert("ご購入ありがとうございました！");
           setSelectedItem(null);
           fetchItems();
-          fetchUserLikes(myAppId); // 購入によって売切れた時のために状態同期
+          fetchUserLikes(myAppId);
         } else {
           alert("購入に失敗しました。");
         }
@@ -167,7 +170,6 @@ function App() {
       .catch((err) => alert(err.message));
   };
 
-  // 🆕 リスト内アイテムクリック時の共通モーダルオープン関数
   const handleCardClick = (e, listSource) => {
     if (e.target.tagName === "BUTTON") return;
     const card =
@@ -185,130 +187,16 @@ function App() {
       className="App"
       style={{ backgroundColor: "#f5f6f8", minHeight: "100vh" }}
     >
-      {/* 🚪 ヘッダーエリア */}
-      <header
-        style={{
-          backgroundColor: "white",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-          padding: "15px 20px",
-          position: "sticky",
-          top: 0,
-          zIndex: 100,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h1
-          style={{
-            color: "#ff4d4d",
-            margin: 0,
-            fontSize: "24px",
-            fontWeight: "bold",
-            letterSpacing: "1px",
-            cursor: "pointer",
-          }}
-          onClick={() => setCurrentTab("home")}
-        >
-          フリマアプリ
-        </h1>
-        {loginUser && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "15px",
-              fontSize: "14px",
-              color: "#333",
-            }}
-          >
-            <span style={{ fontWeight: "500" }}>👤 {loginUser.email}</span>
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: "6px 12px",
-                backgroundColor: "#f5f6f8",
-                color: "#666",
-                border: "1px solid #ddd",
-                borderRadius: "20px",
-                cursor: "pointer",
-                fontSize: "12px",
-                fontWeight: "bold",
-              }}
-            >
-              ログアウト
-            </button>
-          </div>
-        )}
-      </header>
-
-      {/* 🗺️ ナビゲーションタブ（いいねタブを追加） */}
-      {myAppId && (
-        <div
-          style={{
-            backgroundColor: "white",
-            borderBottom: "1px solid #e5e7eb",
-            display: "flex",
-            justifyContent: "center",
-            gap: "20px",
-          }}
-        >
-          <button
-            onClick={() => setCurrentTab("home")}
-            style={{
-              padding: "14px 15px",
-              backgroundColor: "transparent",
-              border: "none",
-              borderBottom:
-                currentTab === "home"
-                  ? "3px solid #ff4d4d"
-                  : "3px solid transparent",
-              color: currentTab === "home" ? "#ff4d4d" : "#666",
-              fontWeight: "bold",
-              fontSize: "14px",
-              cursor: "pointer",
-            }}
-          >
-            🏠 ホーム
-          </button>
-          <button
-            onClick={() => setCurrentTab("likes")}
-            style={{
-              padding: "14px 15px",
-              backgroundColor: "transparent",
-              border: "none",
-              borderBottom:
-                currentTab === "likes"
-                  ? "3px solid #ff4d4d"
-                  : "3px solid transparent",
-              color: currentTab === "likes" ? "#ff4d4d" : "#666",
-              fontWeight: "bold",
-              fontSize: "14px",
-              cursor: "pointer",
-            }}
-          >
-            ❤️ いいね一覧
-          </button>
-          <button
-            onClick={() => setCurrentTab("sell")}
-            style={{
-              padding: "14px 15px",
-              backgroundColor: "transparent",
-              border: "none",
-              borderBottom:
-                currentTab === "sell"
-                  ? "3px solid #ff4d4d"
-                  : "3px solid transparent",
-              color: currentTab === "sell" ? "#ff4d4d" : "#666",
-              fontWeight: "bold",
-              fontSize: "14px",
-              cursor: "pointer",
-            }}
-          >
-            📸 出品する
-          </button>
-        </div>
-      )}
+      <Header
+        loginUser={loginUser}
+        handleLogout={handleLogout}
+        setCurrentTab={setCurrentTab}
+      />
+      <Navigation
+        myAppId={myAppId}
+        currentTab={currentTab}
+        setCurrentTab={setCurrentTab}
+      />
 
       {/* メインコンテンツエリア */}
       <main
@@ -365,39 +253,13 @@ function App() {
               </>
             )}
 
-            {/* ❤️ 🆕 【いいね一覧タブ】既存のItemListをそのまま横流しして美しく再利用！ */}
+            {/* ❤️ 【いいね一覧タブ】 */}
             {currentTab === "likes" && (
-              <div>
-                <h2
-                  style={{
-                    fontSize: "18px",
-                    fontWeight: "bold",
-                    color: "#333",
-                    margin: "0 0 20px 0",
-                  }}
-                >
-                  ❤️ あなたがお気に入り登録した商品
-                </h2>
-                {userLikes.length === 0 ? (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      color: "#9ca3af",
-                      padding: "40px 0",
-                      fontSize: "14px",
-                    }}
-                  >
-                    いいねした商品はまだありません。
-                  </div>
-                ) : (
-                  <div onClick={(e) => handleCardClick(e, userLikes)}>
-                    <ItemList
-                      items={userLikes}
-                      handlePurchaseItem={handlePurchaseItem}
-                    />
-                  </div>
-                )}
-              </div>
+              <LikesTab
+                userLikes={userLikes}
+                handleCardClick={handleCardClick}
+                handlePurchaseItem={handlePurchaseItem}
+              />
             )}
 
             {/* 📸 【出品タブ】 */}
@@ -423,8 +285,8 @@ function App() {
         setSelectedItem={setSelectedItem}
         handlePurchaseItem={handlePurchaseItem}
         myAppId={myAppId}
-        userLikes={userLikes} // 🆕 モーダルへいいね状態を注入
-        onLikeToggle={() => fetchUserLikes(myAppId)} // 🆕 いいねが押されたら再フェッチさせる
+        userLikes={userLikes}
+        onLikeToggle={() => fetchUserLikes(myAppId)}
       />
     </div>
   );
