@@ -9,14 +9,13 @@ import AiRecommendForm from "./components/AiRecommendForm";
 import ItemDetailModal from "./components/ItemDetailModal";
 import Header from "./components/Header";
 import Navigation from "./components/Navigation";
-import LikesTab from "./components/LikesTab";
+import HistoryTab from "./components/HistoryTab";
 import SearchTab from "./components/SearchTab";
 import MyPageTab from "./components/MyPageTab";
 
 function App() {
-  // 🆕 役割に合わせてState（状態）を2つに分離
-  const [homeItems, setHomeItems] = useState([]); // 🏠 ホーム用（AI推薦された10件が入る）
-  const [allItems, setAllItems] = useState([]); // 🔍 検索用（全1000件が常に入る）
+  const [homeItems, setHomeItems] = useState([]);
+  const [allItems, setAllItems] = useState([]);
 
   const [loginUser, setLoginUser] = useState(null);
   const [myAppId, setMyAppId] = useState(null);
@@ -25,11 +24,12 @@ function App() {
   const [moodText, setMoodText] = useState("");
   const [isRecommending, setIsRecommending] = useState(false);
   const [recommendMode, setRecommendMode] = useState("both");
+  const [filterStatus, setFilterStatus] = useState("both"); // 🆕 フィルター用のStateを新設
 
   // 🗺️ 画面遷移・モーダル・履歴用の状態（State）
   const [currentTab, setCurrentTab] = useState("home");
   const [selectedItem, setSelectedItem] = useState(null);
-  const [visibleCount, setVisibleCount] = useState(40);
+  const [visibleCount, setVisibleCount] = useState(20);
   const [userLikes, setUserLikes] = useState([]);
 
   const API_URL =
@@ -69,7 +69,6 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // --- 2. 検索用の全件データを取得する関数 ---
   const fetchAllItems = () => {
     fetch(`${API_URL}/items`)
       .then((response) => response.json())
@@ -77,7 +76,6 @@ function App() {
       .catch((error) => console.error("全件データの取得に失敗:", error));
   };
 
-  // --- 2.2 ホーム画面用の初期AIおすすめを取得する関数 ---
   const fetchHomeRecommendations = (userId) => {
     if (!userId) return;
     setIsRecommending(true);
@@ -86,8 +84,9 @@ function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         user_id: userId,
-        mood_text: "",
-        mode: "history", // 過去の履歴重視でリクエスト
+        mood_text: moodText,
+        mode: recommendMode,
+        filter_status: filterStatus, // 🆕 新条件をブレンドして送信
       }),
     })
       .then((res) => res.json())
@@ -98,15 +97,15 @@ function App() {
       .finally(() => setIsRecommending(false));
   };
 
-  // ログインユーザーが確定した瞬間に、全件データとAIおすすめを同時に引き抜く
+  // ログインユーザー確定、またはラジオボタン切り替え時に自動で再レコメンドを走らせる数理配線
   useEffect(() => {
     if (myAppId) {
       fetchAllItems();
       fetchHomeRecommendations(myAppId);
     }
-  }, [myAppId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myAppId, filterStatus, recommendMode]);
 
-  // ユーザーのいいね一覧をバックエンドから取得する関数
   const fetchUserLikes = (userId) => {
     if (!userId) return;
     fetch(`${API_URL}/users/${userId}/likes`)
@@ -117,15 +116,6 @@ function App() {
       .catch((err) => console.error("いいね一覧の取得に失敗:", err));
   };
 
-  // 🧠 履歴重視モード選択時の自動計算トリガー
-  useEffect(() => {
-    if (recommendMode === "history" && myAppId) {
-      handleAiRecommend();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recommendMode]);
-
-  // 🧠 --- 2.5 AI推薦シミュレーション関数 ---
   const handleAiRecommend = () => {
     if (recommendMode !== "history" && !moodText.trim()) return;
     setIsRecommending(true);
@@ -137,12 +127,13 @@ function App() {
         user_id: myAppId,
         mood_text: moodText,
         mode: recommendMode,
+        filter_status: filterStatus, // 🆕 ボタンを押した時も送信
       }),
     })
       .then((response) => response.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          setHomeItems(data); // 🆕 おすすめ結果はホーム専用Stateに格納
+          setHomeItems(data);
         } else {
           alert("推薦データの取得に失敗しました。");
         }
@@ -156,15 +147,14 @@ function App() {
       });
   };
 
-  // 🧹 AI推薦をリセット
   const handleResetRecommend = () => {
     setMoodText("");
     setRecommendMode("both");
-    setVisibleCount(40);
-    fetchHomeRecommendations(myAppId); // 🆕 おすすめを初期状態（過去履歴ベース）に戻す
+    setFilterStatus("both"); // 🆕 リセット
+    setVisibleCount(20);
+    fetchHomeRecommendations(myAppId);
   };
 
-  // --- 3. 購入処理 ---
   const handlePurchaseItem = (itemId) => {
     if (!myAppId) {
       alert("ログインが必要です！");
@@ -230,7 +220,6 @@ function App() {
         setCurrentTab={setCurrentTab}
       />
 
-      {/* メインコンテンツエリア */}
       <main
         style={{ padding: "40px 20px", maxWidth: "600px", margin: "0 auto" }}
       >
@@ -249,23 +238,26 @@ function App() {
                   isRecommending={isRecommending}
                   handleAiRecommend={handleAiRecommend}
                   handleResetRecommend={handleResetRecommend}
+                  filterStatus={filterStatus}
+                  setFilterStatus={setFilterStatus} // 🆕 フィルター状態を配線
                 />
 
                 <h3
                   style={{
                     fontSize: "16px",
                     fontWeight: "bold",
-                    color: "#111827",
                     margin: "10px 0 -10px 0",
                     display: "flex",
                     alignItems: "center",
                     gap: "6px",
                   }}
                 >
-                  ✨ あなたへのおすすめ商品 (AIパーソナライズ)
+                  ✨{" "}
+                  <span className="ai-heading-text">
+                    あなたへのおすすめ商品 (AIパーソナライズ)
+                  </span>
                 </h3>
 
-                {/* 🆕 描画対象を全件から「homeItems」に変更 */}
                 <div onClick={(e) => handleCardClick(e, homeItems)}>
                   <ItemList
                     items={homeItems.slice(0, visibleCount)}
@@ -282,7 +274,7 @@ function App() {
                     }}
                   >
                     <button
-                      onClick={() => setVisibleCount((prev) => prev + 40)}
+                      onClick={() => setVisibleCount((prev) => prev + 20)}
                       style={{
                         padding: "12px 30px",
                         backgroundColor: "white",
@@ -302,16 +294,17 @@ function App() {
               </>
             )}
 
-            {/* ❤️ 【いいね一覧タブ】 */}
-            {currentTab === "likes" && (
-              <LikesTab
+            {/* 🆕 【履歴タブ】（横スクロールの3段構え） */}
+            {currentTab === "history" && (
+              <HistoryTab
+                myAppId={myAppId}
                 userLikes={userLikes}
                 handleCardClick={handleCardClick}
                 handlePurchaseItem={handlePurchaseItem}
               />
             )}
 
-            {/* 🔍 【検索タブ】 🆕 引数に全件データ「allItems」を渡すことで、常に1000件から爆速検索が可能に！ */}
+            {/* 🔍 【検索タブ】 */}
             {currentTab === "search" && (
               <SearchTab
                 items={allItems}

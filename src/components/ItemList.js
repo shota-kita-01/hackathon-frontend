@@ -2,148 +2,210 @@ import React from "react";
 
 function ItemList({ items, handlePurchaseItem }) {
   return (
-    <section style={{ textAlign: "left" }}>
-      <h2
-        style={{
-          borderBottom: "2px solid #ff4d4d", // 🔥 メルカリレッドのアクセント
-          paddingBottom: "10px",
-          fontSize: "18px",
-          color: "#333333",
-          fontWeight: "bold",
-        }}
-      >
-        🛒 タイムライン（出品された商品）
-      </h2>
-
-      {items.length === 0 ? (
-        <p
-          style={{
-            color: "#999999",
-            textAlign: "center",
-            marginTop: "30px",
-            fontSize: "15px",
-          }}
-        >
-          商品がありません。上のフォームから出品してみましょう！
-        </p>
-      ) : (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "20px",
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+    >
+      {items.map((item) => (
         <div
+          key={item.id}
+          className="item-card"
           style={{
+            // 👇 1. 売り切れならカード全体の背景を少しグレーにする
+            backgroundColor: item.status === "sold_out" ? "#f9fafb" : "white",
+            borderRadius: "16px",
+            border: "1px solid #e5e7eb",
+            padding: "20px",
             display: "flex",
             flexDirection: "column",
-            gap: "15px",
-            marginTop: "20px",
+            gap: "12px",
+            position: "relative",
+            boxSizing: "border-box",
+            width: "100%",
           }}
         >
-          {items.map((item) => {
-            const isSoldOut = item.status === "sold_out";
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              borderRadius: "12px",
+              backgroundColor: "#f3f4f6",
+            }}
+          >
+            <img
+              src={item.image_url}
+              alt={item.name}
+              style={{
+                width: "100%",
+                height: "200px",
+                objectFit: "cover",
+                borderRadius: "12px",
+                display: "block",
+                // 👇 2. 画像は完全に白黒(100%)にして、さらに薄く(0.4)する
+                opacity: item.status === "sold_out" ? 0.4 : 1,
+                filter: item.status === "sold_out" ? "grayscale(100%)" : "none",
+                transition: "all 0.3s ease",
+              }}
+            />
+            {item.status === "sold_out" && (
+              <div className="sold-ribbon-container-large">
+                <span className="sold-ribbon-text-large">SOLD</span>
+              </div>
+            )}
+          </div>
 
-            return (
-              <div
-                key={item.id}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <h3
+              style={{
+                margin: 0,
+                fontSize: "16px",
+                fontWeight: "bold",
+                // 👇 3. タイトルの文字色も、売り切れならグレーにする
+                color: item.status === "sold_out" ? "#9ca3af" : "#111827",
+              }}
+            >
+              {item.name}
+            </h3>
+          </div>
+
+          <div style={{ fontSize: "12px", color: "#9ca3af" }}>
+            👤 出品者: {item.seller_name || "名無しさん"}
+          </div>
+
+          <p
+            style={{
+              fontSize: "13px",
+              color: "#6b7280",
+              margin: 0,
+              whiteSpace: "pre-wrap",
+              display: "-webkit-box",
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {item.description}
+          </p>
+
+          {item.tags && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "6px",
+                marginTop: "4px",
+              }}
+            >
+              {item.tags.split(",").map((tag, idx) => (
+                <span
+                  key={idx}
+                  style={{
+                    fontSize: "11px",
+                    padding: "2px 8px",
+                    borderRadius: "12px",
+                    fontWeight: "500",
+                    // 👇 タグの色もグレーアウト
+                    color: item.status === "sold_out" ? "#6b7280" : "#4f46e5",
+                    backgroundColor:
+                      item.status === "sold_out" ? "#e5e7eb" : "#e0e7ff",
+                  }}
+                >
+                  #{tag.trim()}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderTop: "1px solid #f3f4f6",
+              paddingTop: "12px",
+              marginTop: "4px",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "18px",
+                fontWeight: "bold",
+                // 👇 4. 価格の「赤色」も、売り切れならグレーにする
+                color: item.status === "sold_out" ? "#9ca3af" : "#ff4d4d",
+              }}
+            >
+              {item.price.toLocaleString()} 円
+            </span>
+
+            {item.status === "sold_out" ? (
+              <button
+                disabled
                 style={{
-                  background: "#ffffff", // 🔥 黒から「純白」へ
-                  padding: "20px",
-                  borderRadius: "12px",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.02)", // 優しい影
-                  border: "1px solid #eeeeee",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  opacity: isSoldOut ? 0.6 : 1,
-                  transition: "transform 0.2s",
+                  padding: "8px 16px",
+                  backgroundColor: "#e5e7eb",
+                  color: "#9ca3af",
+                  border: "none",
+                  borderRadius: "20px",
+                  fontSize: "13px",
+                  fontWeight: "bold",
+                  cursor: "not-allowed",
                 }}
               >
-                <div style={{ flex: 1, paddingRight: "20px" }}>
-                  <h3
-                    style={{
-                      margin: "0 0 6px 0",
-                      fontSize: "20px",
-                      color: "#333333",
-                      fontWeight: "bold",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                    }}
-                  >
-                    {item.name}
-                    {isSoldOut && (
-                      <span
-                        style={{
-                          backgroundColor: "#ff4d4d",
-                          color: "white",
-                          fontSize: "11px",
-                          fontWeight: "bold",
-                          padding: "2px 6px",
-                          borderRadius: "4px",
-                        }}
-                      >
-                        SOLD OUT
-                      </span>
-                    )}
-                  </h3>
+                ❌ 売り切れ
+              </button>
+            ) : (
+              <button
+                onClick={() => handlePurchaseItem(item.id)}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#ff4d4d",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "20px",
+                  fontSize: "13px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 4px rgba(255,77,77,0.2)",
+                }}
+              >
+                🛍️ 購入する
+              </button>
+            )}
+          </div>
 
-                  <div
-                    style={{
-                      fontSize: "13px",
-                      color: "#888888",
-                      marginBottom: "12px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    👤 出品者: {item.seller_name || "名無しさん"}
-                  </div>
-
-                  <p
-                    style={{
-                      color: "#666666",
-                      margin: "0 0 15px 0",
-                      fontSize: "15px",
-                      lineHeight: "1.5",
-                    }}
-                  >
-                    {item.description}
-                  </p>
-
-                  <span
-                    style={{
-                      fontSize: "20px",
-                      fontWeight: "bold",
-                      color: "#ff4d4d",
-                    }}
-                  >
-                    {item.price.toLocaleString()} 円
-                  </span>
-                </div>
-
-                <div>
-                  <button
-                    onClick={() => handlePurchaseItem(item.id)}
-                    disabled={isSoldOut}
-                    style={{
-                      backgroundColor: isSoldOut ? "#e0e0e0" : "#ff4d4d", // 売り切れ時は薄いグレーに
-                      color: isSoldOut ? "#999999" : "white",
-                      border: "none",
-                      padding: "12px 22px",
-                      borderRadius: "20px", // ボタンを丸っこく
-                      fontSize: "15px",
-                      fontWeight: "bold",
-                      cursor: isSoldOut ? "not-allowed" : "pointer",
-                      boxShadow: isSoldOut
-                        ? "none"
-                        : "0 4px 12px rgba(255, 77, 77, 0.15)",
-                      transition: "all 0.2s",
-                    }}
-                  >
-                    {isSoldOut ? "❌ 売り切れ" : "🛍️ 購入する"}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+          {item.score !== undefined && item.score > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                top: "12px",
+                right: "12px",
+                backgroundColor: "rgba(79, 70, 229, 0.9)",
+                color: "white",
+                padding: "4px 8px",
+                borderRadius: "8px",
+                fontSize: "10px",
+                fontWeight: "bold",
+                fontFamily: "monospace",
+                backdropFilter: "blur(4px)",
+              }}
+            >
+              Match: {(item.score * 100).toFixed(1)}%
+            </div>
+          )}
         </div>
-      )}
-    </section>
+      ))}
+    </div>
   );
 }
 

@@ -36,3 +36,186 @@
     transform: rotate(360deg);
   }
 }
+
+/* =========================================
+   ✨ 商品カードのホバーエフェクト（浮遊感）
+   ========================================= */
+.item-card {
+  /* 変化を0.25秒かけて滑らかに行う（Apple風のスムーズな動き） */
+  transition:
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.item-card:hover {
+  /* 上に6ピクセルふわりと浮き上がる */
+  transform: translateY(-6px) !important;
+  /* 影を濃く、広く落として「浮いてる感」を強調する */
+  box-shadow:
+    0 12px 20px -5px rgba(0, 0, 0, 0.15),
+    0 8px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* ついでに、カードに乗せたときにマウスのカーソルを「指マーク」にする */
+.item-card:hover {
+  cursor: pointer;
+}
+
+/* =========================================
+   🧠 AIおすすめエリアの魔法のエフェクト
+   ========================================= */
+
+/* 1. ゆったりと呼吸するグラデーション背景 */
+.ai-magic-box {
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid #ddd6fe !important;
+  background: linear-gradient(135deg, #f3e8ff 0%, #e0e7ff 50%, #ede9fe 100%);
+  background-size: 200% 200%;
+  animation: aiGradient 6s ease infinite;
+  box-shadow:
+    0 4px 15px rgba(139, 92, 246, 0.15),
+    inset 0 0 20px rgba(255, 255, 255, 0.6) !important;
+}
+
+@keyframes aiGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 2. Ask AI ボタンのサイバー・ネオン発光 */
+.ai-ask-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 13px;
+  cursor: pointer;
+  color: white;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+  background-size: 200% auto;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
+}
+
+.ai-ask-button:hover:not(:disabled) {
+  background-position: right center;
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.7);
+  transform: translateY(-2px);
+}
+
+.ai-ask-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  animation: pulse 1.5s infinite; /* 計算中はボタンが鼓動する */
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.98);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 3. 見出しのグラデーション・テキスト */
+.ai-heading-text {
+  background: linear-gradient(90deg, #4f46e5, #db2777);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+/* =========================================
+   ❌ SOLD OUTのメルカリ風リボンバッジ
+   ========================================= */
+.sold-ribbon-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 76px;
+  height: 76px;
+  overflow: hidden;
+  z-index: 10;
+  border-top-left-radius: 12px; /* 画像の角丸に合わせる */
+}
+
+.sold-ribbon-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-top: 76px solid #e11d48; /* 強烈な赤色 */
+  border-right: 76px solid transparent;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.sold-ribbon-text {
+  position: absolute;
+  top: 16px;
+  left: 0px;
+  color: white;
+  font-size: 14px;
+  font-weight: 900;
+  transform: rotate(-45deg);
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* 文字に影をつけて際立たせる */
+}
+
+/* =========================================
+   ❌ SOLD OUTのメルカリ風リボンバッジ（特大版：ItemList用）
+   ========================================= */
+.sold-ribbon-container-large {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* 💡 変更箇所1: 表示領域を100px ➔ 140pxに拡大 */
+  width: 140px;
+  height: 140px;
+  overflow: hidden;
+  z-index: 10;
+  border-top-left-radius: 12px;
+}
+
+.sold-ribbon-container-large::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  /* 💡 変更箇所2: 三角形を描画する直角二等辺の辺の長さを 100px ➔ 140px に拡大 */
+  border-top: 140px solid #e11d48;
+  border-right: 140px solid transparent;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.sold-ribbon-text-large {
+  position: absolute;
+  /* 💡 変更箇所3: 三角形が大きくなった斜辺に合わせて、文字の座標(x,y)を下へシフト */
+  top: 32px;
+  left: -12px;
+  width: 140px;
+  text-align: center;
+  color: white;
+  /* 💡 変更箇所4: 文字そのもののフォントサイズを 18px ➔ 24px に爆増！ */
+  font-size: 24px;
+  font-weight: 900;
+  transform: rotate(-45deg);
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4); /* 影も少し濃くしました */
+}

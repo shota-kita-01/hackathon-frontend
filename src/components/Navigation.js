@@ -10,7 +10,7 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
         borderBottom: "1px solid #e5e7eb",
         display: "flex",
         justifyContent: "center",
-        gap: "12px" /* 🆕 5画面が綺麗に収まるように隙間を微調整 */,
+        gap: "12px",
       }}
     >
       <button
@@ -31,7 +31,6 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
       >
         🏠 ホーム
       </button>
-
       <button
         onClick={() => setCurrentTab("search")}
         style={{
@@ -51,26 +50,26 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
         🔍 検索
       </button>
 
+      {/* 🆕 いいねタブを「履歴」にリニューアル */}
       <button
-        onClick={() => setCurrentTab("likes")}
+        onClick={() => setCurrentTab("history")}
         style={{
           padding: "14px 10px",
           backgroundColor: "transparent",
           border: "none",
           borderBottom:
-            currentTab === "likes"
+            currentTab === "history"
               ? "3px solid #ff4d4d"
               : "3px solid transparent",
-          color: currentTab === "likes" ? "#ff4d4d" : "#666",
+          color: currentTab === "history" ? "#ff4d4d" : "#666",
           fontWeight: "bold",
           fontSize: "14px",
           cursor: "pointer",
         }}
       >
-        ❤️ いいね一覧
+        📖 履歴
       </button>
 
-      {/* 🆕 司令塔から指示された「mypage」状態をキックするボタンを特等席にマウント */}
       <button
         onClick={() => setCurrentTab("mypage")}
         style={{
@@ -89,7 +88,6 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
       >
         👤 マイページ
       </button>
-
       <button
         onClick={() => setCurrentTab("sell")}
         style={{
