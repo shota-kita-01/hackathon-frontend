@@ -10,9 +10,14 @@ import ItemDetailModal from "./components/ItemDetailModal";
 import Header from "./components/Header";
 import Navigation from "./components/Navigation";
 import LikesTab from "./components/LikesTab";
+import SearchTab from "./components/SearchTab";
+import MyPageTab from "./components/MyPageTab";
 
 function App() {
-  const [items, setItems] = useState([]);
+  // 🆕 役割に合わせてState（状態）を2つに分離
+  const [homeItems, setHomeItems] = useState([]); // 🏠 ホーム用（AI推薦された10件が入る）
+  const [allItems, setAllItems] = useState([]); // 🔍 検索用（全1000件が常に入る）
+
   const [loginUser, setLoginUser] = useState(null);
   const [myAppId, setMyAppId] = useState(null);
 
@@ -64,13 +69,42 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // --- 2. 商品一覧を取得する関数 ---
-  const fetchItems = () => {
+  // --- 2. 検索用の全件データを取得する関数 ---
+  const fetchAllItems = () => {
     fetch(`${API_URL}/items`)
       .then((response) => response.json())
-      .then((data) => setItems(data))
-      .catch((error) => console.error("データの取得に失敗しました:", error));
+      .then((data) => setAllItems(data))
+      .catch((error) => console.error("全件データの取得に失敗:", error));
   };
+
+  // --- 2.2 ホーム画面用の初期AIおすすめを取得する関数 ---
+  const fetchHomeRecommendations = (userId) => {
+    if (!userId) return;
+    setIsRecommending(true);
+    fetch(`${API_URL}/recommend`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: userId,
+        mood_text: "",
+        mode: "history", // 過去の履歴重視でリクエスト
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setHomeItems(data);
+      })
+      .catch((err) => console.error("初期AI推薦エラー:", err))
+      .finally(() => setIsRecommending(false));
+  };
+
+  // ログインユーザーが確定した瞬間に、全件データとAIおすすめを同時に引き抜く
+  useEffect(() => {
+    if (myAppId) {
+      fetchAllItems();
+      fetchHomeRecommendations(myAppId);
+    }
+  }, [myAppId]);
 
   // ユーザーのいいね一覧をバックエンドから取得する関数
   const fetchUserLikes = (userId) => {
@@ -82,10 +116,6 @@ function App() {
       })
       .catch((err) => console.error("いいね一覧の取得に失敗:", err));
   };
-
-  useEffect(() => {
-    fetchItems();
-  }, []);
 
   // 🧠 履歴重視モード選択時の自動計算トリガー
   useEffect(() => {
@@ -112,7 +142,7 @@ function App() {
       .then((response) => response.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          setItems(data);
+          setHomeItems(data); // 🆕 おすすめ結果はホーム専用Stateに格納
         } else {
           alert("推薦データの取得に失敗しました。");
         }
@@ -131,7 +161,7 @@ function App() {
     setMoodText("");
     setRecommendMode("both");
     setVisibleCount(40);
-    fetchItems();
+    fetchHomeRecommendations(myAppId); // 🆕 おすすめを初期状態（過去履歴ベース）に戻す
   };
 
   // --- 3. 購入処理 ---
@@ -152,8 +182,10 @@ function App() {
         if (data.status === "success") {
           alert("ご購入ありがとうございました！");
           setSelectedItem(null);
-          fetchItems();
+          fetchAllItems();
+          fetchHomeRecommendations(myAppId);
           fetchUserLikes(myAppId);
+          if (currentTab === "mypage") setCurrentTab("home");
         } else {
           alert("購入に失敗しました。");
         }
@@ -218,13 +250,30 @@ function App() {
                   handleAiRecommend={handleAiRecommend}
                   handleResetRecommend={handleResetRecommend}
                 />
-                <div onClick={(e) => handleCardClick(e, items)}>
+
+                <h3
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    color: "#111827",
+                    margin: "10px 0 -10px 0",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  ✨ あなたへのおすすめ商品 (AIパーソナライズ)
+                </h3>
+
+                {/* 🆕 描画対象を全件から「homeItems」に変更 */}
+                <div onClick={(e) => handleCardClick(e, homeItems)}>
                   <ItemList
-                    items={items.slice(0, visibleCount)}
+                    items={homeItems.slice(0, visibleCount)}
                     handlePurchaseItem={handlePurchaseItem}
                   />
                 </div>
-                {items.length > visibleCount && (
+
+                {homeItems.length > visibleCount && (
                   <div
                     style={{
                       textAlign: "center",
@@ -262,14 +311,33 @@ function App() {
               />
             )}
 
+            {/* 🔍 【検索タブ】 🆕 引数に全件データ「allItems」を渡すことで、常に1000件から爆速検索が可能に！ */}
+            {currentTab === "search" && (
+              <SearchTab
+                items={allItems}
+                handleCardClick={handleCardClick}
+                handlePurchaseItem={handlePurchaseItem}
+              />
+            )}
+
+            {/* 👤 【マイページタブ】 */}
+            {currentTab === "mypage" && (
+              <MyPageTab
+                myAppId={myAppId}
+                loginUser={loginUser}
+                handleCardClick={handleCardClick}
+                handlePurchaseItem={handlePurchaseItem}
+              />
+            )}
+
             {/* 📸 【出品タブ】 */}
             {currentTab === "sell" && (
               <ItemForm
-                API_URL={`${API_URL}/items`}
                 sellerId={myAppId}
                 onSuccess={() => {
                   alert("出品が完了しました！");
-                  fetchItems();
+                  fetchAllItems();
+                  fetchHomeRecommendations(myAppId);
                   setCurrentTab("home");
                 }}
               />
