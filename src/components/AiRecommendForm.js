@@ -8,40 +8,42 @@ function AiRecommendForm({
   isRecommending,
   handleAiRecommend,
   handleResetRecommend,
+  filterStatus,
+  setFilterStatus,
 }) {
   return (
-    <div
-      style={{
-        background: "linear-gradient(135deg, #f5f3ff 0%, #e0e7ff 100%)",
-        padding: "20px",
-        borderRadius: "16px",
-        boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
-        border: "1px solid #e0e7ff",
-      }}
-    >
-      <h3
+    // 🆕 クラス名 "ai-magic-box" を適用して呼吸する背景に
+    <div className="ai-magic-box">
+      <div
         style={{
-          margin: "0 0 10px 0",
-          fontSize: "14px",
-          fontWeight: "bold",
-          color: "#312e81",
           display: "flex",
           alignItems: "center",
-          gap: "6px",
+          gap: "8px",
+          marginBottom: "12px",
         }}
       >
-        🧠 AI Mood Recommendation (Two-Tower Model)
-      </h3>
+        <span role="img" aria-label="brain" style={{ fontSize: "18px" }}>
+          🧠
+        </span>
+        <h3
+          style={{
+            margin: 0,
+            fontSize: "14px",
+            fontWeight: "bold",
+            color: "#312e81",
+          }}
+        >
+          AI Mood Recommendation (Two-Tower Model)
+        </h3>
+      </div>
 
-      {/* モード切り替えラジオボタンエリア */}
       <div
         style={{
           display: "flex",
           gap: "15px",
-          marginBottom: "12px",
           fontSize: "13px",
-          fontWeight: "500",
-          color: "#4f46e5",
+          color: "#4338ca",
+          marginBottom: "10px",
         }}
       >
         <label
@@ -54,10 +56,10 @@ function AiRecommendForm({
         >
           <input
             type="radio"
-            name="recommendMode"
+            name="mode"
             value="mood"
             checked={recommendMode === "mood"}
-            onChange={(e) => setRecommendMode(e.target.value)}
+            onChange={() => setRecommendMode("mood")}
           />
           今の気分重視
         </label>
@@ -71,10 +73,10 @@ function AiRecommendForm({
         >
           <input
             type="radio"
-            name="recommendMode"
+            name="mode"
             value="history"
             checked={recommendMode === "history"}
-            onChange={(e) => setRecommendMode(e.target.value)}
+            onChange={() => setRecommendMode("history")}
           />
           過去の好み重視 (履歴)
         </label>
@@ -88,12 +90,79 @@ function AiRecommendForm({
         >
           <input
             type="radio"
-            name="recommendMode"
+            name="mode"
             value="both"
             checked={recommendMode === "both"}
-            onChange={(e) => setRecommendMode(e.target.value)}
+            onChange={() => setRecommendMode("both")}
           />
           ハイブリッド (両方ミックス)
+        </label>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: "15px",
+          fontSize: "13px",
+          color: "#374151",
+          marginBottom: "15px",
+          borderTop: "1px dashed #c7d2fe",
+          paddingTop: "10px",
+        }}
+      >
+        <span style={{ fontWeight: "bold", color: "#1f2937" }}>
+          🛒 表示対象:
+        </span>
+        <label
+          style={{
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+          }}
+        >
+          <input
+            type="radio"
+            name="filter_status"
+            value="both"
+            checked={filterStatus === "both"}
+            onChange={() => setFilterStatus("both")}
+          />
+          すべて (売切は後回し)
+        </label>
+        <label
+          style={{
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+          }}
+        >
+          <input
+            type="radio"
+            name="filter_status"
+            value="active"
+            checked={filterStatus === "active"}
+            onChange={() => setFilterStatus("active")}
+          />
+          販売中のみ
+        </label>
+        <label
+          style={{
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+          }}
+        >
+          <input
+            type="radio"
+            name="filter_status"
+            value="sold_out"
+            checked={filterStatus === "sold_out"}
+            onChange={() => setFilterStatus("sold_out")}
+          />
+          売り切れのみ
         </label>
       </div>
 
@@ -102,51 +171,45 @@ function AiRecommendForm({
           type="text"
           placeholder={
             recommendMode === "history"
-              ? "購入履歴から自動計算するため入力不要です"
+              ? "過去の履歴から自動計算中..."
               : "気分を入力（例：ゴールド、スニーカー、luxury ring）"
           }
           value={moodText}
-          disabled={recommendMode === "history"}
           onChange={(e) => setMoodText(e.target.value)}
+          disabled={recommendMode === "history" || isRecommending}
           style={{
             flex: 1,
             padding: "10px 14px",
-            borderRadius: "10px",
-            border: "1px solid #c7d2fe",
+            borderRadius: "8px",
+            border: "1px solid #a5b4fc",
             fontSize: "14px",
             outline: "none",
-            backgroundColor: recommendMode === "history" ? "#e2e8f0" : "white",
+            backgroundColor: recommendMode === "history" ? "#f3f4f6" : "white",
+            boxShadow: "inset 0 1px 3px rgba(0,0,0,0.05)",
           }}
         />
+
+        {/* 🆕 クラス名 "ai-ask-button" を適用してネオン発光ボタンに */}
         <button
+          className="ai-ask-button"
           onClick={handleAiRecommend}
           disabled={
             isRecommending || (recommendMode !== "history" && !moodText.trim())
           }
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#4f46e5",
-            color: "white",
-            border: "none",
-            borderRadius: "10px",
-            fontWeight: "bold",
-            fontSize: "14px",
-            cursor: "pointer",
-            transition: "background-color 0.2s",
-          }}
         >
-          {isRecommending ? "Calculating..." : "Ask AI"}
+          {isRecommending ? "⏳ 計算中..." : "Ask AI ✨"}
         </button>
+
         <button
           onClick={handleResetRecommend}
           style={{
-            padding: "10px 14px",
+            padding: "10px 15px",
             backgroundColor: "white",
             color: "#4f46e5",
-            border: "1px solid #c7d2fe",
-            borderRadius: "10px",
+            border: "1px solid #a5b4fc",
+            borderRadius: "8px",
             fontWeight: "bold",
-            fontSize: "14px",
+            fontSize: "13px",
             cursor: "pointer",
           }}
         >
