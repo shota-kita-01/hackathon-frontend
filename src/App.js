@@ -3,7 +3,6 @@ import "./App.css";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { fireAuth } from "./firebase";
 import ItemForm from "./components/ItemForm";
-import ItemList from "./components/ItemList";
 import LoginForm from "./components/LoginForm";
 import ItemDetailModal from "./components/ItemDetailModal";
 import Header from "./components/Header";
@@ -29,7 +28,6 @@ function App() {
   // 🗺️ 画面遷移・モーダル・履歴用の状態（State）
   const [currentTab, setCurrentTab] = useState("home");
   const [selectedItem, setSelectedItem] = useState(null);
-  const [visibleCount, setVisibleCount] = useState(20);
   const [userLikes, setUserLikes] = useState([]);
 
   const API_URL =
@@ -150,7 +148,6 @@ function App() {
     setMoodText("");
     setRecommendMode("both");
     setFilterStatus("both");
-    setVisibleCount(20);
     fetchHomeRecommendations(myAppId);
   };
 
