@@ -1,6 +1,7 @@
 import React from "react";
 
-function HorizontalItemList({ items, handlePurchaseItem }) {
+// 🆕 引数（プロップス）に handleCardClick を追加
+function HorizontalItemList({ items, handlePurchaseItem, handleCardClick }) {
   if (!items || items.length === 0) {
     return (
       <div
@@ -35,10 +36,11 @@ function HorizontalItemList({ items, handlePurchaseItem }) {
         <div
           key={item.id}
           className="item-card"
+          // 🆕 1つ1つの商品カードがクリックされたときに、その商品単体のオブジェクト(item)を投げるように修正
+          onClick={() => handleCardClick && handleCardClick(item)}
           style={{
             minWidth: "160px",
             maxWidth: "160px",
-            // 👇 1. 背景をグレーに
             backgroundColor: item.status === "sold_out" ? "#f9fafb" : "white",
             borderRadius: "12px",
             border: "1px solid #e5e7eb",
@@ -68,7 +70,6 @@ function HorizontalItemList({ items, handlePurchaseItem }) {
                 borderTopLeftRadius: "12px",
                 borderTopRightRadius: "12px",
                 display: "block",
-                // 👇 2. 画像を完全に白黒に
                 opacity: item.status === "sold_out" ? 0.4 : 1,
                 filter: item.status === "sold_out" ? "grayscale(100%)" : "none",
                 transition: "all 0.3s ease",
@@ -97,7 +98,6 @@ function HorizontalItemList({ items, handlePurchaseItem }) {
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
-                // 👇 3. タイトルをグレーに
                 color: item.status === "sold_out" ? "#9ca3af" : "#374151",
               }}
             >
@@ -107,7 +107,6 @@ function HorizontalItemList({ items, handlePurchaseItem }) {
               style={{
                 fontSize: "14px",
                 fontWeight: "bold",
-                // 👇 4. 価格をグレーに
                 color: item.status === "sold_out" ? "#9ca3af" : "#ff4d4d",
               }}
             >

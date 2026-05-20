@@ -3,15 +3,14 @@ import "./App.css";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { fireAuth } from "./firebase";
 import ItemForm from "./components/ItemForm";
-import ItemList from "./components/ItemList";
 import LoginForm from "./components/LoginForm";
-import AiRecommendForm from "./components/AiRecommendForm";
 import ItemDetailModal from "./components/ItemDetailModal";
 import Header from "./components/Header";
 import Navigation from "./components/Navigation";
 import HistoryTab from "./components/HistoryTab";
 import SearchTab from "./components/SearchTab";
 import MyPageTab from "./components/MyPageTab";
+import HorizontalItemList from "./components/HorizontalItemList"; // 🆕 横スクロールコンポーネントをホームでも使うためにインポート！
 
 function App() {
   const [homeItems, setHomeItems] = useState([]);
@@ -24,12 +23,11 @@ function App() {
   const [moodText, setMoodText] = useState("");
   const [isRecommending, setIsRecommending] = useState(false);
   const [recommendMode, setRecommendMode] = useState("both");
-  const [filterStatus, setFilterStatus] = useState("both"); // 🆕 フィルター用のStateを新設
+  const [filterStatus, setFilterStatus] = useState("both");
 
   // 🗺️ 画面遷移・モーダル・履歴用の状態（State）
   const [currentTab, setCurrentTab] = useState("home");
   const [selectedItem, setSelectedItem] = useState(null);
-  const [visibleCount, setVisibleCount] = useState(20);
   const [userLikes, setUserLikes] = useState([]);
 
   const API_URL =
@@ -86,7 +84,7 @@ function App() {
         user_id: userId,
         mood_text: moodText,
         mode: recommendMode,
-        filter_status: filterStatus, // 🆕 新条件をブレンドして送信
+        filter_status: filterStatus,
       }),
     })
       .then((res) => res.json())
@@ -97,7 +95,6 @@ function App() {
       .finally(() => setIsRecommending(false));
   };
 
-  // ログインユーザー確定、またはラジオボタン切り替え時に自動で再レコメンドを走らせる数理配線
   useEffect(() => {
     if (myAppId) {
       fetchAllItems();
@@ -127,7 +124,7 @@ function App() {
         user_id: myAppId,
         mood_text: moodText,
         mode: recommendMode,
-        filter_status: filterStatus, // 🆕 ボタンを押した時も送信
+        filter_status: filterStatus,
       }),
     })
       .then((response) => response.json())
@@ -150,8 +147,7 @@ function App() {
   const handleResetRecommend = () => {
     setMoodText("");
     setRecommendMode("both");
-    setFilterStatus("both"); // 🆕 リセット
-    setVisibleCount(20);
+    setFilterStatus("both");
     fetchHomeRecommendations(myAppId);
   };
 
@@ -192,17 +188,43 @@ function App() {
       .catch((err) => alert(err.message));
   };
 
-  const handleCardClick = (e, listSource) => {
+  const handleCardClick = (param1, param2) => {
+    if (param1 && param1.id && !param1.target) {
+      setSelectedItem(param1);
+      recordItemView(param1.id);
+      return;
+    }
+
+    const e = param1;
+    const listSource = param2;
+    if (!e || !listSource) return;
     if (e.target.tagName === "BUTTON") return;
+
     const card =
       e.target.closest(".item-card") ||
       e.target.closest("div[style*='border']");
     if (card) {
       const itemName = card.querySelector("h3")?.innerText;
       const matchItem = listSource.find((i) => i.name === itemName);
-      if (matchItem) setSelectedItem(matchItem);
+      if (matchItem) {
+        setSelectedItem(matchItem);
+        recordItemView(matchItem.id);
+      }
     }
   };
+
+  const recordItemView = (itemId) => {
+    if (!myAppId) return;
+    fetch(`${API_URL}/items/${itemId}/view`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: myAppId }),
+    }).catch((err) => console.error("閲覧履歴登録エラー:", err));
+  };
+
+  // 🆕 配列切り分けの仕込み
+  const firstHeroItem = homeItems[0]; // 1番スコアの高いイチオシの1件
+  const remainingScrollItems = homeItems.slice(1); // 2件目以降のすべて
 
   return (
     <div
@@ -227,74 +249,248 @@ function App() {
           <div
             style={{ display: "flex", flexDirection: "column", gap: "35px" }}
           >
-            {/* 🏠 【ホームタブ】 */}
+            {/* 🏠 【ホームタブ：新・ショーケースUI】 */}
             {currentTab === "home" && (
-              <>
-                <AiRecommendForm
-                  moodText={moodText}
-                  setMoodText={setMoodText}
-                  recommendMode={recommendMode}
-                  setRecommendMode={setRecommendMode}
-                  isRecommending={isRecommending}
-                  handleAiRecommend={handleAiRecommend}
-                  handleResetRecommend={handleResetRecommend}
-                  filterStatus={filterStatus}
-                  setFilterStatus={setFilterStatus} // 🆕 フィルター状態を配線
-                />
-
-                <h3
-                  style={{
-                    fontSize: "16px",
-                    fontWeight: "bold",
-                    margin: "10px 0 -10px 0",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
-                >
-                  ✨{" "}
-                  <span className="ai-heading-text">
-                    あなたへのおすすめ商品 (AIパーソナライズ)
-                  </span>
-                </h3>
-
-                <div onClick={(e) => handleCardClick(e, homeItems)}>
-                  <ItemList
-                    items={homeItems.slice(0, visibleCount)}
-                    handlePurchaseItem={handlePurchaseItem}
-                  />
-                </div>
-
-                {homeItems.length > visibleCount && (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      marginTop: "20px",
-                      marginBottom: "40px",
-                    }}
-                  >
-                    <button
-                      onClick={() => setVisibleCount((prev) => prev + 20)}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "35px",
+                }}
+              >
+                {/* 1段目：✨ あなたへの最高のおすすめ商品（1件限定の巨大ヒーローバナー） */}
+                {firstHeroItem && (
+                  <div>
+                    <h3
                       style={{
-                        padding: "12px 30px",
-                        backgroundColor: "white",
-                        color: "#ff4d4d",
-                        border: "2px solid #ff4d4d",
-                        borderRadius: "25px",
+                        fontSize: "16px",
                         fontWeight: "bold",
-                        fontSize: "14px",
-                        cursor: "pointer",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                        margin: "0 0 15px 0",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
                       }}
                     >
-                      👇 さらに商品を表示する (Load More)
-                    </button>
+                      👑{" "}
+                      <span className="ai-heading-text">
+                        あなたへの最高のイチオシ商品
+                      </span>
+                    </h3>
+
+                    {/* 🆕 1件だけのための特製ビッグカード */}
+                    <div
+                      className="item-card"
+                      onClick={() => handleCardClick(firstHeroItem)}
+                      style={{
+                        backgroundColor:
+                          firstHeroItem.status === "sold_out"
+                            ? "#f9fafb"
+                            : "white",
+                        borderRadius: "20px",
+                        border: "1px solid #e5e7eb",
+                        padding: "24px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "16px",
+                        position: "relative",
+                        cursor: "pointer",
+                        boxShadow: "0 10px 25px -5px rgba(0,0,0,0.05)",
+                        transition: "all 0.3s ease",
+                      }}
+                    >
+                      {/* 画像エリア */}
+                      <div
+                        style={{
+                          position: "relative",
+                          width: "100%",
+                          borderRadius: "14px",
+                          backgroundColor: "#f3f4f6",
+                        }}
+                      >
+                        <img
+                          src={firstHeroItem.image_url}
+                          alt={firstHeroItem.name}
+                          style={{
+                            width: "100%",
+                            height: "260px",
+                            objectFit: "cover",
+                            borderRadius: "14px",
+                            display: "block",
+                            opacity:
+                              firstHeroItem.status === "sold_out" ? 0.4 : 1,
+                            filter:
+                              firstHeroItem.status === "sold_out"
+                                ? "grayscale(100%)"
+                                : "none",
+                          }}
+                        />
+                        {firstHeroItem.status === "sold_out" && (
+                          <div className="sold-ribbon-container-large">
+                            <span className="sold-ribbon-text-large">SOLD</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* タイトルと価格 */}
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                        }}
+                      >
+                        <h2
+                          style={{
+                            margin: 0,
+                            fontSize: "20px",
+                            fontWeight: "900",
+                            color:
+                              firstHeroItem.status === "sold_out"
+                                ? "#9ca3af"
+                                : "#111827",
+                          }}
+                        >
+                          {firstHeroItem.name}
+                        </h2>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "22px",
+                              fontWeight: "900",
+                              color:
+                                firstHeroItem.status === "sold_out"
+                                  ? "#9ca3af"
+                                  : "#ff4d4d",
+                            }}
+                          >
+                            {firstHeroItem.price.toLocaleString()} 円
+                          </span>
+                          <span style={{ fontSize: "12px", color: "#9ca3af" }}>
+                            👤 {firstHeroItem.seller_name || "名無しさん"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* AIマッチ度バッジ */}
+                      {firstHeroItem.score !== undefined &&
+                        firstHeroItem.score > 0 && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "16px",
+                              right: "16px",
+                              backgroundColor: "rgba(79, 70, 229, 0.95)",
+                              color: "white",
+                              padding: "6px 12px",
+                              borderRadius: "10px",
+                              fontSize: "11px",
+                              fontWeight: "bold",
+                              fontFamily: "monospace",
+                              backdropFilter: "blur(4px)",
+                              boxShadow: "0 4px 10px rgba(79, 70, 229, 0.3)",
+                            }}
+                          >
+                            ✨ Match: {(firstHeroItem.score * 100).toFixed(1)}%
+                          </div>
+                        )}
+                    </div>
                   </div>
                 )}
-              </>
+
+                {/* 1.5段目：✨ 他のおすすめ商品（2件目以降を横スクロールで流す） */}
+                {remainingScrollItems.length > 0 && (
+                  <div>
+                    <h3
+                      style={{
+                        fontSize: "15px",
+                        fontWeight: "bold",
+                        margin: "0 0 12px 0",
+                        color: "#4b5563",
+                      }}
+                    >
+                      👀 こちらの商品もおすすめです
+                    </h3>
+                    <HorizontalItemList
+                      items={remainingScrollItems}
+                      handlePurchaseItem={handlePurchaseItem}
+                      handleCardClick={handleCardClick}
+                    />
+                  </div>
+                )}
+
+                {/* 2段目：🏷️ あなたのお気に入りカテゴリー（後で実装） */}
+                <div>
+                  <h3
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                      margin: "0 0 12px 0",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      color: "#333",
+                    }}
+                  >
+                    🏷️ あなたのお気に入りカテゴリー
+                  </h3>
+                  <div
+                    style={{
+                      padding: "24px",
+                      color: "#9ca3af",
+                      fontSize: "13px",
+                      backgroundColor: "white",
+                      borderRadius: "16px",
+                      border: "1px dashed #d1d5db",
+                      textAlign: "center",
+                      fontWeight: "500",
+                    }}
+                  >
+                    ⚙️
+                    AIがあなたの好みのカテゴリを分析中です。実装されるまでお待ちください。
+                  </div>
+                </div>
+
+                {/* 3段目：🔥 人気のカテゴリ（後で実装） */}
+                <div>
+                  <h3
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                      margin: "0 0 12px 0",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      color: "#333",
+                    }}
+                  >
+                    🔥 トレンド・人気のカテゴリ
+                  </h3>
+                  <div
+                    style={{
+                      padding: "24px",
+                      color: "#9ca3af",
+                      fontSize: "13px",
+                      backgroundColor: "white",
+                      borderRadius: "16px",
+                      border: "1px dashed #d1d5db",
+                      textAlign: "center",
+                      fontWeight: "500",
+                    }}
+                  >
+                    📈
+                    現在の市場トレンドを集計しています。実装されるまでお待ちください。
+                  </div>
+                </div>
+              </div>
             )}
 
-            {/* 🆕 【履歴タブ】（横スクロールの3段構え） */}
+            {/* ✨ 【おすすめ・履歴タブ】 */}
             {currentTab === "history" && (
               <HistoryTab
                 myAppId={myAppId}
@@ -308,8 +504,18 @@ function App() {
             {currentTab === "search" && (
               <SearchTab
                 items={allItems}
+                homeItems={homeItems}
                 handleCardClick={handleCardClick}
                 handlePurchaseItem={handlePurchaseItem}
+                moodText={moodText}
+                setMoodText={setMoodText}
+                recommendMode={recommendMode}
+                setRecommendMode={setRecommendMode}
+                isRecommending={isRecommending}
+                handleAiRecommend={handleAiRecommend}
+                handleResetRecommend={handleResetRecommend}
+                filterStatus={filterStatus}
+                setFilterStatus={setFilterStatus}
               />
             )}
 
