@@ -12,8 +12,8 @@ function AiRecommendForm({
   setFilterStatus,
 }) {
   return (
-    // 🆕 クラス名 "ai-magic-box" を適用して呼吸する背景に
     <div className="ai-magic-box">
+      {/* 💡 コメントはここ（親要素の内側）であれば安全に記述できます */}
       <div
         style={{
           display: "flex",
@@ -128,7 +128,7 @@ function AiRecommendForm({
             checked={filterStatus === "both"}
             onChange={() => setFilterStatus("both")}
           />
-          すべて (売切は後回し)
+          すべて
         </label>
         <label
           style={{
@@ -174,7 +174,7 @@ function AiRecommendForm({
               ? "過去の履歴から自動計算中..."
               : "気分を入力（例：ゴールド、スニーカー、luxury ring）"
           }
-          value={moodText}
+          value={moodText || ""}
           onChange={(e) => setMoodText(e.target.value)}
           disabled={recommendMode === "history" || isRecommending}
           style={{
@@ -189,12 +189,12 @@ function AiRecommendForm({
           }}
         />
 
-        {/* 🆕 クラス名 "ai-ask-button" を適用してネオン発光ボタンに */}
         <button
           className="ai-ask-button"
           onClick={handleAiRecommend}
           disabled={
-            isRecommending || (recommendMode !== "history" && !moodText.trim())
+            isRecommending ||
+            (recommendMode !== "history" && !(moodText || "").trim())
           }
         >
           {isRecommending ? "⏳ 計算中..." : "Ask AI ✨"}

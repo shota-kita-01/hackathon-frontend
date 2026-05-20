@@ -50,7 +50,7 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
         🔍 検索
       </button>
 
-      {/* 🆕 いいねタブを「履歴」にリニューアル */}
+      {/* 🆕 文言を興味とAIの集約場所にふさわしくアップデート */}
       <button
         onClick={() => setCurrentTab("history")}
         style={{
@@ -67,7 +67,7 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
           cursor: "pointer",
         }}
       >
-        📖 履歴
+        ✨ おすすめ・履歴
       </button>
 
       <button
