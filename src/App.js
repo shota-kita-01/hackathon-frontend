@@ -10,14 +10,14 @@ import Navigation from "./components/Navigation";
 import HistoryTab from "./components/HistoryTab";
 import SearchTab from "./components/SearchTab";
 import MyPageTab from "./components/MyPageTab";
-import HorizontalItemList from "./components/HorizontalItemList";
+import HomeTab from "./components/HomeTab"; // 💡 外部コンポーネントとして完全に統合
 
 function App() {
   // 🔍 検索タブ用のアイテム（Ask AIの結果用）
   const [homeItems, setHomeItems] = useState([]);
   const [allItems, setAllItems] = useState([]);
 
-  // 🏠 【ホーム用】3段パーソナライズ専用のState（🆕 新設）
+  // 🏠 【ホーム用】3段パーソナライズ専用のState
   const [homePersonalized, setHomePersonalized] = useState([]);
   const [homeUserFavorite, setHomeUserFavorite] = useState({
     title: "",
@@ -86,7 +86,7 @@ function App() {
       .catch((error) => console.error("全件データの取得に失敗:", error));
   };
 
-  // 💡 【超重要】新設したパーソナライズAPIを叩いて3段分のデータを一気に取得！
+  // 💡 新設したパーソナライズAPIを叩いて3段分のデータを一気に取得！
   const fetchHomeRecommendations = (userId) => {
     if (!userId) return;
     setIsRecommending(true);
@@ -95,7 +95,6 @@ function App() {
       .then((res) => res.json())
       .then((json) => {
         if (json.status === "success" && json.data) {
-          // バックエンドが計算した3種類のデータをそれぞれのStateへ格納
           setHomePersonalized(json.data.personalized.items);
           setHomeUserFavorite(json.data.user_favorite);
           setHomeMarketFavorite(json.data.market_favorite);
@@ -147,7 +146,7 @@ function App() {
       .then((response) => response.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          setHomeItems(data); // 検索タブ用（Ask AI結果）にセット
+          setHomeItems(data);
         } else if (data.status === "success" && Array.isArray(data.data)) {
           setHomeItems(data.data);
         } else {
@@ -166,7 +165,7 @@ function App() {
   const handleResetRecommend = () => {
     setMoodText("");
     setFilterStatus("both");
-    setHomeItems([]); // 検索結果をリセット
+    setHomeItems([]);
   };
 
   const handlePurchaseItem = (itemId) => {
@@ -187,7 +186,7 @@ function App() {
           alert("ご購入ありがとうございました！");
           setSelectedItem(null);
           fetchAllItems();
-          fetchHomeRecommendations(myAppId); // 購買によってパーソナライズを再計算！
+          fetchHomeRecommendations(myAppId); // 購買履歴ベースの再インファレンスを発火
           fetchUserLikes(myAppId);
           if (currentTab === "mypage") setCurrentTab("home");
         } else {
@@ -240,10 +239,6 @@ function App() {
     }).catch((err) => console.error("閲覧履歴登録エラー:", err));
   };
 
-  // 🥇 1段目（あなたへのおすすめ）の表示用切り分け
-  const firstHeroItem = homePersonalized[0];
-  const remainingScrollItems = homePersonalized.slice(1);
-
   return (
     <div
       className="App"
@@ -269,217 +264,13 @@ function App() {
           >
             {/* 🏠 【新・ホームタブ：3段パーソナライズUI】 */}
             {currentTab === "home" && (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "45px",
-                }}
-              >
-                {/* 🥇 1段目：あなたへのおすすめ（Top 5） */}
-                {firstHeroItem && (
-                  <div>
-                    <h3
-                      style={{
-                        fontSize: "16px",
-                        fontWeight: "bold",
-                        margin: "0 0 15px 0",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
-                    >
-                      👑{" "}
-                      <span className="ai-heading-text">
-                        あなたへのおすすめ
-                      </span>
-                    </h3>
-
-                    {/* 1件目の特製ビッグカード */}
-                    <div
-                      className="item-card"
-                      onClick={() => handleCardClick(firstHeroItem)}
-                      style={{
-                        backgroundColor:
-                          firstHeroItem.status === "sold_out"
-                            ? "#f9fafb"
-                            : "white",
-                        borderRadius: "20px",
-                        border: "1px solid #e5e7eb",
-                        padding: "24px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "16px",
-                        position: "relative",
-                        cursor: "pointer",
-                        boxShadow: "0 10px 25px -5px rgba(0,0,0,0.05)",
-                        transition: "all 0.3s ease",
-                        marginBottom: "20px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          position: "relative",
-                          width: "100%",
-                          borderRadius: "14px",
-                          backgroundColor: "#f3f4f6",
-                        }}
-                      >
-                        <img
-                          src={firstHeroItem.image_url}
-                          alt={firstHeroItem.name}
-                          style={{
-                            width: "100%",
-                            height: "260px",
-                            objectFit: "cover",
-                            borderRadius: "14px",
-                            display: "block",
-                            opacity:
-                              firstHeroItem.status === "sold_out" ? 0.4 : 1,
-                            filter:
-                              firstHeroItem.status === "sold_out"
-                                ? "grayscale(100%)"
-                                : "none",
-                          }}
-                        />
-                        {firstHeroItem.status === "sold_out" && (
-                          <div className="sold-ribbon-container-large">
-                            <span className="sold-ribbon-text-large">SOLD</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "8px",
-                        }}
-                      >
-                        <h2
-                          style={{
-                            margin: 0,
-                            fontSize: "20px",
-                            fontWeight: "900",
-                            color:
-                              firstHeroItem.status === "sold_out"
-                                ? "#9ca3af"
-                                : "#111827",
-                          }}
-                        >
-                          {firstHeroItem.name}
-                        </h2>
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: "22px",
-                              fontWeight: "900",
-                              color:
-                                firstHeroItem.status === "sold_out"
-                                  ? "#9ca3af"
-                                  : "#ff4d4d",
-                            }}
-                          >
-                            {firstHeroItem.price.toLocaleString()} 円
-                          </span>
-                          <span style={{ fontSize: "12px", color: "#9ca3af" }}>
-                            👤 {firstHeroItem.seller_name || "公式出品"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 残りの4件を横スクロールで流す */}
-                    {remainingScrollItems.length > 0 && (
-                      <HorizontalItemList
-                        items={remainingScrollItems}
-                        handlePurchaseItem={handlePurchaseItem}
-                        handleCardClick={handleCardClick}
-                      />
-                    )}
-                  </div>
-                )}
-
-                {/* 🥈 2段目：あなたに人気のカテゴリー（新規ユーザー向け防弾 placeholder 完備） */}
-                <div>
-                  <h3
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "bold",
-                      margin: "0 0 12px 0",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      color: "#333",
-                    }}
-                  >
-                    {homeUserFavorite.title || "👤 あなたに人気のカテゴリー"}
-                  </h3>
-
-                  {homeUserFavorite.items &&
-                  homeUserFavorite.items.length > 0 ? (
-                    // 💡 データがある場合は通常通り横スクロールで流す
-                    <HorizontalItemList
-                      items={homeUserFavorite.items}
-                      handlePurchaseItem={handlePurchaseItem}
-                      handleCardClick={handleCardClick}
-                    />
-                  ) : (
-                    // 💡 新規ユーザーでデータが0件の場合は、オシャレな点線枠でメッセージを表示！
-                    <div
-                      style={{
-                        padding: "30px 24px",
-                        color: "#9ca3af",
-                        fontSize: "13px",
-                        backgroundColor: "white",
-                        borderRadius: "16px",
-                        border: "1px dashed #d1d5db",
-                        textAlign: "center",
-                        fontWeight: "500",
-                        lineHeight: "1.6",
-                      }}
-                    >
-                      <span>
-                        🛍️ <b>購入後に表示します</b>
-                      </span>
-                      <br />
-                      <span style={{ fontSize: "11px", color: "#cbd5e1" }}>
-                        商品を購入したり、お気に入り・閲覧をすると、AIがあなたの好みを数理分析して専用の特設カテゴリーを自動生成します。
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* 🥉 3段目：市場全体で人気のカテゴリー */}
-                {homeMarketFavorite.items.length > 0 && (
-                  <div>
-                    <h3
-                      style={{
-                        fontSize: "16px",
-                        fontWeight: "bold",
-                        margin: "0 0 12px 0",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        color: "#333",
-                      }}
-                    >
-                      {homeMarketFavorite.title}
-                    </h3>
-                    <HorizontalItemList
-                      items={homeMarketFavorite.items}
-                      handlePurchaseItem={handlePurchaseItem}
-                      handleCardClick={handleCardClick}
-                    />
-                  </div>
-                )}
-              </div>
+              <HomeTab
+                homePersonalized={homePersonalized}
+                homeUserFavorite={homeUserFavorite}
+                homeMarketFavorite={homeMarketFavorite}
+                handleCardClick={handleCardClick}
+                handlePurchaseItem={handlePurchaseItem}
+              />
             )}
 
             {/* ✨ 【おすすめ・履歴タブ】 */}
