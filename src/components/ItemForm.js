@@ -5,7 +5,7 @@ function ItemForm({ sellerId, onSuccess }) {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [tags, setTags] = useState(""); // 🆕 タグ用の状態（State）
+  const [tags, setTags] = useState("");
 
   // 🧠 AI処理中のローディング状態
   const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
@@ -41,8 +41,9 @@ function ItemForm({ sellerId, onSuccess }) {
 
   // 🧠 【機能5】AI価格査定を呼び出す関数
   const handleSuggestPrice = () => {
-    if (!name.trim()) {
-      alert("商品名を入力してからAI価格査定を叩いてください！");
+    // 💡 商品名と商品説明のどちらか片方でも空ならブロック
+    if (!name.trim() || !description.trim()) {
+      alert("商品名と商品説明の両方を入力してからAI価格査定を叩いてください！");
       return;
     }
     setIsEstimatingPrice(true);
@@ -50,7 +51,10 @@ function ItemForm({ sellerId, onSuccess }) {
     fetch(`${BASE_API_URL}/ai/suggest-price`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name }),
+      body: JSON.stringify({
+        name: name,
+        description: description, // 💡 商品説明も一緒にバックエンドへ送信！
+      }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -82,10 +86,10 @@ function ItemForm({ sellerId, onSuccess }) {
       body: JSON.stringify({
         name: name,
         description: description,
-        price: parseInt(price),
+        price: parseInt(price, 10), // 💡 10進数指定でより安全に
         image_url: finalImageUrl,
         seller_id: sellerId,
-        tags: tags, // 🆕 タグをカンマ区切りの文字列のままバックエンドへ送信
+        tags: tags,
       }),
     })
       .then((response) => response.json())
@@ -179,17 +183,25 @@ function ItemForm({ sellerId, onSuccess }) {
           <button
             type="button"
             onClick={handleSuggestPrice}
-            disabled={isEstimatingPrice}
+            // 💡 査定中、または「商品名が空」または「商品説明が空」のときにボタンを無効化！
+            disabled={isEstimatingPrice || !name.trim() || !description.trim()}
             style={{
               flex: 1,
               padding: "10px",
-              backgroundColor: "#ecfdf5",
-              color: "#065f46",
-              border: "1px solid #34d399",
+              // 💡 入力されていないときは少し薄いグレー（not-allowed）に見えるようにすると親切です
+              backgroundColor:
+                !name.trim() || !description.trim() ? "#f3f4f6" : "#ecfdf5",
+              color:
+                !name.trim() || !description.trim() ? "#9ca3af" : "#065f46",
+              border:
+                !name.trim() || !description.trim()
+                  ? "1px solid #e5e7eb"
+                  : "1px solid #34d399",
               borderRadius: "8px",
               fontSize: "12px",
               fontWeight: "bold",
-              cursor: "pointer",
+              cursor:
+                !name.trim() || !description.trim() ? "not-allowed" : "pointer",
               transition: "all 0.2s",
             }}
           >
@@ -205,7 +217,7 @@ function ItemForm({ sellerId, onSuccess }) {
             商品説明 <span style={{ color: "#ff4d4d" }}>*</span>
           </label>
           <textarea
-            placeholder="商品の詳細な説明文（AIボタンで世界基準の英語説明を自動生成できます）"
+            placeholder="商品の詳細な説明文（AIボタンで日本語説明を自動生成できます）"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={5}

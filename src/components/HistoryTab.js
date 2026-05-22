@@ -13,7 +13,6 @@ function HistoryTab({
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
-  // タブが開かれた瞬間に閲覧履歴のみを取得（購入履歴はマイページへ移行したため削除）
   useEffect(() => {
     if (!myAppId) return;
     setIsLoading(true);
@@ -21,13 +20,22 @@ function HistoryTab({
     fetch(`${API_URL}/users/${myAppId}/views`)
       .then((res) => res.json())
       .then((viewsData) => {
-        if (Array.isArray(viewsData)) setViewedItems(viewsData);
+        if (Array.isArray(viewsData)) {
+          // 🆕 【超重要：商品IDの重複を完全に除去する数理フィルター】
+          // 同じ商品を何度も見た場合、最新の1件だけをスマートに残します
+          const uniqueItemsMap = new Map();
+          viewsData.forEach((item) => {
+            if (item && item.id && !uniqueItemsMap.has(item.id)) {
+              uniqueItemsMap.set(item.id, item);
+            }
+          });
+          setViewedItems(Array.from(uniqueItemsMap.values()));
+        }
       })
       .catch((err) => console.error("履歴データ取得エラー:", err))
       .finally(() => setIsLoading(false));
   }, [myAppId]);
 
-  // 🆕 デモ用の検索履歴データ（後ほどバックエンドと繋ぐためのモック）
   const mockSearchQueries = [
     "Nike sneakers",
     "Chanel bag",
@@ -57,7 +65,7 @@ function HistoryTab({
         📖 あなたの興味・おすすめ
       </h2>
 
-      {/* 1段目：❤️ いいねした商品（App.jsから渡されたuserLikesを使用） */}
+      {/* 1段目：❤️ いいねした商品 */}
       <div>
         <h3
           style={{
@@ -79,7 +87,7 @@ function HistoryTab({
         />
       </div>
 
-      {/* 2段目：👁️ 最近チェックした商品 */}
+      {/* 2段目：👁️ 最近チェックした商品（重複が消えてスッキリ！） */}
       <div>
         <h3
           style={{
@@ -101,7 +109,7 @@ function HistoryTab({
         />
       </div>
 
-      {/* 3段目：🆕 🔍 最近の検索履歴（チップ風のオシャレなUI） */}
+      {/* 3段目：🔍 最近の検索キーワード */}
       <div>
         <h3
           style={{
@@ -136,7 +144,6 @@ function HistoryTab({
                 fontWeight: "500",
                 border: "1px solid #e5e7eb",
                 cursor: "pointer",
-                transition: "all 0.2s ease",
               }}
               className="search-history-chip"
             >
@@ -146,7 +153,7 @@ function HistoryTab({
         </div>
       </div>
 
-      {/* 4段目：🆕 ✨ AIによるあなたへの特別推薦（今後の拡張枠） */}
+      {/* 4段目：✨ AIによるあなたへの特別推薦 */}
       <div>
         <h3
           style={{
@@ -161,10 +168,9 @@ function HistoryTab({
         >
           ✨ AIが分析したおすすめ商品
         </h3>
-        {/* 現状は閲覧履歴をベースに「AIがこれに注目しています」感を出すデモ表示 */}
         {viewedItems.length > 0 ? (
           <HorizontalItemList
-            items={[...viewedItems].reverse().slice(0, 5)} // 閲覧履歴の逆順などを一旦流す
+            items={[...viewedItems].reverse().slice(0, 5)}
             handlePurchaseItem={handlePurchaseItem}
             handleCardClick={handleCardClick}
           />

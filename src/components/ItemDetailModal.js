@@ -20,29 +20,32 @@ function ItemDetailModal({
   useEffect(() => {
     if (!selectedItem || !myAppId) return;
 
-    // 🚀 【新機能】① 閲覧履歴APIをバックエンドに自動送信（バックグラウンド処理）
+    // 🚀 ① 閲覧履歴API（items.py側がproducts対応したため、デプロイ完了後はエラーなく裏で自動登録されます）
     fetch(`${API_URL}/items/${selectedItem.id}/view`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: myAppId }),
     }).catch((err) => console.error("閲覧履歴記録エラー:", err));
 
-    // 🧠 ② 関連商品AI推薦の計算（前回作成ロジック）
+    // 🧠 ② 関連商品AI推薦（喜多さん特製の確率的時間遷移・空間類似カルーセルをフロントに超連動！）
     setIsCalculating(true);
     setRelatedItems([]);
-    fetch(`${API_URL}/recommend`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: myAppId,
-        mood_text: selectedItem.name,
-        mode: "mood",
-      }),
-    })
+
+    // 💡 ターゲット商品のASINをURLに乗せてGETでハントしにいきます
+    fetch(`${API_URL}/recommendations/${selectedItem.asin}`)
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) {
-          const filtered = data.filter((item) => item.id !== selectedItem.id);
+        // バックエンドから空間的類似（carousel_space_similarity.items）が返ってくるので、
+        // その中のアイテムの配列を安全に抽出して関連商品エリアにマッピングします
+        if (
+          data &&
+          data.carousel_space_similarity &&
+          Array.isArray(data.carousel_space_similarity.items)
+        ) {
+          // 自分自身を覗いた上位3件をセット
+          const filtered = data.carousel_space_similarity.items.filter(
+            (item) => item.id !== selectedItem.id,
+          );
           setRelatedItems(filtered.slice(0, 3));
         }
       })
@@ -50,7 +53,7 @@ function ItemDetailModal({
       .finally(() => setIsCalculating(false));
   }, [selectedItem, myAppId]);
 
-  // 🆕 【新機能】いいねボタンが押された時の処理
+  // 🆕 いいねボタンが押された時の処理
   const handleLikeClick = () => {
     if (!myAppId || !selectedItem) return;
 
@@ -62,7 +65,7 @@ function ItemDetailModal({
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") {
-          onLikeToggle(); // 親コンポーネント（App.js）のいいね一覧を最新に更新させる
+          onLikeToggle(); // 親のいいね一覧を最新に更新
         }
       })
       .catch((err) => console.error("いいね通信エラー:", err));
@@ -102,7 +105,7 @@ function ItemDetailModal({
         <div
           style={{
             display: "flex",
-            justifyContent: "space-between",
+            justifycontent: "space-between",
             alignItems: "center",
             marginBottom: "15px",
           }}
@@ -136,7 +139,6 @@ function ItemDetailModal({
           }}
         />
 
-        {/* 🆕 タイトルの横に可愛い「いいねトグルボタン」を設置 */}
         <div
           style={{
             display: "flex",
@@ -232,7 +234,7 @@ function ItemDetailModal({
               fontWeight: "bold",
             }}
           >
-            🧠 こちらの商品を見た人におすすめ (AI Recommendation)
+            🧠 この商品を見た人におすすめ (AI 空間的類似推薦)
           </h4>
 
           {isCalculating ? (
@@ -295,17 +297,6 @@ function ItemDetailModal({
                   >
                     {item.price.toLocaleString()} 円
                   </div>
-                  {item.score !== undefined && (
-                    <div
-                      style={{
-                        fontSize: "9px",
-                        color: "#4f46e5",
-                        fontFamily: "monospace",
-                      }}
-                    >
-                      Match: {(item.score * 100).toFixed(1)}%
-                    </div>
-                  )}
                 </div>
               ))}
               {relatedItems.length === 0 && (
