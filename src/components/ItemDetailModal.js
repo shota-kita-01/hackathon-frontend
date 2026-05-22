@@ -11,38 +11,44 @@ function ItemDetailModal({
   const [relatedItems, setRelatedItems] = useState([]);
   const [isCalculating, setIsCalculating] = useState(false);
 
+  // 💡 いいねの「即時反応」を実現するためのローカルステート
+  const [localIsLiked, setLocalIsLiked] = useState(false);
+
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
-  // 🆕 自分がこの商品をいいねしているかを数理的に判定
-  const isLiked = userLikes.some((like) => like.id === selectedItem?.id);
+  // モーダルが開かれたら、親から渡されたいいねリストをもとに初期状態をセット
+  useEffect(() => {
+    if (selectedItem) {
+      const isLikedInitially = userLikes.some(
+        (like) => like.id === selectedItem.id,
+      );
+      setLocalIsLiked(isLikedInitially);
+    }
+  }, [selectedItem, userLikes]);
 
   useEffect(() => {
     if (!selectedItem || !myAppId) return;
 
-    // 🚀 ① 閲覧履歴API（items.py側がproducts対応したため、デプロイ完了後はエラーなく裏で自動登録されます）
+    // 🚀 ① 閲覧履歴API
     fetch(`${API_URL}/items/${selectedItem.id}/view`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: myAppId }),
     }).catch((err) => console.error("閲覧履歴記録エラー:", err));
 
-    // 🧠 ② 関連商品AI推薦（喜多さん特製の確率的時間遷移・空間類似カルーセルをフロントに超連動！）
+    // 🧠 ② 関連商品AI推薦
     setIsCalculating(true);
     setRelatedItems([]);
 
-    // 💡 ターゲット商品のASINをURLに乗せてGETでハントしにいきます
     fetch(`${API_URL}/recommendations/${selectedItem.asin}`)
       .then((res) => res.json())
       .then((data) => {
-        // バックエンドから空間的類似（carousel_space_similarity.items）が返ってくるので、
-        // その中のアイテムの配列を安全に抽出して関連商品エリアにマッピングします
         if (
           data &&
           data.carousel_space_similarity &&
           Array.isArray(data.carousel_space_similarity.items)
         ) {
-          // 自分自身を覗いた上位3件をセット
           const filtered = data.carousel_space_similarity.items.filter(
             (item) => item.id !== selectedItem.id,
           );
@@ -57,6 +63,9 @@ function ItemDetailModal({
   const handleLikeClick = () => {
     if (!myAppId || !selectedItem) return;
 
+    // 💡 ユーザーのクリックに対して「即時」に色を変える！（UX向上）
+    setLocalIsLiked(!localIsLiked);
+
     fetch(`${API_URL}/items/${selectedItem.id}/like`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -65,10 +74,14 @@ function ItemDetailModal({
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") {
-          onLikeToggle(); // 親のいいね一覧を最新に更新
+          onLikeToggle(); // 裏側で親のリストも最新にする
         }
       })
-      .catch((err) => console.error("いいね通信エラー:", err));
+      .catch((err) => {
+        console.error("いいね通信エラー:", err);
+        // 万が一エラーなら色を元に戻す
+        setLocalIsLiked((prev) => !prev);
+      });
   };
 
   if (!selectedItem) return null;
@@ -97,35 +110,41 @@ function ItemDetailModal({
           width: "100%",
           padding: "25px",
           boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
-          position: "relative",
+          position: "relative", // 💡 ここが Relative だから、絶対配置の基準になる
           maxHeight: "90vh",
           overflowY: "auto",
         }}
       >
-        <div
+        {/* 🆕 ばつ印を右上に絶対配置！ */}
+        <button
+          onClick={() => setSelectedItem(null)}
           style={{
+            position: "absolute",
+            top: "15px",
+            right: "15px",
+            border: "none",
+            backgroundColor: "#f3f4f6",
+            borderRadius: "50%",
+            width: "32px",
+            height: "32px",
             display: "flex",
-            justifycontent: "space-between",
+            justifyContent: "center",
             alignItems: "center",
-            marginBottom: "15px",
+            fontSize: "16px",
+            cursor: "pointer",
+            color: "#6b7280",
+            transition: "background-color 0.2s",
           }}
         >
-          <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "bold" }}>
-            🛍️ 商品詳細
-          </h2>
-          <button
-            onClick={() => setSelectedItem(null)}
-            style={{
-              border: "none",
-              backgroundColor: "transparent",
-              fontSize: "20px",
-              cursor: "pointer",
-              color: "#aaa",
-            }}
-          >
-            ✕
-          </button>
-        </div>
+          ✕
+        </button>
+
+        {/* ヘッダーの余白調整 */}
+        <h2
+          style={{ margin: "0 0 15px 0", fontSize: "20px", fontWeight: "bold" }}
+        >
+          🛍️ 商品詳細
+        </h2>
 
         <img
           src={selectedItem.image_url}
@@ -148,15 +167,18 @@ function ItemDetailModal({
             marginBottom: "10px",
           }}
         >
-          <h3 style={{ margin: 0, fontSize: "18px", flex: 1 }}>
+          <h3
+            style={{ margin: 0, fontSize: "18px", flex: 1, lineHeight: "1.4" }}
+          >
             {selectedItem.name}
           </h3>
           <button
             onClick={handleLikeClick}
             style={{
-              backgroundColor: isLiked ? "#fff1f2" : "#f3f4f6",
-              color: isLiked ? "#f43f5e" : "#9ca3af",
-              border: isLiked ? "1px solid #fecdd3" : "1px solid #e5e7eb",
+              // 💡 localIsLiked（即時反応ステート）を使って色を制御
+              backgroundColor: localIsLiked ? "#fff1f2" : "#f3f4f6",
+              color: localIsLiked ? "#f43f5e" : "#9ca3af",
+              border: localIsLiked ? "1px solid #fecdd3" : "1px solid #e5e7eb",
               borderRadius: "30px",
               padding: "6px 14px",
               cursor: "pointer",
@@ -166,9 +188,10 @@ function ItemDetailModal({
               alignItems: "center",
               gap: "4px",
               transition: "all 0.2s",
+              flexShrink: 0, // タイトルが長くてもボタンが潰れないようにする
             }}
           >
-            {isLiked ? "❤️ いいね中" : "🤍 いいね"}
+            {localIsLiked ? "❤️ いいね中" : "🤍 いいね"}
           </button>
         </div>
 
@@ -212,6 +235,7 @@ function ItemDetailModal({
               fontWeight: "bold",
               fontSize: "15px",
               cursor: "pointer",
+              transition: "transform 0.1s",
             }}
           >
             🛍️ 今すぐ購入する

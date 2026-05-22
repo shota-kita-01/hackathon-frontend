@@ -26,7 +26,7 @@ function Header({ loginUser, handleLogout, setCurrentTab }) {
         }}
         onClick={() => setCurrentTab("home")}
       >
-        フリマアプリ
+        次世代型フリマアプリ
       </h1>
       {loginUser && (
         <div
