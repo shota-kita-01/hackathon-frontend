@@ -77,21 +77,18 @@ function App() {
   const fetchHomeRecommendations = (userId) => {
     if (!userId) return;
     setIsRecommending(true);
-    fetch(`${API_URL}/recommend`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: userId,
-        mood_text: moodText,
-        mode: recommendMode,
-        filter_status: filterStatus,
-      }),
-    })
+
+    // 💡 404になる古いレコメンドの代わりに、今回作ったproductsから320件をGETで直接ハントします！
+    fetch(`${API_URL}/products`)
       .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setHomeItems(data);
+      .then((json) => {
+        // バックエンドから { status: "success", data: [...] } で返ってくるので、
+        // その中の320件の配列（json.data）をホーム用のStateにぶち込みます
+        if (json.status === "success" && Array.isArray(json.data)) {
+          setHomeItems(json.data);
+        }
       })
-      .catch((err) => console.error("初期AI推薦エラー:", err))
+      .catch((err) => console.error("初期特権データ取得エラー:", err))
       .finally(() => setIsRecommending(false));
   };
 
@@ -114,7 +111,7 @@ function App() {
   };
 
   const handleAiRecommend = () => {
-    if (recommendMode !== "history" && !moodText.trim()) return;
+    if (!moodText.trim()) return;
     setIsRecommending(true);
 
     fetch(`${API_URL}/recommend`, {
@@ -123,14 +120,16 @@ function App() {
       body: JSON.stringify({
         user_id: myAppId,
         mood_text: moodText,
-        mode: recommendMode,
-        filter_status: filterStatus,
+        filter_status: filterStatus, // 販売中・売切の連動用
       }),
     })
       .then((response) => response.json())
       .then((data) => {
+        // バックエンドから推薦された商品の配列が返ってくるので格納
         if (Array.isArray(data)) {
           setHomeItems(data);
+        } else if (data.status === "success" && Array.isArray(data.data)) {
+          setHomeItems(data.data);
         } else {
           alert("推薦データの取得に失敗しました。");
         }
@@ -146,7 +145,6 @@ function App() {
 
   const handleResetRecommend = () => {
     setMoodText("");
-    setRecommendMode("both");
     setFilterStatus("both");
     fetchHomeRecommendations(myAppId);
   };

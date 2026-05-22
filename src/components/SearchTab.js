@@ -8,8 +8,8 @@ function SearchTab({
   handlePurchaseItem,
   moodText,
   setMoodText,
-  recommendMode,
-  setRecommendMode,
+  recommendMode, // 💡 エラー防止のため引数は維持、UIからは削除
+  setRecommendMode, // 💡 エラー防止のため引数は維持、UIからは削除
   isRecommending,
   handleAiRecommend,
   handleResetRecommend,
@@ -20,58 +20,85 @@ function SearchTab({
   const [sortOrder, setSortOrder] = useState("ai_match");
   const [visibleCount, setVisibleCount] = useState(20);
 
-  // 条件が変わったら件数をリセット
+  // 📦 Amazonのデータセットに適合する「33個のカテゴリージャンル」を完全定義！
+  // 💡 もし実際のバックエンドのジャンル名と完全一致させたい場合は、ここの文字列を書き換えてください。
+  const amazon33Categories = [
+    "Electronics",
+    "Computers",
+    "Smart Home",
+    "Clothing",
+    "Shoes",
+    "Bags & Luggage",
+    "Jewelry",
+    "Watches",
+    "Home & Kitchen",
+    "Kitchen & Dining",
+    "Furniture",
+    "Bedding",
+    "Beauty",
+    "Health & Household",
+    "Grocery & Gourmet",
+    "Wine & Alcohol",
+    "Baby",
+    "Toys & Games",
+    "Video Games",
+    "Books",
+    "Kindle Store",
+    "Movies & TV",
+    "Music & CD",
+    "Sports & Outdoors",
+    "Fitness",
+    "Tools & Home Improvement",
+    "Automotive",
+    "Pet Supplies",
+    "Office Products",
+    "Stationery",
+    "Musical Instruments",
+    "Garden & Patio",
+    "Hobby & Collectibles",
+  ];
+
+  // 条件が変わったら表示件数をリセット
   useEffect(() => {
     setVisibleCount(20);
   }, [searchQuery, sortOrder, moodText, filterStatus]);
-
-  useEffect(() => {
-    if (!moodText.trim() && recommendMode === "both") {
-      setSortOrder("ai_match");
-    }
-  }, [moodText, recommendMode]);
-
-  const popularTags = [
-    "sneakers",
-    "bag",
-    "wallet",
-    "watch",
-    "chanel",
-    "nike",
-    "gold",
-  ];
 
   // 常に最新のAIスコア付き配列をベースにする
   const baseItems =
     Array.isArray(homeItems) && homeItems.length > 0 ? homeItems : items;
 
-  // 1. 文字列での絞り込み
+  // ===================================================
+  // 🔍 フィルターロジックの完全連動
+  // ===================================================
+
+  // 1. 文字列 ＆ カテゴリ選択での絞り込み
   let filteredItems = baseItems.filter((item) => {
     if (!item) return false;
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
 
+    // Amazonの ai_category (バックエンドで tags に変換済) を最優先でチェック
+    const tagMatch = item.tags
+      ? String(item.tags).toLowerCase().includes(query)
+      : false;
     const nameMatch = item.name
       ? item.name.toLowerCase().includes(query)
       : false;
     const descMatch = item.description
       ? item.description.toLowerCase().includes(query)
       : false;
-    const tagMatch = item.tags
-      ? String(item.tags).toLowerCase().includes(query)
-      : false;
 
-    return nameMatch || descMatch || tagMatch;
+    return tagMatch || nameMatch || descMatch;
   });
 
-  // 2. 表示対象フィルター
+  // 2. 表示対象フィルター（販売中 / 売切）➔ Amazonの status に完全連動！
   if (filterStatus === "active") {
     filteredItems = filteredItems.filter((item) => item.status === "on_sale");
   } else if (filterStatus === "sold_out") {
     filteredItems = filteredItems.filter((item) => item.status === "sold_out");
   }
 
-  // 3. 並び替え
+  // 3. 並び替え（AIおすすめ順、価格順、新しい順）
   let sortedItems = [...filteredItems];
   if (sortOrder === "ai_match") {
     sortedItems.sort((a, b) => {
@@ -87,6 +114,7 @@ function SearchTab({
     sortedItems.sort((a, b) => b.price - a.price);
   }
 
+  // 「すべて」表示の時は、売り切れ(sold_out)が自然に後ろに沈むようにソート
   if (filterStatus === "both") {
     sortedItems.sort(
       (a, b) =>
@@ -107,7 +135,7 @@ function SearchTab({
         🔍 商品を探す
       </h2>
 
-      {/* 🆕 ✨ 2つのボックスを1つに統合した巨大なハイブリッド検索コンソール */}
+      {/* 融合型検索コンソール */}
       <div
         style={{
           backgroundColor: "white",
@@ -117,7 +145,7 @@ function SearchTab({
           overflow: "hidden",
         }}
       >
-        {/* ─── 上段：AI Mood 検索エリア（うっすらと呼吸するパープル背景を融合） ─── */}
+        {/* ─── 上段：AI Mood 検索エリア（不要なモード選択ラジオは撤去し究極にシンプル化） ─── */}
         <div
           className="ai-magic-box"
           style={{
@@ -144,72 +172,8 @@ function SearchTab({
                 color: "#312e81",
               }}
             >
-              AI Mood Recommendation (Two-Tower Model)
+              AIイメージ検索（欲しい雰囲気や気分を入力）
             </h3>
-          </div>
-
-          {/* モード設定 */}
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "15px",
-              fontSize: "13px",
-              color: "#4338ca",
-              marginBottom: "10px",
-            }}
-          >
-            <label
-              style={{
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              <input
-                type="radio"
-                name="mode"
-                value="mood"
-                checked={recommendMode === "mood"}
-                onChange={() => setRecommendMode("mood")}
-              />{" "}
-              今の気分重視
-            </label>
-            <label
-              style={{
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              <input
-                type="radio"
-                name="mode"
-                value="history"
-                checked={recommendMode === "history"}
-                onChange={() => setRecommendMode("history")}
-              />{" "}
-              過去の好み重視 (履歴)
-            </label>
-            <label
-              style={{
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              <input
-                type="radio"
-                name="mode"
-                value="both"
-                checked={recommendMode === "both"}
-                onChange={() => setRecommendMode("both")}
-              />{" "}
-              ハイブリッド
-            </label>
           </div>
 
           {/* 表示対象フィルター */}
@@ -220,8 +184,7 @@ function SearchTab({
               fontSize: "13px",
               color: "#374151",
               marginBottom: "15px",
-              borderTop: "1px dashed #c7d2fe",
-              paddingTop: "10px",
+              paddingBottom: "10px",
             }}
           >
             <span style={{ fontWeight: "bold", color: "#1f2937" }}>
@@ -280,18 +243,14 @@ function SearchTab({
             </label>
           </div>
 
-          {/* AI気分の入力行 */}
+          {/* AI検索入力行 */}
           <div style={{ display: "flex", gap: "10px" }}>
             <input
               type="text"
-              placeholder={
-                recommendMode === "history"
-                  ? "過去の履歴から自動計算中..."
-                  : "今の気分や欲しいイメージ（例：爽やかな春服、大容量の財布）"
-              }
+              placeholder="今の気分や欲しいイメージ（例：Macに合う黒いガジェット、洗練されたオフィス服）"
               value={moodText || ""}
               onChange={(e) => setMoodText(e.target.value)}
-              disabled={recommendMode === "history" || isRecommending}
+              disabled={isRecommending}
               style={{
                 flex: 1,
                 padding: "10px 14px",
@@ -299,17 +258,12 @@ function SearchTab({
                 border: "1px solid #a5b4fc",
                 fontSize: "14px",
                 outline: "none",
-                backgroundColor:
-                  recommendMode === "history" ? "#f3f4f6" : "white",
               }}
             />
             <button
               className="ai-ask-button"
               onClick={handleAiRecommend}
-              disabled={
-                isRecommending ||
-                (recommendMode !== "history" && !(moodText || "").trim())
-              }
+              disabled={isRecommending || !(moodText || "").trim()}
             >
               {isRecommending ? "⏳ 計算中..." : "Ask AI ✨"}
             </button>
@@ -331,8 +285,47 @@ function SearchTab({
           </div>
         </div>
 
-        {/* ─── 下段：キーワード・タグによる詳細絞り込みエリア ─── */}
+        {/* ─── 下段：33カテゴリー ＆ キーワード絞り込みエリア ─── */}
         <div style={{ padding: "20px", backgroundColor: "white" }}>
+          {/* 🆕 Amazon専用：33カテゴリー選択用セレクトボックス */}
+          <div style={{ marginBottom: "20px" }}>
+            <div
+              style={{
+                fontSize: "13px",
+                fontWeight: "bold",
+                color: "#4b5563",
+                marginBottom: "8px",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              🏷️ <span>33ジャンルからカテゴリー指定</span>
+            </div>
+            <select
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                borderRadius: "8px",
+                border: "1px solid #d1d5db",
+                backgroundColor: "white",
+                fontSize: "14px",
+                color: "#374151",
+                outline: "none",
+                cursor: "pointer",
+              }}
+            >
+              <option value="">▼ 指定なし（すべてのカテゴリーを表示）</option>
+              {amazon33Categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div
             style={{
               display: "flex",
@@ -350,22 +343,15 @@ function SearchTab({
                 color: "#4b5563",
               }}
             >
-              キーワード・タグでさらに絞り込む
+              キーワードでさらにテキスト絞り込む
             </h4>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              alignItems: "center",
-              marginBottom: "15px",
-            }}
-          >
+          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             {/* キーワード入力窓 */}
             <input
               type="text"
-              placeholder="結果からさらに絞り込むキーワード（例: black, nike）"
+              placeholder="商品名や説明文のキーワードで絞り込み（例: black, leather）"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -413,56 +399,25 @@ function SearchTab({
             </div>
           </div>
 
-          {/* 人気タグ */}
-          <div>
-            <div
-              style={{
-                fontSize: "11px",
-                fontWeight: "bold",
-                color: "#9ca3af",
-                marginBottom: "6px",
-              }}
-            >
-              🔥 人気のタグ
+          {/* クリアボタン（何か入力・選択されているときだけ出現） */}
+          {searchQuery && (
+            <div style={{ marginTop: "12px", textAlign: "right" }}>
+              <button
+                onClick={() => setSearchQuery("")}
+                style={{
+                  padding: "4px 12px",
+                  backgroundColor: "#f3f4f6",
+                  color: "#4b5563",
+                  border: "none",
+                  borderRadius: "20px",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                }}
+              >
+                選択・入力をクリア ✕
+              </button>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              {popularTags.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => setSearchQuery(tag)}
-                  style={{
-                    padding: "5px 12px",
-                    backgroundColor:
-                      searchQuery === tag ? "#ff4d4d" : "#f3f4f6",
-                    color: searchQuery === tag ? "white" : "#4b5563",
-                    border: "none",
-                    borderRadius: "20px",
-                    fontSize: "12px",
-                    cursor: "pointer",
-                    fontWeight: "500",
-                  }}
-                >
-                  #{tag}
-                </button>
-              ))}
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  style={{
-                    padding: "5px 12px",
-                    backgroundColor: "#e5e7eb",
-                    color: "#4b5563",
-                    border: "none",
-                    borderRadius: "20px",
-                    fontSize: "12px",
-                    cursor: "pointer",
-                  }}
-                >
-                  クリア ✕
-                </button>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -473,7 +428,7 @@ function SearchTab({
         >
           {sortOrder === "ai_match"
             ? "✨ AIが算出したマッチ度順: "
-            : "📦 条件に合う商品: "}{" "}
+            : "📦 条件に合う商品: "}
           <b>{sortedItems.length}</b> 件
         </div>
 

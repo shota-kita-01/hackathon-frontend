@@ -16,7 +16,6 @@ function ItemList({ items, handlePurchaseItem }) {
           key={item.id}
           className="item-card"
           style={{
-            // 👇 1. 売り切れならカード全体の背景を少しグレーにする
             backgroundColor: item.status === "sold_out" ? "#f9fafb" : "white",
             borderRadius: "16px",
             border: "1px solid #e5e7eb",
@@ -46,7 +45,6 @@ function ItemList({ items, handlePurchaseItem }) {
                 objectFit: "cover",
                 borderRadius: "12px",
                 display: "block",
-                // 👇 2. 画像は完全に白黒(100%)にして、さらに薄く(0.4)する
                 opacity: item.status === "sold_out" ? 0.4 : 1,
                 filter: item.status === "sold_out" ? "grayscale(100%)" : "none",
                 transition: "all 0.3s ease",
@@ -71,7 +69,6 @@ function ItemList({ items, handlePurchaseItem }) {
                 margin: 0,
                 fontSize: "16px",
                 fontWeight: "bold",
-                // 👇 3. タイトルの文字色も、売り切れならグレーにする
                 color: item.status === "sold_out" ? "#9ca3af" : "#111827",
               }}
             >
@@ -80,7 +77,7 @@ function ItemList({ items, handlePurchaseItem }) {
           </div>
 
           <div style={{ fontSize: "12px", color: "#9ca3af" }}>
-            👤 出品者: {item.seller_name || "名無しさん"}
+            👤 出品者: {item.seller_name || "Amazon公式"}
           </div>
 
           <p
@@ -98,7 +95,8 @@ function ItemList({ items, handlePurchaseItem }) {
             {item.description}
           </p>
 
-          {item.tags && (
+          {/* 💡 【安全防弾ガード】item.tags が文字列のときだけ安全にスプリットしてループを回す */}
+          {item.tags && typeof item.tags === "string" && (
             <div
               style={{
                 display: "flex",
@@ -115,7 +113,6 @@ function ItemList({ items, handlePurchaseItem }) {
                     padding: "2px 8px",
                     borderRadius: "12px",
                     fontWeight: "500",
-                    // 👇 タグの色もグレーアウト
                     color: item.status === "sold_out" ? "#6b7280" : "#4f46e5",
                     backgroundColor:
                       item.status === "sold_out" ? "#e5e7eb" : "#e0e7ff",
@@ -141,7 +138,6 @@ function ItemList({ items, handlePurchaseItem }) {
               style={{
                 fontSize: "18px",
                 fontWeight: "bold",
-                // 👇 4. 価格の「赤色」も、売り切れならグレーにする
                 color: item.status === "sold_out" ? "#9ca3af" : "#ff4d4d",
               }}
             >
