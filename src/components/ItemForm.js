@@ -180,33 +180,6 @@ function ItemForm({ sellerId, onSuccess }) {
           >
             {isGeneratingDesc ? "⏳ AI執筆中..." : "🧠 AI自動商品説明"}
           </button>
-          <button
-            type="button"
-            onClick={handleSuggestPrice}
-            // 💡 査定中、または「商品名が空」または「商品説明が空」のときにボタンを無効化！
-            disabled={isEstimatingPrice || !name.trim() || !description.trim()}
-            style={{
-              flex: 1,
-              padding: "10px",
-              // 💡 入力されていないときは少し薄いグレー（not-allowed）に見えるようにすると親切です
-              backgroundColor:
-                !name.trim() || !description.trim() ? "#f3f4f6" : "#ecfdf5",
-              color:
-                !name.trim() || !description.trim() ? "#9ca3af" : "#065f46",
-              border:
-                !name.trim() || !description.trim()
-                  ? "1px solid #e5e7eb"
-                  : "1px solid #34d399",
-              borderRadius: "8px",
-              fontSize: "12px",
-              fontWeight: "bold",
-              cursor:
-                !name.trim() || !description.trim() ? "not-allowed" : "pointer",
-              transition: "all 0.2s",
-            }}
-          >
-            {isEstimatingPrice ? "⏳ 査定中..." : "💰 AI適正価格査定"}
-          </button>
         </div>
 
         {/* 商品説明 */}
@@ -232,6 +205,33 @@ function ItemForm({ sellerId, onSuccess }) {
             }}
           />
         </div>
+
+        <button
+          type="button"
+          onClick={handleSuggestPrice}
+          // 💡 査定中、または「商品名が空」または「商品説明が空」のときにボタンを無効化！
+          disabled={isEstimatingPrice || !name.trim() || !description.trim()}
+          style={{
+            flex: 1,
+            padding: "10px",
+            // 💡 入力されていないときは少し薄いグレー（not-allowed）に見えるようにすると親切です
+            backgroundColor:
+              !name.trim() || !description.trim() ? "#f3f4f6" : "#ecfdf5",
+            color: !name.trim() || !description.trim() ? "#9ca3af" : "#065f46",
+            border:
+              !name.trim() || !description.trim()
+                ? "1px solid #e5e7eb"
+                : "1px solid #34d399",
+            borderRadius: "8px",
+            fontSize: "12px",
+            fontWeight: "bold",
+            cursor:
+              !name.trim() || !description.trim() ? "not-allowed" : "pointer",
+            transition: "all 0.2s",
+          }}
+        >
+          {isEstimatingPrice ? "⏳ 査定中..." : "💰 AI適正価格査定"}
+        </button>
 
         {/* 価格入力 */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>

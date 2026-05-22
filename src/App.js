@@ -10,11 +10,23 @@ import Navigation from "./components/Navigation";
 import HistoryTab from "./components/HistoryTab";
 import SearchTab from "./components/SearchTab";
 import MyPageTab from "./components/MyPageTab";
-import HorizontalItemList from "./components/HorizontalItemList"; // 🆕 横スクロールコンポーネントをホームでも使うためにインポート！
+import HorizontalItemList from "./components/HorizontalItemList";
 
 function App() {
+  // 🔍 検索タブ用のアイテム（Ask AIの結果用）
   const [homeItems, setHomeItems] = useState([]);
   const [allItems, setAllItems] = useState([]);
+
+  // 🏠 【ホーム用】3段パーソナライズ専用のState（🆕 新設）
+  const [homePersonalized, setHomePersonalized] = useState([]);
+  const [homeUserFavorite, setHomeUserFavorite] = useState({
+    title: "",
+    items: [],
+  });
+  const [homeMarketFavorite, setHomeMarketFavorite] = useState({
+    title: "",
+    items: [],
+  });
 
   const [loginUser, setLoginUser] = useState(null);
   const [myAppId, setMyAppId] = useState(null);
@@ -74,21 +86,24 @@ function App() {
       .catch((error) => console.error("全件データの取得に失敗:", error));
   };
 
+  // 💡 【超重要】新設したパーソナライズAPIを叩いて3段分のデータを一気に取得！
   const fetchHomeRecommendations = (userId) => {
     if (!userId) return;
     setIsRecommending(true);
 
-    // 💡 404になる古いレコメンドの代わりに、今回作ったproductsから320件をGETで直接ハントします！
-    fetch(`${API_URL}/products`)
+    fetch(`${API_URL}/home/${userId}`)
       .then((res) => res.json())
       .then((json) => {
-        // バックエンドから { status: "success", data: [...] } で返ってくるので、
-        // その中の320件の配列（json.data）をホーム用のStateにぶち込みます
-        if (json.status === "success" && Array.isArray(json.data)) {
-          setHomeItems(json.data);
+        if (json.status === "success" && json.data) {
+          // バックエンドが計算した3種類のデータをそれぞれのStateへ格納
+          setHomePersonalized(json.data.personalized.items);
+          setHomeUserFavorite(json.data.user_favorite);
+          setHomeMarketFavorite(json.data.market_favorite);
         }
       })
-      .catch((err) => console.error("初期特権データ取得エラー:", err))
+      .catch((err) =>
+        console.error("ホームパーソナライズデータ取得エラー:", err),
+      )
       .finally(() => setIsRecommending(false));
   };
 
@@ -114,20 +129,25 @@ function App() {
     if (!moodText.trim()) return;
     setIsRecommending(true);
 
+    fetch(`${API_URL}/users/${myAppId}/keywords`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keyword: moodText }),
+    }).catch((err) => console.error("キーワード保存エラー:", err));
+
     fetch(`${API_URL}/recommend`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         user_id: myAppId,
         mood_text: moodText,
-        filter_status: filterStatus, // 販売中・売切の連動用
+        filter_status: filterStatus,
       }),
     })
       .then((response) => response.json())
       .then((data) => {
-        // バックエンドから推薦された商品の配列が返ってくるので格納
         if (Array.isArray(data)) {
-          setHomeItems(data);
+          setHomeItems(data); // 検索タブ用（Ask AI結果）にセット
         } else if (data.status === "success" && Array.isArray(data.data)) {
           setHomeItems(data.data);
         } else {
@@ -146,7 +166,7 @@ function App() {
   const handleResetRecommend = () => {
     setMoodText("");
     setFilterStatus("both");
-    fetchHomeRecommendations(myAppId);
+    setHomeItems([]); // 検索結果をリセット
   };
 
   const handlePurchaseItem = (itemId) => {
@@ -167,7 +187,7 @@ function App() {
           alert("ご購入ありがとうございました！");
           setSelectedItem(null);
           fetchAllItems();
-          fetchHomeRecommendations(myAppId);
+          fetchHomeRecommendations(myAppId); // 購買によってパーソナライズを再計算！
           fetchUserLikes(myAppId);
           if (currentTab === "mypage") setCurrentTab("home");
         } else {
@@ -220,9 +240,9 @@ function App() {
     }).catch((err) => console.error("閲覧履歴登録エラー:", err));
   };
 
-  // 🆕 配列切り分けの仕込み
-  const firstHeroItem = homeItems[0]; // 1番スコアの高いイチオシの1件
-  const remainingScrollItems = homeItems.slice(1); // 2件目以降のすべて
+  // 🥇 1段目（あなたへのおすすめ）の表示用切り分け
+  const firstHeroItem = homePersonalized[0];
+  const remainingScrollItems = homePersonalized.slice(1);
 
   return (
     <div
@@ -247,16 +267,16 @@ function App() {
           <div
             style={{ display: "flex", flexDirection: "column", gap: "35px" }}
           >
-            {/* 🏠 【ホームタブ：新・ショーケースUI】 */}
+            {/* 🏠 【新・ホームタブ：3段パーソナライズUI】 */}
             {currentTab === "home" && (
               <div
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: "35px",
+                  gap: "45px",
                 }}
               >
-                {/* 1段目：✨ あなたへの最高のおすすめ商品（1件限定の巨大ヒーローバナー） */}
+                {/* 🥇 1段目：あなたへのおすすめ（Top 5） */}
                 {firstHeroItem && (
                   <div>
                     <h3
@@ -271,11 +291,11 @@ function App() {
                     >
                       👑{" "}
                       <span className="ai-heading-text">
-                        あなたへの最高のイチオシ商品
+                        あなたへのおすすめ
                       </span>
                     </h3>
 
-                    {/* 🆕 1件だけのための特製ビッグカード */}
+                    {/* 1件目の特製ビッグカード */}
                     <div
                       className="item-card"
                       onClick={() => handleCardClick(firstHeroItem)}
@@ -294,9 +314,9 @@ function App() {
                         cursor: "pointer",
                         boxShadow: "0 10px 25px -5px rgba(0,0,0,0.05)",
                         transition: "all 0.3s ease",
+                        marginBottom: "20px",
                       }}
                     >
-                      {/* 画像エリア */}
                       <div
                         style={{
                           position: "relative",
@@ -329,7 +349,6 @@ function App() {
                         )}
                       </div>
 
-                      {/* タイトルと価格 */}
                       <div
                         style={{
                           display: "flex",
@@ -370,121 +389,96 @@ function App() {
                             {firstHeroItem.price.toLocaleString()} 円
                           </span>
                           <span style={{ fontSize: "12px", color: "#9ca3af" }}>
-                            👤 {firstHeroItem.seller_name || "名無しさん"}
+                            👤 {firstHeroItem.seller_name || "公式出品"}
                           </span>
                         </div>
                       </div>
-
-                      {/* AIマッチ度バッジ */}
-                      {firstHeroItem.score !== undefined &&
-                        firstHeroItem.score > 0 && (
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "16px",
-                              right: "16px",
-                              backgroundColor: "rgba(79, 70, 229, 0.95)",
-                              color: "white",
-                              padding: "6px 12px",
-                              borderRadius: "10px",
-                              fontSize: "11px",
-                              fontWeight: "bold",
-                              fontFamily: "monospace",
-                              backdropFilter: "blur(4px)",
-                              boxShadow: "0 4px 10px rgba(79, 70, 229, 0.3)",
-                            }}
-                          >
-                            ✨ Match: {(firstHeroItem.score * 100).toFixed(1)}%
-                          </div>
-                        )}
                     </div>
+
+                    {/* 残りの4件を横スクロールで流す */}
+                    {remainingScrollItems.length > 0 && (
+                      <HorizontalItemList
+                        items={remainingScrollItems}
+                        handlePurchaseItem={handlePurchaseItem}
+                        handleCardClick={handleCardClick}
+                      />
+                    )}
                   </div>
                 )}
 
-                {/* 1.5段目：✨ 他のおすすめ商品（2件目以降を横スクロールで流す） */}
-                {remainingScrollItems.length > 0 && (
+                {/* 🥈 2段目：あなたに人気のカテゴリー（新規ユーザー向け防弾 placeholder 完備） */}
+                <div>
+                  <h3
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                      margin: "0 0 12px 0",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      color: "#333",
+                    }}
+                  >
+                    {homeUserFavorite.title || "👤 あなたに人気のカテゴリー"}
+                  </h3>
+
+                  {homeUserFavorite.items &&
+                  homeUserFavorite.items.length > 0 ? (
+                    // 💡 データがある場合は通常通り横スクロールで流す
+                    <HorizontalItemList
+                      items={homeUserFavorite.items}
+                      handlePurchaseItem={handlePurchaseItem}
+                      handleCardClick={handleCardClick}
+                    />
+                  ) : (
+                    // 💡 新規ユーザーでデータが0件の場合は、オシャレな点線枠でメッセージを表示！
+                    <div
+                      style={{
+                        padding: "30px 24px",
+                        color: "#9ca3af",
+                        fontSize: "13px",
+                        backgroundColor: "white",
+                        borderRadius: "16px",
+                        border: "1px dashed #d1d5db",
+                        textAlign: "center",
+                        fontWeight: "500",
+                        lineHeight: "1.6",
+                      }}
+                    >
+                      <span>
+                        🛍️ <b>購入後に表示します</b>
+                      </span>
+                      <br />
+                      <span style={{ fontSize: "11px", color: "#cbd5e1" }}>
+                        商品を購入したり、お気に入り・閲覧をすると、AIがあなたの好みを数理分析して専用の特設カテゴリーを自動生成します。
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* 🥉 3段目：市場全体で人気のカテゴリー */}
+                {homeMarketFavorite.items.length > 0 && (
                   <div>
                     <h3
                       style={{
-                        fontSize: "15px",
+                        fontSize: "16px",
                         fontWeight: "bold",
                         margin: "0 0 12px 0",
-                        color: "#4b5563",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        color: "#333",
                       }}
                     >
-                      👀 こちらの商品もおすすめです
+                      {homeMarketFavorite.title}
                     </h3>
                     <HorizontalItemList
-                      items={remainingScrollItems}
+                      items={homeMarketFavorite.items}
                       handlePurchaseItem={handlePurchaseItem}
                       handleCardClick={handleCardClick}
                     />
                   </div>
                 )}
-
-                {/* 2段目：🏷️ あなたのお気に入りカテゴリー（後で実装） */}
-                <div>
-                  <h3
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "bold",
-                      margin: "0 0 12px 0",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      color: "#333",
-                    }}
-                  >
-                    🏷️ あなたのお気に入りカテゴリー
-                  </h3>
-                  <div
-                    style={{
-                      padding: "24px",
-                      color: "#9ca3af",
-                      fontSize: "13px",
-                      backgroundColor: "white",
-                      borderRadius: "16px",
-                      border: "1px dashed #d1d5db",
-                      textAlign: "center",
-                      fontWeight: "500",
-                    }}
-                  >
-                    ⚙️
-                    AIがあなたの好みのカテゴリを分析中です。実装されるまでお待ちください。
-                  </div>
-                </div>
-
-                {/* 3段目：🔥 人気のカテゴリ（後で実装） */}
-                <div>
-                  <h3
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "bold",
-                      margin: "0 0 12px 0",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      color: "#333",
-                    }}
-                  >
-                    🔥 トレンド・人気のカテゴリ
-                  </h3>
-                  <div
-                    style={{
-                      padding: "24px",
-                      color: "#9ca3af",
-                      fontSize: "13px",
-                      backgroundColor: "white",
-                      borderRadius: "16px",
-                      border: "1px dashed #d1d5db",
-                      textAlign: "center",
-                      fontWeight: "500",
-                    }}
-                  >
-                    📈
-                    現在の市場トレンドを集計しています。実装されるまでお待ちください。
-                  </div>
-                </div>
               </div>
             )}
 

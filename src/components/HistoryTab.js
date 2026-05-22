@@ -8,6 +8,8 @@ function HistoryTab({
   handlePurchaseItem,
 }) {
   const [viewedItems, setViewedItems] = useState([]);
+  const [searchKeywords, setSearchKeywords] = useState([]);
+  const [aiRecommendations, setAiRecommendations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const API_URL =
@@ -17,12 +19,21 @@ function HistoryTab({
     if (!myAppId) return;
     setIsLoading(true);
 
-    fetch(`${API_URL}/users/${myAppId}/views`)
-      .then((res) => res.json())
-      .then((viewsData) => {
+    // 📡 3つのエンドポイントから本物のデータを並行して超高速一括ハント
+    const pViews = fetch(`${API_URL}/users/${myAppId}/views`).then((res) =>
+      res.json(),
+    );
+    const pKeywords = fetch(`${API_URL}/users/${myAppId}/keywords`).then(
+      (res) => res.json(),
+    );
+    const pAiHome = fetch(`${API_URL}/home/${myAppId}`).then((res) =>
+      res.json(),
+    );
+
+    Promise.all([pViews, pKeywords, pAiHome])
+      .then(([viewsData, keywordsData, homeData]) => {
+        // ① 閲覧履歴の格納（重複排除フィルター）
         if (Array.isArray(viewsData)) {
-          // 🆕 【超重要：商品IDの重複を完全に除去する数理フィルター】
-          // 同じ商品を何度も見た場合、最新の1件だけをスマートに残します
           const uniqueItemsMap = new Map();
           viewsData.forEach((item) => {
             if (item && item.id && !uniqueItemsMap.has(item.id)) {
@@ -31,22 +42,39 @@ function HistoryTab({
           });
           setViewedItems(Array.from(uniqueItemsMap.values()));
         }
+
+        // ② 本物の検索キーワードの格納（重複を綺麗に抜く数理フィルター）
+        if (Array.isArray(keywordsData)) {
+          const uniqueWords = Array.from(
+            new Set(keywordsData.map((k) => k.keyword)),
+          );
+          setSearchKeywords(uniqueWords);
+        }
+
+        // ③ 4段目：AIによるあなたへの特別推薦（ホームの高度なパーソナライズデータを流用ドッキング！）
+        if (
+          homeData &&
+          homeData.status === "success" &&
+          homeData.data?.personalized?.items
+        ) {
+          setAiRecommendations(homeData.data.personalized.items);
+        }
       })
-      .catch((err) => console.error("履歴データ取得エラー:", err))
+      .catch((err) => console.error("興味・おすすめデータ同期エラー:", err))
       .finally(() => setIsLoading(false));
   }, [myAppId]);
 
-  const mockSearchQueries = [
-    "Nike sneakers",
-    "Chanel bag",
-    "vintage wallet",
-    "gold ring",
-  ];
-
   if (isLoading) {
     return (
-      <div style={{ textAlign: "center", color: "#666", padding: "40px" }}>
-        ⏳ 履歴データを読み込み中...
+      <div
+        style={{
+          textAlign: "center",
+          color: "#9ca3af",
+          padding: "60px 0",
+          fontSize: "14px",
+        }}
+      >
+        ⏳ あなたの興味関心を分析中...
       </div>
     );
   }
@@ -87,7 +115,7 @@ function HistoryTab({
         />
       </div>
 
-      {/* 2段目：👁️ 最近チェックした商品（重複が消えてスッキリ！） */}
+      {/* 2段目：👁️ 最近チェックした商品 */}
       <div>
         <h3
           style={{
@@ -109,7 +137,7 @@ function HistoryTab({
         />
       </div>
 
-      {/* 3段目：🔍 最近の検索キーワード */}
+      {/* 3段目：🔍 最近の検索キーワード（完全リアルデータ） */}
       <div>
         <h3
           style={{
@@ -124,33 +152,48 @@ function HistoryTab({
         >
           🔍 最近の検索キーワード
         </h3>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "8px",
-            padding: "4px",
-          }}
-        >
-          {mockSearchQueries.map((query, idx) => (
-            <span
-              key={idx}
-              style={{
-                padding: "8px 16px",
-                backgroundColor: "#f3f4f6",
-                color: "#4b5563",
-                borderRadius: "20px",
-                fontSize: "13px",
-                fontWeight: "500",
-                border: "1px solid #e5e7eb",
-                cursor: "pointer",
-              }}
-              className="search-history-chip"
-            >
-              {query}
-            </span>
-          ))}
-        </div>
+        {searchKeywords.length > 0 ? (
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "8px",
+              padding: "4px",
+            }}
+          >
+            {searchKeywords.map((query, idx) => (
+              <span
+                key={idx}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "white",
+                  color: "#4b5563",
+                  borderRadius: "20px",
+                  fontSize: "13px",
+                  fontWeight: "500",
+                  border: "1px solid #e5e7eb",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+                }}
+              >
+                {query}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div
+            style={{
+              padding: "20px",
+              color: "#9ca3af",
+              fontSize: "13px",
+              backgroundColor: "white",
+              borderRadius: "12px",
+              border: "1px dashed #d1d5db",
+              textAlign: "center",
+            }}
+          >
+            検索履歴がまだありません。AI検索をお試しください！
+          </div>
+        )}
       </div>
 
       {/* 4段目：✨ AIによるあなたへの特別推薦 */}
@@ -168,9 +211,9 @@ function HistoryTab({
         >
           ✨ AIが分析したおすすめ商品
         </h3>
-        {viewedItems.length > 0 ? (
+        {aiRecommendations.length > 0 ? (
           <HorizontalItemList
-            items={[...viewedItems].reverse().slice(0, 5)}
+            items={aiRecommendations}
             handlePurchaseItem={handlePurchaseItem}
             handleCardClick={handleCardClick}
           />
@@ -186,7 +229,7 @@ function HistoryTab({
               textAlign: "center",
             }}
           >
-            好みを分析中... もっと商品をチェックしてみましょう！
+            あなたの好みを学習中... もっとタイムラインを巡ってみましょう！
           </div>
         )}
       </div>
