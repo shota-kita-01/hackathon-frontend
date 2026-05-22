@@ -63,15 +63,18 @@ function SearchTab({
   let filteredItems = baseItems.filter((item) => {
     if (!item) return false;
 
-    // 1. 💡 【バグ修正】item.tags から DBスキーマに合わせた item.ai_category へ変更！
-    if (categoryFilter && item.ai_category !== categoryFilter) return false;
+    // 💡 【防弾仕様】AI検索前（ai_category）とAI検索後（tags）のキー分裂を完全吸収！
+    const itemCategory = item.ai_category || item.tags;
+
+    // 1. カテゴリーフィルター
+    if (categoryFilter && itemCategory !== categoryFilter) return false;
 
     // 2. キーワードフィルター
     if (keywordFilter) {
       const query = keywordFilter.toLowerCase().trim();
-      // 💡 こちらも item.ai_category に安全に同期
-      const tagMatch = item.ai_category
-        ? String(item.ai_category).toLowerCase().includes(query)
+      // 💡 タグマッチも統合されたカテゴリ名を参照
+      const tagMatch = itemCategory
+        ? String(itemCategory).toLowerCase().includes(query)
         : false;
       const nameMatch = item.name
         ? item.name.toLowerCase().includes(query)
@@ -414,12 +417,12 @@ function SearchTab({
             ? "✨ 768次元空間ベクトル・マッチ度順: "
             : "📦 表示中の商品: "}
           <b style={{ color: "#111827", fontSize: "15px" }}>
-            {filteredItems.length}
+            {sortedItems.length}
           </b>{" "}
           件
         </div>
 
-        {filteredItems.length === 0 ? (
+        {sortedItems.length === 0 ? (
           <div
             style={{
               textAlign: "center",
@@ -437,14 +440,14 @@ function SearchTab({
           </div>
         ) : (
           <>
-            <div onClick={(e) => handleCardClick(e, filteredItems)}>
+            <div onClick={(e) => handleCardClick(e, sortedItems)}>
               <ItemList
-                items={filteredItems.slice(0, visibleCount)}
+                items={sortedItems.slice(0, visibleCount)}
                 handlePurchaseItem={handlePurchaseItem}
               />
             </div>
 
-            {filteredItems.length > visibleCount && (
+            {sortedItems.length > visibleCount && (
               <div style={{ textAlign: "center", marginTop: "30px" }}>
                 <button
                   onClick={() => setVisibleCount((prev) => prev + 20)}
