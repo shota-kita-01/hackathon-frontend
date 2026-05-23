@@ -8,7 +8,9 @@ function ItemDetailModal({
   userLikes,
   onLikeToggle,
 }) {
-  const [relatedItems, setRelatedItems] = useState([]);
+  // 💡 2つの異なるAI推薦を格納するためにStateを分離
+  const [spaceItems, setSpaceItems] = useState([]); // 1. 空間的類似
+  const [timeItems, setTimeItems] = useState([]); // 2. 確率的時間遷移
   const [isCalculating, setIsCalculating] = useState(false);
 
   // 💡 いいねの「即時反応」を実現するためのローカルステート
@@ -37,33 +39,46 @@ function ItemDetailModal({
       body: JSON.stringify({ user_id: myAppId }),
     }).catch((err) => console.error("閲覧履歴記録エラー:", err));
 
-    // 🧠 ② 関連商品AI推薦
+    // 🧠 ② 関連商品AI推薦（ハイブリッド2段ハント）
     setIsCalculating(true);
-    setRelatedItems([]);
+    setSpaceItems([]);
+    setTimeItems([]);
 
     fetch(`${API_URL}/recommendations/${selectedItem.asin}`)
       .then((res) => res.json())
       .then((data) => {
-        if (
-          data &&
-          data.carousel_space_similarity &&
-          Array.isArray(data.carousel_space_similarity.items)
-        ) {
-          const filtered = data.carousel_space_similarity.items.filter(
-            (item) => item.id !== selectedItem.id,
-          );
-          setRelatedItems(filtered.slice(0, 3));
+        if (data) {
+          // 📊 抽出1: 同じカテゴリーから、意味（隠れ表現）が近いもの上位3つ
+          if (
+            data.carousel_space_similarity &&
+            Array.isArray(data.carousel_space_similarity.items)
+          ) {
+            const filteredSpace = data.carousel_space_similarity.items.filter(
+              (item) => item.id !== selectedItem.id,
+            );
+            setSpaceItems(filteredSpace.slice(0, 3));
+          }
+
+          // 📊 抽出2: マルコフ遷移した未来のカテゴリーから、近いもの上位3つ
+          if (
+            data.carousel_time_transition &&
+            Array.isArray(data.carousel_time_transition.items)
+          ) {
+            const filteredTime = data.carousel_time_transition.items.filter(
+              (item) => item.id !== selectedItem.id,
+            );
+            setTimeItems(filteredTime.slice(0, 3));
+          }
         }
       })
       .catch((err) => console.error("関連商品取得エラー:", err))
       .finally(() => setIsCalculating(false));
   }, [selectedItem, myAppId]);
 
-  // 🆕 いいねボタンが押された時の処理
+  // いいねボタンが押された時の処理
   const handleLikeClick = () => {
     if (!myAppId || !selectedItem) return;
 
-    // 💡 ユーザーのクリックに対して「即時」に色を変える！（UX向上）
     setLocalIsLiked(!localIsLiked);
 
     fetch(`${API_URL}/items/${selectedItem.id}/like`, {
@@ -74,12 +89,11 @@ function ItemDetailModal({
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") {
-          onLikeToggle(); // 裏側で親のリストも最新にする
+          onLikeToggle();
         }
       })
       .catch((err) => {
         console.error("いいね通信エラー:", err);
-        // 万が一エラーなら色を元に戻す
         setLocalIsLiked((prev) => !prev);
       });
   };
@@ -110,12 +124,12 @@ function ItemDetailModal({
           width: "100%",
           padding: "25px",
           boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
-          position: "relative", // 💡 ここが Relative だから、絶対配置の基準になる
+          position: "relative",
           maxHeight: "90vh",
           overflowY: "auto",
         }}
       >
-        {/* 🆕 ばつ印を右上に絶対配置！ */}
+        {/* ✕ボタン */}
         <button
           onClick={() => setSelectedItem(null)}
           style={{
@@ -139,7 +153,6 @@ function ItemDetailModal({
           ✕
         </button>
 
-        {/* ヘッダーの余白調整 */}
         <h2
           style={{ margin: "0 0 15px 0", fontSize: "20px", fontWeight: "bold" }}
         >
@@ -164,7 +177,7 @@ function ItemDetailModal({
             justifyContent: "space-between",
             alignItems: "start",
             gap: "10px",
-            marginBottom: "10px",
+            marginBottom: "12px",
           }}
         >
           <h3
@@ -175,7 +188,6 @@ function ItemDetailModal({
           <button
             onClick={handleLikeClick}
             style={{
-              // 💡 localIsLiked（即時反応ステート）を使って色を制御
               backgroundColor: localIsLiked ? "#fff1f2" : "#f3f4f6",
               color: localIsLiked ? "#f43f5e" : "#9ca3af",
               border: localIsLiked ? "1px solid #fecdd3" : "1px solid #e5e7eb",
@@ -188,23 +200,89 @@ function ItemDetailModal({
               alignItems: "center",
               gap: "4px",
               transition: "all 0.2s",
-              flexShrink: 0, // タイトルが長くてもボタンが潰れないようにする
+              flexShrink: 0,
             }}
           >
             {localIsLiked ? "❤️ いいね中" : "🤍 いいね"}
           </button>
         </div>
 
+        {/* ===================================================
+            🆕 【新設】フリマ特化型：商品詳細メタデータシート
+           =================================================== */}
+        <div
+          style={{
+            backgroundColor: "#f8fafc",
+            border: "1px solid #e2e8f0",
+            borderRadius: "12px",
+            padding: "12px 16px",
+            marginBottom: "15px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            fontSize: "13px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span style={{ color: "#64748b", fontWeight: "600" }}>
+              👤 出品者
+            </span>
+            <span style={{ fontWeight: "700", color: "#334155" }}>
+              {selectedItem.seller_name || "公式出品"}
+            </span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderTop: "1px solid #e2e8f0",
+              paddingTop: "8px",
+            }}
+          >
+            <span style={{ color: "#64748b", fontWeight: "600" }}>
+              ✨ 商品の状態
+            </span>
+            <span style={{ fontWeight: "700", color: "#334155" }}>
+              {selectedItem.item_condition || "新品・未使用"}
+            </span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderTop: "1px solid #e2e8f0",
+              paddingTop: "8px",
+            }}
+          >
+            <span style={{ color: "#64748b", fontWeight: "600" }}>
+              🚚 発送日の目安
+            </span>
+            <span style={{ fontWeight: "700", color: "#334155" }}>
+              {selectedItem.shipping_days || "1〜2日で発送"}
+            </span>
+          </div>
+        </div>
+
+        {/* 商品説明文 */}
         <p
           style={{
             fontSize: "13px",
-            color: "#666",
+            color: "#475569",
             whiteSpace: "pre-wrap",
-            backgroundColor: "#f8fafc",
+            backgroundColor: "#ffffff",
             padding: "12px",
             borderRadius: "8px",
-            border: "1px solid #edf2f7",
+            border: "1px solid #e2e8f0",
             margin: "0 0 15px 0",
+            lineHeight: "1.6",
           }}
         >
           {selectedItem.description}
@@ -235,108 +313,206 @@ function ItemDetailModal({
               fontWeight: "bold",
               fontSize: "15px",
               cursor: "pointer",
-              transition: "transform 0.1s",
             }}
           >
             🛍️ 今すぐ購入する
           </button>
         </div>
 
-        {/* 【関連商品提案エリア】 */}
+        {/* ===================================================
+            🔥 【ハイブリッド多次元AI推薦エリア（2段構成）】
+           =================================================== */}
         <div
           style={{
-            marginTop: "25px",
-            paddingTop: "15px",
+            marginTop: "30px",
+            paddingTop: "5px",
             borderTop: "1px solid #eee",
+            display: "flex",
+            flexDirection: "column",
+            gap: "25px",
           }}
         >
-          <h4
-            style={{
-              margin: "0 0 12px 0",
-              fontSize: "13px",
-              color: "#4f46e5",
-              fontWeight: "bold",
-            }}
-          >
-            🧠 この商品を見た人におすすめ (AI 空間的類似推薦)
-          </h4>
-
-          {isCalculating ? (
-            <div
+          {/* 🥇 1段目：同じカテゴリーの空間類似推薦 */}
+          <div>
+            <h4
               style={{
-                textAlign: "center",
-                fontSize: "12px",
-                color: "#666",
-                padding: "20px",
+                margin: "0 0 12px 0",
+                fontSize: "13px",
+                color: "#4f46e5",
+                fontWeight: "bold",
               }}
             >
-              ⏳ ベクトル空間から関連商品を高速計算中...
-            </div>
-          ) : (
-            <div style={{ display: "flex", gap: "10px" }}>
-              {relatedItems.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => setSelectedItem(item)}
-                  style={{
-                    flex: 1,
-                    backgroundColor: "#f8fafc",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "12px",
-                    padding: "8px",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "4px",
-                  }}
-                >
-                  <img
-                    src={item.image_url}
-                    alt={item.name}
+              🧠 この商品と似ているアイテム (空間的類似)
+            </h4>
+            {isCalculating ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  fontSize: "12px",
+                  color: "#666",
+                  padding: "10px",
+                }}
+              >
+                ⏳ 高速空間計算中...
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: "10px" }}>
+                {spaceItems.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => setSelectedItem(item)}
                     style={{
+                      flex: 1,
+                      minWidth: 0,
+                      backgroundColor: "#f8fafc",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "12px",
+                      padding: "8px",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "4px",
+                    }}
+                  >
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      style={{
+                        width: "100%",
+                        height: "70px",
+                        objectFit: "cover",
+                        borderRadius: "6px",
+                      }}
+                    />
+                    <div
+                      style={{
+                        fontWeight: "bold",
+                        fontSize: "11px",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {item.name}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        color: "#ff4d4d",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {item.price.toLocaleString()} 円
+                    </div>
+                  </div>
+                ))}
+                {spaceItems.length === 0 && (
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      color: "#aaa",
+                      textAlign: "center",
                       width: "100%",
-                      height: "70px",
-                      objectFit: "cover",
-                      borderRadius: "6px",
-                    }}
-                  />
-                  <div
-                    style={{
-                      fontWeight: "bold",
-                      fontSize: "11px",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
+                      padding: "10px",
                     }}
                   >
-                    {item.name}
+                    関連商品が見つかりませんでした
                   </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 🥈 2段目：マルコフ連鎖による時間遷移推薦 */}
+          <div>
+            <h4
+              style={{
+                margin: "0 0 12px 0",
+                fontSize: "13px",
+                color: "#10b981",
+                fontWeight: "bold",
+              }}
+            >
+              ✨ この商品を見ている人におすすめ (こんな商品も見ています)
+            </h4>
+            {isCalculating ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  fontSize: "12px",
+                  color: "#666",
+                  padding: "10px",
+                }}
+              >
+                ⏳ 確率遷移シミュレート中...
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: "10px" }}>
+                {timeItems.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => setSelectedItem(item)}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      backgroundColor: "#f8fafc",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "12px",
+                      padding: "8px",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "4px",
+                    }}
+                  >
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      style={{
+                        width: "100%",
+                        height: "70px",
+                        objectFit: "cover",
+                        borderRadius: "6px",
+                      }}
+                    />
+                    <div
+                      style={{
+                        fontWeight: "bold",
+                        fontSize: "11px",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {item.name}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        color: "#ff4d4d",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {item.price.toLocaleString()} 円
+                    </div>
+                  </div>
+                ))}
+                {timeItems.length === 0 && (
                   <div
                     style={{
                       fontSize: "11px",
-                      color: "#ff4d4d",
-                      fontWeight: "bold",
+                      color: "#aaa",
+                      textAlign: "center",
+                      width: "100%",
+                      padding: "10px",
                     }}
                   >
-                    {item.price.toLocaleString()} 円
+                    次の候補が見つかりませんでした
                   </div>
-                </div>
-              ))}
-              {relatedItems.length === 0 && (
-                <div
-                  style={{
-                    fontSize: "11px",
-                    color: "#aaa",
-                    textAlign: "center",
-                    width: "100%",
-                  }}
-                >
-                  関連商品が見つかりませんでした
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
