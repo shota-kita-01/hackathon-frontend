@@ -1,6 +1,81 @@
 import React, { useState, useEffect } from "react";
 import ItemList from "./ItemList";
 
+// 📚 検索画面専用：日本語ユーザーの直感に最適化された22カテゴリ
+const AMAZON_CATEGORIES_FOR_SEARCH = [
+  // ✨ 1. ファッション・ビューティー
+  {
+    value: "Clothing_Shoes_and_Jewelry",
+    label: "服・靴・ファッション小物 (Clothing_Shoes_and_Jewelry)",
+  },
+  { value: "Amazon_Fashion", label: "公式ファッション (Amazon_Fashion)" },
+  {
+    value: "Beauty_and_Personal_Care",
+    label: "コスメ・パーソナルケア (Beauty_and_Personal_Care)",
+  },
+  { value: "All_Beauty", label: "ビューティー・コスメ全般 (All_Beauty)" },
+
+  // 📱 2. デジタルガジェット・家電
+  {
+    value: "Cell_Phones_and_Accessories",
+    label: "スマートフォン・携帯アクセサリ (Cell_Phones_and_Accessories)",
+  },
+  { value: "Electronics", label: "家電・カメラ・オーディオ (Electronics)" },
+  { value: "Video_Games", label: "テレビゲーム・機材 (Video_Games)" },
+  { value: "Appliances", label: "大型家電・家庭用機器 (Appliances)" },
+
+  // 🧸 3. エンタメ・カルチャー・ホビー
+  {
+    value: "Toys_and_Games",
+    label: "おもちゃ・ホビー・ゲーム (Toys_and_Games)",
+  },
+  { value: "Books", label: "本・書籍 (Books)" },
+  { value: "CDs_and_Vinyl", label: "CD・レコード・音楽 (CDs_and_Vinyl)" },
+  { value: "Movies_and_TV", label: "DVD・ブルーレイ・映画 (Movies_and_TV)" },
+  {
+    value: "Musical_Instruments",
+    label: "楽器・音響機器 (Musical_Instruments)",
+  },
+  { value: "Handmade_Products", label: "ハンドメイド作品 (Handmade_Products)" },
+
+  // 🏡 4. ライフスタイル・ホーム・暮らし
+  {
+    value: "Home_and_Kitchen",
+    label: "ホーム＆キッチン・家具 (Home_and_Kitchen)",
+  },
+  { value: "Office_Products", label: "オフィス用品・文房具 (Office_Products)" },
+  { value: "Pet_Supplies", label: "ペット用品 (Pet_Supplies)" },
+  {
+    value: "Grocery_and_Gourmet_Food",
+    label: "食品・飲料・お酒 (Grocery_and_Gourmet_Food)",
+  },
+
+  // 🏃 5. アウトドア・工具・自動車
+  {
+    value: "Sports_and_Outdoors",
+    label: "スポーツ＆アウトドア (Sports_and_Outdoors)",
+  },
+  {
+    value: "Tools_and_Home_Improvement",
+    label: "工具・DIY・住宅設備 (Tools_and_Home_Improvement)",
+  },
+  {
+    value: "Patio_Lawn_and_Garden",
+    label: "ガーデン・エクステリア (Patio_Lawn_and_Garden)",
+  },
+  { value: "Automotive", label: "車・バイク用品 (Automotive)" },
+];
+
+// 🏷️ フリマアプリの標準的な商品の状態
+const ITEM_CONDITIONS = [
+  "新品・未使用",
+  "未使用に近い",
+  "目立った傷や汚れなし",
+  "やや傷や汚れあり",
+  "傷や汚れあり",
+  "全体的に状態が悪い",
+];
+
 function SearchTab({
   items,
   homeItems,
@@ -18,61 +93,39 @@ function SearchTab({
 }) {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [keywordFilter, setKeywordFilter] = useState("");
+  const [conditionFilter, setConditionFilter] = useState("");
 
   const [sortOrder, setSortOrder] = useState("ai_match");
   const [visibleCount, setVisibleCount] = useState(20);
 
-  // 💡 【修正】厳選された22カテゴリー（アルファベット順）に完全リプレイス！
-  const curated22Categories = [
-    "All_Beauty",
-    "Amazon_Fashion",
-    "Appliances",
-    "Automotive",
-    "Beauty_and_Personal_Care",
-    "Books",
-    "CDs_and_Vinyl",
-    "Cell_Phones_and_Accessories",
-    "Clothing_Shoes_and_Jewelry",
-    "Electronics",
-    "Grocery_and_Gourmet_Food",
-    "Handmade_Products",
-    "Home_and_Kitchen",
-    "Movies_and_TV",
-    "Musical_Instruments",
-    "Office_Products",
-    "Patio_Lawn_and_Garden",
-    "Pet_Supplies",
-    "Sports_and_Outdoors",
-    "Tools_and_Home_Improvement",
-    "Toys_and_Games",
-    "Video_Games",
-  ];
-
   // 検索条件が変わったら表示件数をリセット
   useEffect(() => {
     setVisibleCount(20);
-  }, [categoryFilter, keywordFilter, sortOrder, moodText, filterStatus]);
+  }, [
+    categoryFilter,
+    keywordFilter,
+    conditionFilter,
+    sortOrder,
+    moodText,
+    filterStatus,
+  ]);
 
   // AI検索結果があればそれを、なければ全アイテムをベースにする
   const baseItems =
     Array.isArray(homeItems) && homeItems.length > 0 ? homeItems : items;
 
   // ===================================================
-  // 🔍 フィルターロジックの完全連動（AI空間 × 物理フィルター）
+  // 🔍 フィルターロジック
   // ===================================================
   let filteredItems = baseItems.filter((item) => {
     if (!item) return false;
 
-    // 💡 【防弾仕様】AI検索前（ai_category）とAI検索後（tags）のキー分裂を完全吸収！
     const itemCategory = item.ai_category || item.tags;
 
-    // 1. カテゴリーフィルター
     if (categoryFilter && itemCategory !== categoryFilter) return false;
 
-    // 2. キーワードフィルター
     if (keywordFilter) {
       const query = keywordFilter.toLowerCase().trim();
-      // 💡 タグマッチも統合されたカテゴリ名を参照
       const tagMatch = itemCategory
         ? String(itemCategory).toLowerCase().includes(query)
         : false;
@@ -85,9 +138,13 @@ function SearchTab({
       if (!tagMatch && !nameMatch && !descMatch) return false;
     }
 
-    // 3. 販売ステータスフィルター
     if (filterStatus === "active" && item.status !== "on_sale") return false;
     if (filterStatus === "sold_out" && item.status !== "sold_out") return false;
+
+    if (conditionFilter) {
+      const itemCondition = item.item_condition || "新品・未使用";
+      if (itemCondition !== conditionFilter) return false;
+    }
 
     return true;
   });
@@ -130,7 +187,7 @@ function SearchTab({
         🔍 AI 空間検索
       </h2>
 
-      {/* 🚀 AI Mood 検索エリア */}
+      {/* AI Mood 検索エリア */}
       <div
         style={{
           backgroundColor: "white",
@@ -224,6 +281,7 @@ function SearchTab({
                     handleResetRecommend();
                     setCategoryFilter("");
                     setKeywordFilter("");
+                    setConditionFilter("");
                   }}
                   style={{
                     background: "none",
@@ -241,94 +299,135 @@ function SearchTab({
           </div>
         </div>
 
-        {/* 下段：物理フィルター */}
-        <div style={{ padding: "20px", backgroundColor: "white" }}>
+        {/* 🛠️ 下段：物理フィルターの超整列構造 */}
+        <div
+          style={{
+            padding: "20px 24px",
+            backgroundColor: "white",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          }}
+        >
+          {/* ❶ 表示対象（✨縦並びから「横一列インライン」へリファクタリングして超省スペース化！） */}
           <div
             style={{
               display: "flex",
+              alignItems: "center",
+              gap: "24px",
               flexWrap: "wrap",
-              gap: "20px",
-              marginBottom: "15px",
             }}
           >
-            <div style={{ flex: "1 1 200px" }}>
-              <div
-                style={{
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  color: "#6b7280",
-                  marginBottom: "8px",
-                }}
-              >
-                🛒 表示対象
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "15px",
-                  fontSize: "13px",
-                  color: "#374151",
-                }}
-              >
-                <label
-                  style={{
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  <input
-                    type="radio"
-                    value="both"
-                    checked={filterStatus === "both"}
-                    onChange={() => setFilterStatus("both")}
-                  />{" "}
-                  すべて
-                </label>
-                <label
-                  style={{
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  <input
-                    type="radio"
-                    value="active"
-                    checked={filterStatus === "active"}
-                    onChange={() => setFilterStatus("active")}
-                  />{" "}
-                  販売中
-                </label>
-                <label
-                  style={{
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  <input
-                    type="radio"
-                    value="sold_out"
-                    checked={filterStatus === "sold_out"}
-                    onChange={() => setFilterStatus("sold_out")}
-                  />{" "}
-                  売切
-                </label>
-              </div>
+            <div
+              style={{
+                fontSize: "12px",
+                fontWeight: "bold",
+                color: "#6b7280",
+                letterSpacing: "0.5px",
+                flexShrink: 0,
+              }}
+            >
+              🛒 表示対象
             </div>
+            <div
+              style={{
+                display: "flex",
+                gap: "20px",
+                fontSize: "14px",
+                color: "#374151",
+              }}
+            >
+              <label
+                style={{
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <input
+                  type="radio"
+                  value="both"
+                  checked={filterStatus === "both"}
+                  onChange={() => setFilterStatus("both")}
+                  style={{
+                    accentColor: "#4f46e5",
+                    width: "16px",
+                    height: "16px",
+                  }}
+                />{" "}
+                すべて
+              </label>
+              <label
+                style={{
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <input
+                  type="radio"
+                  value="active"
+                  checked={filterStatus === "active"}
+                  onChange={() => setFilterStatus("active")}
+                  style={{
+                    accentColor: "#4f46e5",
+                    width: "16px",
+                    height: "16px",
+                  }}
+                />{" "}
+                販売中
+              </label>
+              <label
+                style={{
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <input
+                  type="radio"
+                  value="sold_out"
+                  checked={filterStatus === "sold_out"}
+                  onChange={() => setFilterStatus("sold_out")}
+                  style={{
+                    accentColor: "#4f46e5",
+                    width: "16px",
+                    height: "16px",
+                  }}
+                />{" "}
+                売切
+              </label>
+            </div>
+          </div>
 
+          <hr
+            style={{
+              border: "none",
+              borderTop: "1px solid #f1f5f9",
+              margin: "0",
+            }}
+          />
+
+          {/* ❷ セレクトボックス群（ツインカラム構成） */}
+          <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
             {/* カテゴリ選択 */}
-            <div style={{ flex: "1 1 200px" }}>
+            <div
+              style={{
+                flex: "1 1 220px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+              }}
+            >
               <div
                 style={{
                   fontSize: "12px",
                   fontWeight: "bold",
                   color: "#6b7280",
-                  marginBottom: "8px",
+                  letterSpacing: "0.5px",
                 }}
               >
                 🏷️ カテゴリー
@@ -338,38 +437,104 @@ function SearchTab({
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 style={{
                   width: "100%",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
+                  padding: "10px 12px",
+                  borderRadius: "10px",
                   border: "1px solid #d1d5db",
                   fontSize: "13px",
+                  backgroundColor: "#ffffff",
                   outline: "none",
                   cursor: "pointer",
+                  height: "40px",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
                 }}
               >
                 <option value="">▼ すべてのカテゴリー</option>
-                {/* 💡 【修正】新しく定義した curated22Categories で map を回します */}
-                {curated22Categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
+                {AMAZON_CATEGORIES_FOR_SEARCH.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 商品の状態選択 */}
+            <div
+              style={{
+                flex: "1 1 220px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  color: "#6b7280",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                ✨ 商品の状態
+              </div>
+              <select
+                value={conditionFilter}
+                onChange={(e) => setConditionFilter(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  borderRadius: "10px",
+                  border: "1px solid #d1d5db",
+                  fontSize: "13px",
+                  backgroundColor: "#ffffff",
+                  outline: "none",
+                  cursor: "pointer",
+                  height: "40px",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+                }}
+              >
+                <option value="">▼ すべての状態</option>
+                {ITEM_CONDITIONS.map((cond) => (
+                  <option key={cond} value={cond}>
+                    {cond}
                   </option>
                 ))}
               </select>
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <hr
+            style={{
+              border: "none",
+              borderTop: "1px solid #f1f5f9",
+              margin: "0",
+            }}
+          />
+
+          {/* ❸ キーワード ＆ 並び替え（コンパクトスリム版） */}
+          <div
+            style={{
+              display: "flex",
+              gap: "12px",
+              alignItems: "center",
+              flexWrap: "wrap",
+              justifyContent: "space-between",
+            }}
+          >
             <input
               type="text"
               placeholder="さらにキーワードで絞り込む（例: black, leather）"
               value={keywordFilter}
               onChange={(e) => setKeywordFilter(e.target.value)}
               style={{
-                flex: 1,
-                padding: "10px 14px",
-                borderRadius: "8px",
+                flex: "1 1 200px",
+                maxWidth: "380px",
+                padding: "8px 14px",
+                borderRadius: "10px",
                 border: "1px solid #d1d5db",
                 fontSize: "13px",
                 outline: "none",
+                height: "20px",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
               }}
             />
 
@@ -377,23 +542,33 @@ function SearchTab({
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
+                gap: "8px",
                 fontSize: "13px",
                 flexShrink: 0,
               }}
             >
-              <span style={{ fontWeight: "bold", color: "#4b5563" }}>⇅</span>
+              <span
+                style={{
+                  fontWeight: "bold",
+                  color: "#64748b",
+                  fontSize: "14px",
+                }}
+              >
+                ⇅
+              </span>
               <select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value)}
                 style={{
-                  padding: "8px 12px",
-                  borderRadius: "8px",
+                  padding: "6px 12px",
+                  borderRadius: "10px",
                   border: "1px solid #d1d5db",
                   backgroundColor: "white",
                   fontSize: "13px",
                   outline: "none",
                   cursor: "pointer",
+                  height: "38px",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
                 }}
               >
                 <option value="ai_match">🤖 AIおすすめ順</option>

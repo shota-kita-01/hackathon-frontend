@@ -111,12 +111,18 @@ function HomeTab({
                   👤 出品者: {firstHeroItem.seller_name || "公式出品"}
                 </span>
               </div>
+              {/* 💡 左揃え ＆ 5行ラインクランプの魔法を注入 */}
               <p
                 style={{
                   margin: 0,
                   fontSize: "14px",
                   color: "#4b5563",
                   lineHeight: "1.6",
+                  textAlign: "left", // ✨ カチッと綺麗な左揃えに
+                  display: "-webkit-box", // ✨ 複数行省略を有効にするおまじない
+                  WebkitLineClamp: 5, // ✨ ここで最大「5行」に制限！
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden", // ✨ はみ出た文字を隠して「...」化
                 }}
               >
                 {firstHeroItem.description}
