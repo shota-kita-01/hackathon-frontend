@@ -6,6 +6,7 @@ function HistoryTab({
   userLikes,
   handleCardClick,
   handlePurchaseItem,
+  onKeywordClick, // 💡 親（App.js）からセット＆ジャンプ用の関数を受け取る
 }) {
   const [viewedItems, setViewedItems] = useState([]);
   const [searchKeywords, setSearchKeywords] = useState([]);
@@ -164,6 +165,7 @@ function HistoryTab({
             {searchKeywords.map((query, idx) => (
               <span
                 key={idx}
+                onClick={() => onKeywordClick && onKeywordClick(query)}
                 style={{
                   padding: "8px 16px",
                   backgroundColor: "white",
@@ -173,6 +175,19 @@ function HistoryTab({
                   fontWeight: "500",
                   border: "1px solid #e5e7eb",
                   boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  userSelect: "none",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f8fafc";
+                  e.currentTarget.style.borderColor = "#cbd5e1";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "white";
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                  e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
                 {query}
