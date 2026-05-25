@@ -171,6 +171,14 @@ function App() {
     setMoodText(keyword); // 1. 検索タブの入力テキストを同期
     setCurrentTab("search"); // 2. 検索タブへ自動で切り替え
     handleAiRecommend(keyword); // 3. State反映を待たずに、引数の文字で直接AI推薦を駆動！
+    window.scrollTo(0, 0);
+  };
+
+  // 💡 【新設】履歴タブの過去キーワードから呼ばれる「セット＆ジャンプ」中継関数（自動検索は非発火）
+  const handleKeywordClick = (keyword) => {
+    setMoodText(keyword); // 1. 検索タブのテキストボックスに文字列を同期
+    setCurrentTab("search"); // 2. 検索タブに画面をスライド切り替え
+    window.scrollTo(0, 0);
   };
 
   const handleResetRecommend = () => {
@@ -292,6 +300,7 @@ function App() {
                 userLikes={userLikes}
                 handleCardClick={handleCardClick}
                 handlePurchaseItem={handlePurchaseItem}
+                onKeywordClick={handleKeywordClick}
               />
             )}
 
