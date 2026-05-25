@@ -167,12 +167,8 @@ function SearchTab({
     sortedItems.sort((a, b) => b.price - a.price);
   }
 
-  if (filterStatus === "both") {
-    sortedItems.sort(
-      (a, b) =>
-        (a.status === "sold_out" ? 1 : 0) - (b.status === "sold_out" ? 1 : 0),
-    );
-  }
+  // 💡【修正】売切商品を強制的に下に追いやる2次ソートロジックを完全撤去しました！
+  // これにより、選択したsortOrder（特にai_match順）の純粋な並び順が維持されます。
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
@@ -309,7 +305,7 @@ function SearchTab({
             gap: "16px",
           }}
         >
-          {/* ❶ 表示対象（✨縦並びから「横一列インライン」へリファクタリングして超省スペース化！） */}
+          {/* ❶ 表示対象 */}
           <div
             style={{
               display: "flex",
@@ -411,7 +407,7 @@ function SearchTab({
             }}
           />
 
-          {/* ❷ セレクトボックス群（ツインカラム構成） */}
+          {/* ❷ セレクトボックス群 */}
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
             {/* カテゴリ選択 */}
             <div
@@ -510,7 +506,7 @@ function SearchTab({
             }}
           />
 
-          {/* ❸ キーワード ＆ 並び替え（コンパクトスリム版） */}
+          {/* ❸ キーワード ＆ 並び替え */}
           <div
             style={{
               display: "flex",

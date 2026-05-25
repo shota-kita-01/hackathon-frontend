@@ -10,7 +10,7 @@ import Navigation from "./components/Navigation";
 import HistoryTab from "./components/HistoryTab";
 import SearchTab from "./components/SearchTab";
 import MyPageTab from "./components/MyPageTab";
-import HomeTab from "./components/HomeTab"; // 💡 外部コンポーネントとして完全に統合
+import HomeTab from "./components/HomeTab";
 
 function App() {
   // 🔍 検索タブ用のアイテム（Ask AIの結果用）
@@ -124,7 +124,7 @@ function App() {
       .catch((err) => console.error("いいね一覧の取得に失敗:", err));
   };
 
-  // 💡 【改修】ホーム画面からの直接検索を受け付けるため、明示的な引数（explicitText）に対応
+  // 💡 ホーム画面からの直接検索を受け付けるため、明示的な引数（explicitText）に対応
   const handleAiRecommend = (explicitText) => {
     const targetText =
       typeof explicitText === "string" ? explicitText : moodText;
@@ -144,7 +144,7 @@ function App() {
       body: JSON.stringify({
         user_id: myAppId,
         mood_text: targetText,
-        filter_status: filterStatus,
+        filter_status: "both", // 😎 【修正】選択状態に関わらず、常に売切を含む「both」で500件まるごとハント！
       }),
     })
       .then((response) => response.json())
@@ -166,7 +166,7 @@ function App() {
       });
   };
 
-  // 💡 【新設】ホーム画面の検索バーから呼び出される中継・高速遷移ロケット関数
+  // 💡 ホーム画面の検索バーから呼び出される中継・高速遷移ロケット関数
   const handleHomeSearch = (keyword) => {
     setMoodText(keyword); // 1. 検索タブの入力テキストを同期
     setCurrentTab("search"); // 2. 検索タブへ自動で切り替え
@@ -174,7 +174,7 @@ function App() {
     window.scrollTo(0, 0);
   };
 
-  // 💡 【新設】履歴タブの過去キーワードから呼ばれる「セット＆ジャンプ」中継関数（自動検索は非発火）
+  // 💡 履歴タブの過去キーワードから呼ばれる「セット＆ジャンプ」中継関数（自動検索は非発火）
   const handleKeywordClick = (keyword) => {
     setMoodText(keyword); // 1. 検索タブのテキストボックスに文字列を同期
     setCurrentTab("search"); // 2. 検索タブに画面をスライド切り替え
