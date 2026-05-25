@@ -267,6 +267,7 @@ function App() {
         loginUser={loginUser}
         handleLogout={handleLogout}
         setCurrentTab={setCurrentTab}
+        myAppId={myAppId}
       />
       <Navigation
         myAppId={myAppId}
@@ -330,6 +331,8 @@ function App() {
                 loginUser={loginUser}
                 handleCardClick={handleCardClick}
                 handlePurchaseItem={handlePurchaseItem}
+                setMyAppId={setMyAppId}
+                handleLogout={handleLogout}
               />
             )}
 
