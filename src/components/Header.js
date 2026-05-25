@@ -1,6 +1,18 @@
 import React from "react";
 
-function Header({ loginUser, handleLogout, setCurrentTab }) {
+function Header({ loginUser, handleLogout, setCurrentTab, myAppId }) {
+  // 👥 ブラウザの永続ストレージからログイン履歴のある本物のアカウント達をロード
+  const savedAccounts = JSON.parse(
+    localStorage.getItem("fleamarket_authenticated_accounts") || "[]",
+  );
+
+  // 💡 現在アクティブな会員ID（myAppId）に合致するアカウントのメールアドレスを動的ハント
+  const currentActiveAccount = savedAccounts.find(
+    (acc) => acc.id === myAppId,
+  ) || {
+    email: loginUser?.email || "ゲストユーザー",
+  };
+
   return (
     <header
       style={{
@@ -40,7 +52,10 @@ function Header({ loginUser, handleLogout, setCurrentTab }) {
             color: "#333",
           }}
         >
-          <span style={{ fontWeight: "500" }}>👤 {loginUser.email}</span>
+          {/* 💡 Firebaseの生セッションではなく、現在アクティブなユーザーのメアドを追従表示 */}
+          <span style={{ fontWeight: "500" }}>
+            👤 {currentActiveAccount.email}
+          </span>
           <button
             onClick={handleLogout}
             style={{
