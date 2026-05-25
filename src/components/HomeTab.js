@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import HorizontalItemList from "./HorizontalItemList";
 
 function HomeTab({
@@ -7,13 +7,140 @@ function HomeTab({
   homeMarketFavorite,
   handleCardClick,
   handlePurchaseItem,
+  onHomeSearch,
+  setCurrentTab, // 💡 親からタブ切り替え関数を受け取る！
 }) {
+  const [localKeyword, setLocalKeyword] = useState("");
+
   // 🥇 1段目（あなたへのおすすめ）の表示用切り分け
   const firstHeroItem = homePersonalized[0];
   const remainingScrollItems = homePersonalized.slice(1);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "45px" }}>
+      {/* 🔍 【AI空間検索コンテナー】 */}
+      <div
+        style={{
+          backgroundColor: "white",
+          padding: "24px",
+          borderRadius: "20px",
+          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)",
+          border: "1px solid #e5e7eb",
+          display: "flex",
+          flexDirection: "column",
+          gap: "14px",
+          marginTop: "-10px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span style={{ fontSize: "18px" }}>✨</span>
+          <span
+            style={{
+              fontSize: "13px",
+              fontWeight: "900",
+              color: "#312e81",
+              letterSpacing: "0.5px",
+            }}
+          >
+            商品検索
+          </span>
+        </div>
+
+        <div style={{ display: "flex", gap: "10px" }}>
+          <input
+            type="text"
+            placeholder="週末のカフェに合う落ち着いた服、Macに合う黒いガジェット... 🪄"
+            value={localKeyword}
+            onChange={(e) => setLocalKeyword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && localKeyword.trim()) {
+                onHomeSearch(localKeyword);
+              }
+            }}
+            style={{
+              flex: 1,
+              padding: "14px 20px",
+              border: "1px solid #cbd5e1",
+              borderRadius: "30px",
+              fontSize: "14px",
+              backgroundColor: "#f8fafc",
+              outline: "none",
+              color: "#334155",
+            }}
+          />
+          <button
+            onClick={() => {
+              if (localKeyword.trim()) onHomeSearch(localKeyword);
+            }}
+            style={{
+              padding: "0 28px",
+              backgroundColor: "#4f46e5",
+              color: "white",
+              border: "none",
+              borderRadius: "30px",
+              fontWeight: "900",
+              fontSize: "14px",
+              cursor: "pointer",
+              boxShadow: "0 4px 14px rgba(79, 70, 229, 0.25)",
+              transition: "all 0.2s",
+            }}
+          >
+            検索する
+          </button>
+        </div>
+      </div>
+
+      {/* 📸 【新設】出品インフォメーション・特製ワイドバナー */}
+      <div
+        onClick={() => setCurrentTab("sell")} // 💡 タップされた瞬間、一撃で出品タブへワープ！
+        style={{
+          backgroundColor: "#f0fdf4", // 出品の楽しさと安心感を刺激する爽やかなライトグリーン
+          border: "1px solid #bbf7d0",
+          borderRadius: "20px",
+          padding: "16px 20px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          cursor: "pointer",
+          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.02)",
+          marginTop: "-25px", // 検索バーとの視覚的パッケージ感を出すための極上マージン数理
+          marginBottom: "-10px",
+          transition: "all 0.2s ease",
+        }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = "#e8fdf0")
+        }
+        onMouseLeave={(e) =>
+          (e.currentTarget.style.backgroundColor = "#f0fdf4")
+        }
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <span style={{ fontSize: "22px" }}>📸</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            <span
+              style={{ fontSize: "14px", fontWeight: "bold", color: "#166534" }}
+            >
+              使わなくなったアイテムを出品してみよう！
+            </span>
+            <span
+              style={{ fontSize: "11px", color: "#15803d", fontWeight: "500" }}
+            >
+              AIが商品説明の自動生成や適正価格の査定をサポートします 🪄
+            </span>
+          </div>
+        </div>
+        <span
+          style={{
+            color: "#166534",
+            fontWeight: "900",
+            fontSize: "16px",
+            paddingRight: "4px",
+          }}
+        >
+          ➔
+        </span>
+      </div>
+
       {/* 🥇 1段目：あなたへのおすすめ（Top 5） */}
       {firstHeroItem && (
         <div>
@@ -96,7 +223,6 @@ function HomeTab({
               >
                 {firstHeroItem.name}
               </h2>
-              {/* 💡 justifyContent: "center" を滑り込ませます */}
               <div
                 style={{
                   fontSize: "13px",
@@ -111,18 +237,17 @@ function HomeTab({
                   👤 出品者: {firstHeroItem.seller_name || "公式出品"}
                 </span>
               </div>
-              {/* 💡 左揃え ＆ 5行ラインクランプの魔法を注入 */}
               <p
                 style={{
                   margin: 0,
                   fontSize: "14px",
                   color: "#4b5563",
                   lineHeight: "1.6",
-                  textAlign: "left", // ✨ カチッと綺麗な左揃えに
-                  display: "-webkit-box", // ✨ 複数行省略を有効にするおまじない
-                  WebkitLineClamp: 5, // ✨ ここで最大「5行」に制限！
+                  textAlign: "left",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 5,
                   WebkitBoxOrient: "vertical",
-                  overflow: "hidden", // ✨ はみ出た文字を隠して「...」化
+                  overflow: "hidden",
                 }}
               >
                 {firstHeroItem.description}

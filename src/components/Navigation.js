@@ -7,10 +7,16 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
     <div
       style={{
         backgroundColor: "white",
-        borderBottom: "1px solid #e5e7eb",
         display: "flex",
         justifyContent: "center",
         gap: "12px",
+        position: "sticky", // 💡 ナびゲーションも固定化
+        top: "60px", // 💡 Header(60px)の真下にピタッと吸着させる数理設計
+        zIndex: 100, // 💡 コンテンツより上で、Headerより下のレイヤー
+        // 💡 スクロールした時に、アプリ全体が下に潜り込んで浮き出て見えるシャドウ効果
+        boxShadow:
+          "0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)",
+        borderBottom: "1px solid #e5e7eb",
       }}
     >
       <button
@@ -50,7 +56,6 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
         🔍 検索
       </button>
 
-      {/* 🆕 文言を興味とAIの集約場所にふさわしくアップデート */}
       <button
         onClick={() => setCurrentTab("history")}
         style={{

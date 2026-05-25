@@ -184,7 +184,7 @@ function SearchTab({
           margin: "0",
         }}
       >
-        🔍 AI 空間検索
+        🔍 商品検索
       </h2>
 
       {/* AI Mood 検索エリア */}

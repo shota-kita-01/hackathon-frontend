@@ -5,11 +5,13 @@ function Header({ loginUser, handleLogout, setCurrentTab }) {
     <header
       style={{
         backgroundColor: "white",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-        padding: "15px 20px",
+        // 💡 影は2段目のNavigationの下に持っていくため、ここでは一旦クリア
+        borderBottom: "1px solid #f3f4f6",
+        padding: "0 20px",
+        height: "60px", // 💡 高さを60pxに完全固定
         position: "sticky",
         top: 0,
-        zIndex: 100,
+        zIndex: 101, // 💡 2段目のNavigation(100)より前面に保証
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
@@ -19,7 +21,7 @@ function Header({ loginUser, handleLogout, setCurrentTab }) {
         style={{
           color: "#ff4d4d",
           margin: 0,
-          fontSize: "24px",
+          fontSize: "22px", // 60pxの高さに最適化
           fontWeight: "bold",
           letterSpacing: "1px",
           cursor: "pointer",
