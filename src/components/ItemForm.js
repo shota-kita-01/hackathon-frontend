@@ -2,7 +2,6 @@ import React, { useState } from "react";
 
 // 📚 日本語ユーザーの直感に最適化された21カテゴリ
 const AMAZON_CATEGORIES = [
-  // ✨ 1. ファッション・ビューティー
   {
     value: "Clothing_Shoes_and_Jewelry",
     label: "服・靴・ファッション小物 (Clothing_Shoes_and_Jewelry)",
@@ -12,8 +11,6 @@ const AMAZON_CATEGORIES = [
     label: "コスメ・パーソナルケア (Beauty_and_Personal_Care)",
   },
   { value: "All_Beauty", label: "ビューティー・コスメ全般 (All_Beauty)" },
-
-  // 📱 2. デジタルガジェット・家電
   {
     value: "Cell_Phones_and_Accessories",
     label: "スマートフォン・携帯アクセサリ (Cell_Phones_and_Accessories)",
@@ -21,8 +18,6 @@ const AMAZON_CATEGORIES = [
   { value: "Electronics", label: "家電・カメラ・オーディオ (Electronics)" },
   { value: "Video_Games", label: "テレビゲーム・機材 (Video_Games)" },
   { value: "Appliances", label: "大型家電・家庭用機器 (Appliances)" },
-
-  // 🧸 3. エンタメ・カルチャー・ホビー
   {
     value: "Toys_and_Games",
     label: "おもちゃ・ホビー・ゲーム (Toys_and_Games)",
@@ -35,8 +30,6 @@ const AMAZON_CATEGORIES = [
     label: "楽器・音響機器 (Musical_Instruments)",
   },
   { value: "Handmade_Products", label: "ハンドメイド作品 (Handmade_Products)" },
-
-  // 🏡 4. ライフスタイル・ホーム・暮らし
   {
     value: "Home_and_Kitchen",
     label: "ホーム＆キッチン・家具 (Home_and_Kitchen)",
@@ -47,8 +40,6 @@ const AMAZON_CATEGORIES = [
     value: "Grocery_and_Gourmet_Food",
     label: "食品・飲料・お酒 (Grocery_and_Gourmet_Food)",
   },
-
-  // 🏃 5. アウトドア・工具・自動車
   {
     value: "Sports_and_Outdoors",
     label: "スポーツ＆アウトドア (Sports_and_Outdoors)",
@@ -64,7 +55,6 @@ const AMAZON_CATEGORIES = [
   { value: "Automotive", label: "車・バイク用品 (Automotive)" },
 ];
 
-// 🏷️ フリマアプリの標準的な商品の状態
 const ITEM_CONDITIONS = [
   "新品・未使用",
   "未使用に近い",
@@ -74,7 +64,6 @@ const ITEM_CONDITIONS = [
   "全体的に状態が悪い",
 ];
 
-// 🚚 ユーザー指定の4区分をフリマ仕様に最適化した発送日数オプション
 const SHIPPING_DAYS_OPTIONS = [
   { value: "1〜2日で発送", label: "1〜2日以内に発送" },
   { value: "3〜4日で発送", label: "3〜4日以内に発送" },
@@ -82,7 +71,6 @@ const SHIPPING_DAYS_OPTIONS = [
   { value: "7日以上で発送", label: "7日以上（1週間以降）で発送" },
 ];
 
-// 🧠 公式データと一対一対応するマスター画像プール
 const CATEGORY_IMAGE_POOLS = {
   All_Beauty: [
     "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600",
@@ -135,7 +123,7 @@ const CATEGORY_IMAGE_POOLS = {
     "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600",
   ],
   Handmade_Products: [
-    "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600",
+    "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=600",
     "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600",
     "https://images.unsplash.com/photo-1561715276-a2d087060f1d?w=600",
   ],
@@ -198,19 +186,31 @@ function ItemForm({ sellerId, onSuccess }) {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-
   const [tags, setTags] = useState("");
   const [itemCondition, setItemCondition] = useState("");
-
-  // 🆕 【新設】出品者と発送日数の管理用State（初期状態はフリマの掟通り完全空欄）
   const [sellerName, setSellerName] = useState("");
   const [shippingDays, setShippingDays] = useState("");
+  const [priceError, setPriceError] = useState("");
+
+  // 🛡️ AI安全チェック管理用のトリプルState
+  const [isAiChecked, setIsAiChecked] = useState(false);
+  const [isCheckingSafety, setIsCheckingSafety] = useState(false);
+  const [safetyCheckMessage, setSafetyCheckMessage] = useState("");
 
   const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
   const [isEstimatingPrice, setIsEstimatingPrice] = useState(false);
 
   const BASE_API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
+
+  // 💡 文字が書き換えられたら、安全性を担保するため自動的に「未チェック状態」へ数理リセットする関数
+  const handleTextChange = (type, value) => {
+    if (type === "name") setName(value);
+    if (type === "description") setDescription(value);
+
+    setIsAiChecked(false);
+    setSafetyCheckMessage("");
+  };
 
   const handleSuggestDescription = () => {
     if (!name.trim()) return;
@@ -225,6 +225,7 @@ function ItemForm({ sellerId, onSuccess }) {
       .then((data) => {
         if (data.status === "success") {
           setDescription(data.description);
+          setIsAiChecked(false);
         } else {
           alert("商品説明の生成に失敗しました。");
         }
@@ -251,24 +252,91 @@ function ItemForm({ sellerId, onSuccess }) {
       .then((data) => {
         if (data.status === "success") {
           setPrice(data.suggested_price);
+          setPriceError("");
         } else {
           alert(data.detail || "価格査定に失敗しました。");
         }
       })
       .catch((err) => {
-        console.error("AI価格査定エラー:", err);
+        console.error(`AI価格査定エラー: ${err}`); // 💡 構文エラーを修正しました！
         alert("通信エラーが発生しました。");
       })
       .finally(() => setIsEstimatingPrice(false));
   };
 
+  // 💡 フロントエンドから新設APIを叩く、AI安全審査駆動ハンドラー
+  const handleAiSafetyCheck = () => {
+    if (!name.trim() || !description.trim()) {
+      alert("商品名と商品説明を先に入力してください！");
+      return;
+    }
+    setIsCheckingSafety(true);
+    setSafetyCheckMessage("");
+
+    fetch(`${BASE_API_URL}/items/check`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name, description: description }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === "success") {
+          if (data.is_safe) {
+            setIsAiChecked(true);
+            setSafetyCheckMessage(
+              "✅ AI規約審査クリア！安全な商品と認定されました。✨",
+            );
+          } else {
+            setIsAiChecked(false);
+            setSafetyCheckMessage(`❌ 出品制限: ${data.reason}`);
+          }
+        } else {
+          alert(data.message || "AI審査システムとの通信に失敗しました。");
+        }
+      })
+      .catch((err) => {
+        console.error("AIモデレーションエラー:", err);
+        alert("通信エラーが発生しました。");
+      })
+      .finally(() => setIsCheckingSafety(false));
+  };
+
+  const handlePriceChange = (value) => {
+    if (value === "") {
+      setPrice("");
+      setPriceError("");
+      return;
+    }
+    if (Number(value) < 0) {
+      setPriceError("金額に負の数字は入力できません。");
+      return;
+    }
+    if (!/^\d+$/.test(value)) {
+      setPriceError("数字を入力してください。");
+      return;
+    }
+    setPrice(value);
+    setPriceError("");
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // 💡 新設した必須項目（sellerName, shippingDays）も条件分岐のガードロジックに合流！
+
+    if (!isAiChecked) {
+      alert(
+        "出品する前に、必ず「AI規約自動チェック」を実行してクリアしてください！",
+      );
+      return;
+    }
+
+    if (priceError || !price || Number(price) < 0) {
+      alert("販売価格に正しい数字を入力してください。");
+      return;
+    }
+
     if (
       !name ||
       !description ||
-      !price ||
       !tags ||
       !itemCondition ||
       !sellerName ||
@@ -296,8 +364,8 @@ function ItemForm({ sellerId, onSuccess }) {
         seller_id: sellerId,
         tags: tags,
         item_condition: itemCondition,
-        seller_nickname: sellerName, // 💡 固定文字からユーザー入力の動的データへ差し替え！
-        shipping_days: shippingDays, // 💡 固定文字からユーザー選択の動的データへ差し替え！
+        seller_nickname: sellerName,
+        shipping_days: shippingDays,
       }),
     })
       .then((response) => response.json())
@@ -309,8 +377,11 @@ function ItemForm({ sellerId, onSuccess }) {
           setImageUrl("");
           setTags("");
           setItemCondition("");
-          setSellerName(""); // フォームクリア
-          setShippingDays(""); // フォームクリア
+          setSellerName("");
+          setShippingDays("");
+          setPriceError("");
+          setIsAiChecked(false);
+          setSafetyCheckMessage("");
           onSuccess();
         } else {
           alert("出品に失敗しました: " + data.message);
@@ -329,6 +400,10 @@ function ItemForm({ sellerId, onSuccess }) {
     !description.trim() ||
     !tags ||
     !itemCondition;
+
+  // 💡 チェックボタンを活性化させる条件（両方のテキストが入っていること）
+  const isCheckBtnDisabled =
+    isCheckingSafety || !name.trim() || !description.trim();
 
   return (
     <div
@@ -366,7 +441,7 @@ function ItemForm({ sellerId, onSuccess }) {
             type="text"
             placeholder="商品名を入力"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => handleTextChange("name", e.target.value)}
             style={{
               padding: "10px 12px",
               borderRadius: "8px",
@@ -379,17 +454,6 @@ function ItemForm({ sellerId, onSuccess }) {
 
         {/* AI自動商品説明セクション */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <span
-            style={{
-              fontSize: "11px",
-              fontWeight: "600",
-              color: !name.trim() ? "#94a3b8" : "#8b5cf6",
-            }}
-          >
-            {!name.trim()
-              ? "💡 使い方：商品名を入力すると、下のAI自動執筆が起動します"
-              : "✨ 準備完了：下のボタンを押すとAIが魅力的な説明文を書きます"}
-          </span>
           <button
             type="button"
             onClick={handleSuggestDescription}
@@ -407,7 +471,7 @@ function ItemForm({ sellerId, onSuccess }) {
               cursor: isDescBtnDisabled ? "not-allowed" : "pointer",
             }}
           >
-            {isGeneratingDesc ? "⏳ AI執筆中..." : "🧠 AI自動商品説明"}
+            {isGeneratingDesc ? "⏳ AI執筆中..." : "🧠 AI自動商品説明文の生成"}
           </button>
         </div>
 
@@ -421,7 +485,7 @@ function ItemForm({ sellerId, onSuccess }) {
           <textarea
             placeholder="商品の詳細な説明文"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => handleTextChange("description", e.target.value)}
             rows={5}
             style={{
               padding: "10px 12px",
@@ -435,7 +499,91 @@ function ItemForm({ sellerId, onSuccess }) {
           />
         </div>
 
-        {/* 22ジャンルの選択セレクトボックス（21厳選版） */}
+        {/* 🛡️ AI規約自動チェック特設セクション */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "6px",
+            backgroundColor: "#f8fafc",
+            padding: "16px",
+            borderRadius: "12px",
+            border: "1px solid #e2e8f0",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "2px" }}
+            >
+              <span
+                style={{
+                  fontSize: "13px",
+                  fontWeight: "bold",
+                  color: "#1e293b",
+                }}
+              >
+                🛡️ AI規約自動チェック（リアルタイムコンプライアンス）
+              </span>
+              <span style={{ fontSize: "11px", color: "#64748b" }}>
+                出品ポリシー違反（偽ブランド、危険物など）がないか自動検査します。
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleAiSafetyCheck}
+              disabled={isCheckBtnDisabled}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: isCheckBtnDisabled
+                  ? "#cbd5e1"
+                  : isAiChecked
+                    ? "#10b981"
+                    : "#4f46e5",
+                color: "white",
+                border: "none",
+                borderRadius: "20px",
+                fontSize: "12px",
+                fontWeight: "900",
+                cursor: isCheckBtnDisabled ? "not-allowed" : "pointer",
+                boxShadow: isCheckBtnDisabled
+                  ? "none"
+                  : "0 4px 10px rgba(79, 70, 229, 0.15)",
+                transition: "all 0.2s",
+              }}
+            >
+              {isCheckingSafety
+                ? "⏳ 審査中..."
+                : isAiChecked
+                  ? "✓ 審査完了"
+                  : "安全性を確認する"}
+            </button>
+          </div>
+
+          {safetyCheckMessage && (
+            <div
+              style={{
+                marginTop: "10px",
+                padding: "10px 12px",
+                borderRadius: "8px",
+                fontSize: "12px",
+                fontWeight: "bold",
+                backgroundColor: isAiChecked ? "#ecfdf5" : "#fef2f2",
+                color: isAiChecked ? "#065f46" : "#991b1b",
+                border: isAiChecked ? "1px solid #a7f3d0" : "1px solid #fca5a5",
+              }}
+            >
+              {safetyCheckMessage}
+            </div>
+          )}
+        </div>
+
+        {/* 出品ジャンル */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <label
             style={{ fontSize: "13px", fontWeight: "bold", color: "#4b5563" }}
@@ -465,7 +613,7 @@ function ItemForm({ sellerId, onSuccess }) {
           </select>
         </div>
 
-        {/* 商品の状態選択セレクトボックス */}
+        {/* 商品の状態 */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <label
             style={{ fontSize: "13px", fontWeight: "bold", color: "#4b5563" }}
@@ -496,33 +644,6 @@ function ItemForm({ sellerId, onSuccess }) {
 
         {/* AI価格査定セクション */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <span
-            style={{
-              fontSize: "11px",
-              fontWeight: "600",
-              color: isPriceBtnDisabled ? "#94a3b8" : "#059669",
-            }}
-          >
-            {isPriceBtnDisabled ? (
-              <span>
-                💡 使い方：
-                {!name.trim() && "「商品名」"}
-                {name.trim() && !description.trim() && "「商品説明」"}
-                {name.trim() &&
-                  description.trim() &&
-                  !tags &&
-                  "「ジャンル選択」"}
-                {name.trim() &&
-                  description.trim() &&
-                  tags &&
-                  !itemCondition &&
-                  "「状態選択」"}
-                を埋めると、下のAI査定がアンロックされます
-              </span>
-            ) : (
-              "✅ 準備完了！市場ビッグデータから適正価格を精密シミュレートできます"
-            )}
-          </span>
           <button
             type="button"
             onClick={handleSuggestPrice}
@@ -553,20 +674,46 @@ function ItemForm({ sellerId, onSuccess }) {
           </label>
           <input
             type="number"
+            min="0"
             placeholder="金額を入力"
             value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            onChange={(e) => handlePriceChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (
+                e.key === "-" ||
+                e.key === "+" ||
+                e.key === "e" ||
+                e.key === "E" ||
+                e.key === "."
+              ) {
+                e.preventDefault();
+              }
+            }}
             style={{
               padding: "10px 12px",
               borderRadius: "8px",
-              border: "1px solid #d1d5db",
+              border: priceError ? "1px solid #ff4d4d" : "1px solid #d1d5db",
               fontSize: "14px",
               outline: "none",
+              backgroundColor: priceError ? "#fef2f2" : "white",
+              transition: "all 0.2s",
             }}
           />
+          {priceError && (
+            <span
+              style={{
+                color: "#ff4d4d",
+                fontSize: "12px",
+                fontWeight: "bold",
+                marginTop: "2px",
+              }}
+            >
+              ⚠️ {priceError}
+            </span>
+          )}
         </div>
 
-        {/* 🆕 【拡張】出品者ニックネーム入力欄 */}
+        {/* 出品者ニックネーム入力欄 */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <label
             style={{ fontSize: "13px", fontWeight: "bold", color: "#4b5563" }}
@@ -588,7 +735,7 @@ function ItemForm({ sellerId, onSuccess }) {
           />
         </div>
 
-        {/* 🆕 【拡張】発送までの目安セレクトボックス */}
+        {/* 発送までの目安 */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <label
             style={{ fontSize: "13px", fontWeight: "bold", color: "#4b5563" }}
@@ -651,16 +798,23 @@ function ItemForm({ sellerId, onSuccess }) {
         {/* 出品ボタン */}
         <button
           type="submit"
+          disabled={!isAiChecked || !!priceError}
           style={{
             marginTop: "10px",
             padding: "12px",
-            backgroundColor: "#ff4d4d",
+            backgroundColor:
+              !isAiChecked || !!priceError ? "#cbd5e1" : "#ff4d4d",
             color: "white",
             border: "none",
             borderRadius: "8px",
             fontSize: "15px",
             fontWeight: "bold",
-            cursor: "pointer",
+            cursor: !isAiChecked || !!priceError ? "not-allowed" : "pointer",
+            boxShadow:
+              !isAiChecked || !!priceError
+                ? "none"
+                : "0 4px 12px rgba(255, 77, 77, 0.2)",
+            transition: "background-color 0.2s",
           }}
         >
           🚀 この内容でタイムラインに出品する

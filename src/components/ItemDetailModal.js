@@ -100,6 +100,9 @@ function ItemDetailModal({
 
   if (!selectedItem) return null;
 
+  // 💡 売り切れフラグ
+  const isSoldOut = selectedItem.status === "sold_out";
+
   return (
     <div
       style={{
@@ -159,17 +162,36 @@ function ItemDetailModal({
           🛍️ 商品詳細
         </h2>
 
-        <img
-          src={selectedItem.image_url}
-          alt={selectedItem.name}
+        {/* 💡 【修正】画像スタイルとエフェクトを HorizontalItemList と100%同期！ */}
+        <div
           style={{
+            position: "relative",
             width: "100%",
             height: "220px",
-            objectFit: "cover",
-            borderRadius: "12px",
             marginBottom: "15px",
           }}
-        />
+        >
+          <img
+            src={selectedItem.image_url}
+            alt={selectedItem.name}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              borderRadius: "12px",
+              display: "block",
+              opacity: isSoldOut ? 0.4 : 1, // ✨ 売り切れなら一律で 0.4 まで薄くする
+              filter: isSoldOut ? "grayscale(100%)" : "none", // ✨ 売り切れなら完全グレースケール（白黒）化
+              transition: "all 0.3s ease",
+            }}
+          />
+          {/* ❌ 特大影付き斜めリボン（sold-ribbon-container-large） */}
+          {isSoldOut && (
+            <div className="sold-ribbon-container-large">
+              <span className="sold-ribbon-text-large">SOLD</span>
+            </div>
+          )}
+        </div>
 
         <div
           style={{
@@ -207,15 +229,15 @@ function ItemDetailModal({
           </button>
         </div>
 
-        {/* 🏷️ 【新設】カテゴリーハッシュタグ（タイムラインのバッジスタイルを完全エミュレート） */}
+        {/* カテゴリーハッシュタグ */}
         {selectedItem.tags && (
           <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
             <span
               style={{
-                backgroundColor: "#e0e7ff", // 空間を邪魔しない爽やかなライトブルー
-                color: "#4f46e5", // 視認性の高いインディゴブルー
+                backgroundColor: "#e0e7ff",
+                color: "#4f46e5",
                 padding: "4px 10px",
-                borderRadius: "8px", // タイムラインカードの角丸感に統一
+                borderRadius: "8px",
                 fontSize: "12px",
                 fontWeight: "bold",
               }}
@@ -225,9 +247,7 @@ function ItemDetailModal({
           </div>
         )}
 
-        {/* ===================================================
-            🆕 【既存】フリマ特化型：商品詳細メタデータシート
-           =================================================== */}
+        {/* 商品詳細メタデータシート */}
         <div
           style={{
             backgroundColor: "#f8fafc",
@@ -306,6 +326,7 @@ function ItemDetailModal({
           {selectedItem.description}
         </p>
 
+        {/* 価格 ＆ 購入セクション */}
         <div
           style={{
             display: "flex",
@@ -316,24 +337,35 @@ function ItemDetailModal({
           }}
         >
           <span
-            style={{ fontSize: "22px", fontWeight: "bold", color: "#ff4d4d" }}
+            style={{
+              fontSize: "22px",
+              fontWeight: "bold",
+              color: isSoldOut ? "#94a3b8" : "#ff4d4d",
+              textDecoration: isSoldOut ? "line-through" : "none",
+            }}
           >
             {selectedItem.price.toLocaleString()} 円
           </span>
+
           <button
             onClick={() => handlePurchaseItem(selectedItem.id)}
+            disabled={isSoldOut}
             style={{
               padding: "10px 24px",
-              backgroundColor: "#ff4d4d",
-              color: "white",
+              backgroundColor: isSoldOut ? "#cbd5e1" : "#ff4d4d",
+              color: isSoldOut ? "#94a3b8" : "white",
               border: "none",
               borderRadius: "25px",
               fontWeight: "bold",
               fontSize: "15px",
-              cursor: "pointer",
+              cursor: isSoldOut ? "not-allowed" : "pointer",
+              boxShadow: isSoldOut
+                ? "none"
+                : "0 4px 12px rgba(255, 77, 77, 0.2)",
+              transition: "all 0.2s",
             }}
           >
-            🛍️ 今すぐ購入する
+            {isSoldOut ? "❌ 売り切れました" : "🛍️ 今すぐ購入する"}
           </button>
         </div>
 
