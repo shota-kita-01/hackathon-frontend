@@ -44,7 +44,7 @@ function ItemDetailModal({
     setSpaceItems([]);
     setTimeItems([]);
 
-    fetch(`${API_URL}/recommendations/${selectedItem.asin}`)
+    fetch(`${API_URL}/recommendations/${selectedItem.asin || selectedItem.id}`)
       .then((res) => res.json())
       .then((data) => {
         if (data) {
@@ -207,8 +207,26 @@ function ItemDetailModal({
           </button>
         </div>
 
+        {/* 🏷️ 【新設】カテゴリーハッシュタグ（タイムラインのバッジスタイルを完全エミュレート） */}
+        {selectedItem.tags && (
+          <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+            <span
+              style={{
+                backgroundColor: "#e0e7ff", // 空間を邪魔しない爽やかなライトブルー
+                color: "#4f46e5", // 視認性の高いインディゴブルー
+                padding: "4px 10px",
+                borderRadius: "8px", // タイムラインカードの角丸感に統一
+                fontSize: "12px",
+                fontWeight: "bold",
+              }}
+            >
+              #{selectedItem.tags}
+            </span>
+          </div>
+        )}
+
         {/* ===================================================
-            🆕 【新設】フリマ特化型：商品詳細メタデータシート
+            🆕 【既存】フリマ特化型：商品詳細メタデータシート
            =================================================== */}
         <div
           style={{

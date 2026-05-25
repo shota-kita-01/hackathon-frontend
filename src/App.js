@@ -124,14 +124,18 @@ function App() {
       .catch((err) => console.error("いいね一覧の取得に失敗:", err));
   };
 
-  const handleAiRecommend = () => {
-    if (!moodText.trim()) return;
+  // 💡 【改修】ホーム画面からの直接検索を受け付けるため、明示的な引数（explicitText）に対応
+  const handleAiRecommend = (explicitText) => {
+    const targetText =
+      typeof explicitText === "string" ? explicitText : moodText;
+
+    if (!targetText.trim()) return;
     setIsRecommending(true);
 
     fetch(`${API_URL}/users/${myAppId}/keywords`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keyword: moodText }),
+      body: JSON.stringify({ keyword: targetText }),
     }).catch((err) => console.error("キーワード保存エラー:", err));
 
     fetch(`${API_URL}/recommend`, {
@@ -139,7 +143,7 @@ function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         user_id: myAppId,
-        mood_text: moodText,
+        mood_text: targetText,
         filter_status: filterStatus,
       }),
     })
@@ -160,6 +164,13 @@ function App() {
       .finally(() => {
         setIsRecommending(false);
       });
+  };
+
+  // 💡 【新設】ホーム画面の検索バーから呼び出される中継・高速遷移ロケット関数
+  const handleHomeSearch = (keyword) => {
+    setMoodText(keyword); // 1. 検索タブの入力テキストを同期
+    setCurrentTab("search"); // 2. 検索タブへ自動で切り替え
+    handleAiRecommend(keyword); // 3. State反映を待たずに、引数の文字で直接AI推薦を駆動！
   };
 
   const handleResetRecommend = () => {
@@ -262,7 +273,6 @@ function App() {
           <div
             style={{ display: "flex", flexDirection: "column", gap: "35px" }}
           >
-            {/* 🏠 【新・ホームタブ：3段パーソナライズUI】 */}
             {currentTab === "home" && (
               <HomeTab
                 homePersonalized={homePersonalized}
@@ -270,6 +280,8 @@ function App() {
                 homeMarketFavorite={homeMarketFavorite}
                 handleCardClick={handleCardClick}
                 handlePurchaseItem={handlePurchaseItem}
+                onHomeSearch={handleHomeSearch}
+                setCurrentTab={setCurrentTab}
               />
             )}
 
