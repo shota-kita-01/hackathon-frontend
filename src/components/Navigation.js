@@ -10,7 +10,7 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
         display: "flex",
         justifyContent: "center",
         gap: "12px",
-        position: "sticky", // 💡 ナびゲーションも固定化
+        position: "sticky", // 💡 ナビゲーションも固定化
         top: "60px", // 💡 Header(60px)の真下にピタッと吸着させる数理設計
         zIndex: 100, // 💡 コンテンツより上で、Headerより下のレイヤー
         // 💡 スクロールした時に、アプリ全体が下に潜り込んで浮き出て見えるシャドウ効果
@@ -37,6 +37,7 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
       >
         🏠 ホーム
       </button>
+
       <button
         onClick={() => setCurrentTab("search")}
         style={{
@@ -75,24 +76,7 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
         ✨ おすすめ・履歴
       </button>
 
-      <button
-        onClick={() => setCurrentTab("mypage")}
-        style={{
-          padding: "14px 10px",
-          backgroundColor: "transparent",
-          border: "none",
-          borderBottom:
-            currentTab === "mypage"
-              ? "3px solid #ff4d4d"
-              : "3px solid transparent",
-          color: currentTab === "mypage" ? "#ff4d4d" : "#666",
-          fontWeight: "bold",
-          fontSize: "14px",
-          cursor: "pointer",
-        }}
-      >
-        👤 マイページ
-      </button>
+      {/* 📸 【順番変更】出品タブを左側へスライド */}
       <button
         onClick={() => setCurrentTab("sell")}
         style={{
@@ -110,6 +94,26 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
         }}
       >
         📸 出品
+      </button>
+
+      {/* 👤 【順番変更】マイページタブを一番右端（最後尾）へ配置 */}
+      <button
+        onClick={() => setCurrentTab("mypage")}
+        style={{
+          padding: "14px 10px",
+          backgroundColor: "transparent",
+          border: "none",
+          borderBottom:
+            currentTab === "mypage"
+              ? "3px solid #ff4d4d"
+              : "3px solid transparent",
+          color: currentTab === "mypage" ? "#ff4d4d" : "#666",
+          fontWeight: "bold",
+          fontSize: "14px",
+          cursor: "pointer",
+        }}
+      >
+        👤 マイページ
       </button>
     </div>
   );

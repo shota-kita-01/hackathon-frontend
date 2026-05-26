@@ -6,14 +6,18 @@ function MyPageTab({
   loginUser,
   handleCardClick,
   handlePurchaseItem,
-  setMyAppId, // 親（App.js）の状態を書き換える
-  handleLogout, // 親（App.js）のログアウト処理
+  setMyAppId,
+  handleLogout,
+  setActiveTransactionId,
+  setCurrentTab,
 }) {
   const [purchasedItems, setPurchasedItems] = useState([]); // 購入履歴
   const [myProducts, setMyProducts] = useState([]); // 出品履歴
+  const [activeTransactions, setActiveTransactions] = useState([]); // 進行中の取引
+  const [completedTransactions, setCompletedTransactions] = useState([]); // 完了済みの過去取引
   const [isLoading, setIsLoading] = useState(true);
 
-  // 👥 ブラウザの永続ストレージ（localStorage）から過去にログインした本物のアカウント達をロード
+  // 👥 ブラウザの永続ストレージからロード
   const [accountList, setAccountList] = useState(() => {
     const saved = localStorage.getItem("fleamarket_authenticated_accounts");
     return saved ? JSON.parse(saved) : [];
@@ -22,20 +26,19 @@ function MyPageTab({
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
-  // 🔄 仕組み1: 現在ログインに成功しているアカウントを、自動的にマルチアカウントリストへ蓄積・同期する数理ロジック
+  // 🔄 仕組み1: アカウントの自動蓄積・同期
   useEffect(() => {
     if (!myAppId || !loginUser?.email) return;
 
     const currentAccount = {
       id: myAppId,
-      name: loginUser.email.split("@")[0], // メアドの@より前を表示名にする
+      name: loginUser.email.split("@")[0],
       email: loginUser.email,
     };
 
     setAccountList((prevList) => {
-      // 既にリストに同じ会員IDがあれば重複して追加しないガード
-      if (prevList.some((acc) => acc.id === myAppId)) return prevList;
-
+      if (prevList.some((acc) => String(acc.id) === String(myAppId)))
+        return prevList;
       const updatedList = [...prevList, currentAccount];
       localStorage.setItem(
         "fleamarket_authenticated_accounts",
@@ -45,48 +48,55 @@ function MyPageTab({
     });
   }, [myAppId, loginUser]);
 
-  // 🛒 仕組み2: 選択されたアクティブユーザーの取引履歴をリアルタイムフェッチ
+  // 🛒 仕組み2: 4本のAPIを一斉に並列高速フェッチ ＆ 3秒自動同期
   useEffect(() => {
     if (!myAppId) return;
     setIsLoading(true);
 
-    const p1 = fetch(`${API_URL}/users/${myAppId}/purchases`).then((res) =>
-      res.json(),
-    );
-    const p2 = fetch(`${API_URL}/users/${myAppId}/products`).then((res) =>
-      res.json(),
-    );
+    const fetchMyPageData = () => {
+      const p1 = fetch(`${API_URL}/users/${myAppId}/purchases`).then((res) =>
+        res.json(),
+      );
+      const p2 = fetch(`${API_URL}/users/${myAppId}/products`).then((res) =>
+        res.json(),
+      );
+      const p3 = fetch(`${API_URL}/users/${myAppId}/transactions`).then((res) =>
+        res.json(),
+      );
+      const p4 = fetch(
+        `${API_URL}/users/${myAppId}/transactions/completed`,
+      ).then((res) => res.json());
 
-    Promise.all([p1, p2])
-      .then(([purchasesData, productsData]) => {
-        if (Array.isArray(purchasesData)) setPurchasedItems(purchasesData);
-        if (Array.isArray(productsData)) setMyProducts(productsData);
-      })
-      .catch((err) => console.error("マイページデータ取得エラー:", err))
-      .finally(() => setIsLoading(false));
+      Promise.all([p1, p2, p3, p4])
+        .then(([purchasesData, productsData, txData, completedTxData]) => {
+          if (Array.isArray(purchasesData)) setPurchasedItems(purchasesData);
+          if (Array.isArray(productsData)) setMyProducts(productsData);
+          if (Array.isArray(txData)) setActiveTransactions(txData);
+          if (Array.isArray(completedTxData))
+            setCompletedTransactions(completedTxData);
+        })
+        .catch((err) => console.error("マイページデータ取得エラー:", err))
+        .finally(() => setIsLoading(false));
+    };
+
+    fetchMyPageData();
+    const timer = setInterval(fetchMyPageData, 3000);
+    return () => clearInterval(timer);
   }, [myAppId]);
 
-  // ➕ 既存のログイン導線を100%活かした「アカウントの正規追加」
   const handleAddAccount = () => {
     if (
       window.confirm(
-        "別のアカウントを追加するために、一時的にサインイン画面へ遷移します。よろしいですか？\n（現在のアカウントは自動的に記憶され、いつでも戻ってこられます）",
+        "別のアカウントを追加するために、一時的にサインイン画面へ遷移します。よろしいですか？",
       )
     ) {
-      // 親のログアウト関数を呼び出し、Firebase Authのセッションを安全に切断してLoginFormを表示させる
       handleLogout();
     }
   };
 
-  // ❌ 記憶している特定のデモアカウントをブラウザから忘却（削除）する機能
   const handleRemoveAccountFromCache = (e, targetId) => {
-    e.stopPropagation(); // 切り替えイベントの暴発を差し止めるガード
-    if (
-      !window.confirm(
-        "このアカウントのログイン情報を削除しますか？\n（ログイン情報を再び入力すればまた戻ってくることができます）",
-      )
-    )
-      return;
+    e.stopPropagation();
+    if (!window.confirm("このアカウントのログイン情報を削除しますか？")) return;
 
     const updatedList = accountList.filter((acc) => acc.id !== targetId);
     setAccountList(updatedList);
@@ -95,18 +105,22 @@ function MyPageTab({
       JSON.stringify(updatedList),
     );
 
-    // もし今ログイン中のアカウントを削除した場合は、強制的にログアウトさせる
-    if (myAppId === targetId) {
+    if (String(myAppId) === String(targetId)) {
       handleLogout();
     }
   };
 
-  // 💡 【数理同期ハック】選択されている myAppId に合致するアカウント情報をリストから動的抽出
   const currentActiveAccount = accountList.find(
-    (acc) => acc.id === myAppId,
+    (acc) => String(acc.id) === String(myAppId),
   ) || {
     name: loginUser?.email ? loginUser.email.split("@")[0] : "ゲストユーザー",
     email: loginUser?.email || "",
+  };
+
+  const handleJumpToTransaction = (txId) => {
+    setActiveTransactionId(txId);
+    setCurrentTab("transaction");
+    window.scrollTo(0, 0);
   };
 
   return (
@@ -122,7 +136,7 @@ function MyPageTab({
         👤 マイページ
       </h2>
 
-      {/* ❶ メインのユーザープロフィールカード */}
+      {/* ❶ プロフィールカード */}
       <div
         style={{
           backgroundColor: "white",
@@ -148,14 +162,12 @@ function MyPageTab({
             fontWeight: "bold",
           }}
         >
-          {/* 💡 Firebaseの生セッションではなく、現在のアクティブアカウントのメアド頭文字を追従表示 */}
           {currentActiveAccount.email
             ? currentActiveAccount.email[0].toUpperCase()
             : "U"}
         </div>
         <div>
           <div style={{ fontWeight: "bold", fontSize: "18px", color: "#333" }}>
-            {/* 💡 現在のアクティブアカウントの表示名を完全リアルタイム同期 */}
             {currentActiveAccount.name}
           </div>
           <div style={{ fontSize: "13px", color: "#6b7280", marginTop: "4px" }}>
@@ -164,7 +176,99 @@ function MyPageTab({
         </div>
       </div>
 
-      {/* ❷ 👥 【プロダクト仕様】永続化マルチアカウントスイッチングセンター */}
+      {/* 🚚 ❷ 【最優先】進行中の取引レーン（取引中は常に一番上に出現！） */}
+      {activeTransactions.length > 0 && (
+        <div
+          style={{
+            backgroundColor: "#fffbeb",
+            border: "1px solid #fde68a",
+            borderRadius: "16px",
+            padding: "20px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          <div
+            style={{ fontSize: "14px", fontWeight: "bold", color: "#d97706" }}
+          >
+            🚚 進行中の取引（発送・メッセージ手続き）
+          </div>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+          >
+            {activeTransactions.map((tx) => (
+              <div
+                key={tx.transaction_id}
+                style={{
+                  backgroundColor: "white",
+                  border: "1px solid #fef3c7",
+                  borderRadius: "12px",
+                  padding: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "15px",
+                }}
+              >
+                <img
+                  src={tx.item_image_url}
+                  alt=""
+                  style={{
+                    width: "45px",
+                    height: "45px",
+                    borderRadius: "6px",
+                    objectFit: "cover",
+                  }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: "14px",
+                      color: "#333",
+                    }}
+                  >
+                    {tx.item_name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      color: "#9a3412",
+                      marginTop: "2px",
+                    }}
+                  >
+                    状態:{" "}
+                    {tx.transaction_status === "shipping_pending"
+                      ? "⏳ 発送待ち"
+                      : "🚚 発送済み・受取評価待ち"}
+                    {String(myAppId) === String(tx.seller_id)
+                      ? " (出品者)"
+                      : " (購入者)"}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleJumpToTransaction(tx.transaction_id)}
+                  style={{
+                    padding: "6px 12px",
+                    backgroundColor: "#d97706",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                  }}
+                >
+                  取引画面へ
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 👥 ❸ アカウント切り替えマルチセンター */}
       <div
         style={{
           backgroundColor: "#f8fafc",
@@ -174,7 +278,6 @@ function MyPageTab({
           display: "flex",
           flexDirection: "column",
           gap: "16px",
-          boxShadow: "inset 0 2px 4px rgba(0,0,0,0.01)",
         }}
       >
         <div
@@ -185,13 +288,11 @@ function MyPageTab({
             letterSpacing: "0.5px",
           }}
         >
-          👥 アカウントの切り替え（このブラウザでログイン履歴のあるユーザー）
+          👥 アカウントの切り替え
         </div>
-
-        {/* アカウントの縦並びリスト */}
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {accountList.map((acc) => {
-            const isCurrent = acc.id === myAppId;
+            const isCurrent = String(acc.id) === String(myAppId);
             return (
               <div
                 key={acc.id}
@@ -203,10 +304,8 @@ function MyPageTab({
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  transition: "all 0.2s",
                 }}
               >
-                {/* 左側：アカウント基本情報 */}
                 <div>
                   <div
                     style={{
@@ -249,8 +348,6 @@ function MyPageTab({
                     ID: 0000{acc.id} • {acc.email}
                   </div>
                 </div>
-
-                {/* 右側：インライン・アクションボタン */}
                 <div style={{ display: "flex", gap: "8px" }}>
                   {!isCurrent ? (
                     <div style={{ display: "flex", gap: "6px" }}>
@@ -265,7 +362,6 @@ function MyPageTab({
                           fontSize: "12px",
                           fontWeight: "bold",
                           cursor: "pointer",
-                          boxShadow: "0 2px 4px rgba(59, 130, 246, 0.2)",
                         }}
                       >
                         切り替える
@@ -281,7 +377,6 @@ function MyPageTab({
                           fontSize: "12px",
                           cursor: "pointer",
                         }}
-                        title="記憶を削除"
                       >
                         🗑️
                       </button>
@@ -308,8 +403,6 @@ function MyPageTab({
             );
           })}
         </div>
-
-        {/* 下段：本物のアカウント追加フローのトリガー */}
         <button
           onClick={handleAddAccount}
           style={{
@@ -323,18 +416,13 @@ function MyPageTab({
             fontWeight: "bold",
             cursor: "pointer",
             textAlign: "center",
-            transition: "all 0.2s",
           }}
-          onMouseOver={(e) =>
-            (e.currentTarget.style.backgroundColor = "#f5f3ff")
-          }
-          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "white")}
         >
           ＋ 別のアカウントで新規ログイン（リストに追加）
         </button>
       </div>
 
-      {/* ❸ 取引履歴（購入・出品）レーン */}
+      {/* 🛍️ ❹ 通常の商品履歴レーン（購入した商品・出品した商品の一覧） */}
       {isLoading ? (
         <div
           style={{
@@ -348,7 +436,6 @@ function MyPageTab({
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
-          {/* 1段目：🛍️ 購入した商品 */}
           <div>
             <h3
               style={{
@@ -369,8 +456,6 @@ function MyPageTab({
               handleCardClick={handleCardClick}
             />
           </div>
-
-          {/* 2段目：📸 出品した商品 */}
           <div>
             <h3
               style={{
@@ -390,6 +475,96 @@ function MyPageTab({
               handlePurchaseItem={handlePurchaseItem}
               handleCardClick={handleCardClick}
             />
+          </div>
+        </div>
+      )}
+
+      {/* 🏁 ❺ 【最下部へ移動完了】過去の取引履歴アーカイブ */}
+      {completedTransactions.length > 0 && (
+        <div
+          style={{
+            backgroundColor: "#f8fafc",
+            border: "1px solid #e2e8f0",
+            borderRadius: "16px",
+            padding: "20px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          <div
+            style={{ fontSize: "14px", fontWeight: "bold", color: "#475569" }}
+          >
+            🏁 過去の取引履歴（完了済みのメッセージ・詳細確認）
+          </div>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+          >
+            {completedTransactions.map((tx) => (
+              <div
+                key={tx.transaction_id}
+                style={{
+                  backgroundColor: "white",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "12px",
+                  padding: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "15px",
+                }}
+              >
+                <img
+                  src={tx.item_image_url}
+                  alt=""
+                  style={{
+                    width: "45px",
+                    height: "45px",
+                    borderRadius: "6px",
+                    objectFit: "cover",
+                    filter: "grayscale(30%)",
+                  }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: "14px",
+                      color: "#64748b",
+                    }}
+                  >
+                    {tx.item_name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      color: "#64748b",
+                      marginTop: "2px",
+                    }}
+                  >
+                    ✅ 取引完了{" "}
+                    {String(myAppId) === String(tx.seller_id)
+                      ? " (元出品者)"
+                      : " (元購入者)"}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleJumpToTransaction(tx.transaction_id)}
+                  style={{
+                    padding: "6px 12px",
+                    backgroundColor: "#64748b",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                  }}
+                >
+                  ログを見る
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}

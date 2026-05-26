@@ -1,7 +1,19 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
-function Header({ loginUser, handleLogout, setCurrentTab, myAppId }) {
-  // 👥 ブラウザの永続ストレージからログイン履歴のある本物のアカウント達をロード
+function Header({
+  loginUser,
+  handleLogout,
+  setCurrentTab,
+  myAppId,
+  setActiveTransactionId,
+}) {
+  const [notifications, setNotifications] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const API_URL =
+    "https://hackathon-backend-63005122361.us-central1.run.app/api";
+
+  // 👥 ブラウザの永続ストレージからログイン履歴のあるアカウント達をロード
   const savedAccounts = JSON.parse(
     localStorage.getItem("fleamarket_authenticated_accounts") || "[]",
   );
@@ -13,17 +25,58 @@ function Header({ loginUser, handleLogout, setCurrentTab, myAppId }) {
     email: loginUser?.email || "ゲストユーザー",
   };
 
+  // 🔄 仕組み1: 裏側に新設した通知APIから、3秒ポーリングでリアルタイムに通知をフェッチ
+  useEffect(() => {
+    if (!myAppId) return;
+
+    const fetchNotifications = () => {
+      fetch(`${API_URL}/users/${myAppId}/notifications`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) setNotifications(data);
+        })
+        .catch((err) => console.error("通知取得エラー:", err));
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 3000); // 3秒自動同期
+    return () => clearInterval(interval);
+  }, [myAppId]);
+
+  // 未読の通知カウントを算出
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  // 🔔 仕組み2: 通知をクリックした時の既読化 ＆ 画面ワープ処理
+  const handleNotificationClick = (notif) => {
+    // 1. バックエンドを既読状態へコミット
+    fetch(`${API_URL}/notifications/${notif.id}/read`, { method: "POST" })
+      .then(() => {
+        // ローカルの状態を更新
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n)),
+        );
+      })
+      .catch((err) => console.error("既読処理エラー:", err));
+
+    // 2. 通知のコンテキストに応じて、適切なタブへユーザーを誘導
+    if (notif.title.includes("入荷")) {
+      setCurrentTab("search");
+    } else {
+      setCurrentTab("mypage");
+    }
+    setShowDropdown(false);
+  };
+
   return (
     <header
       style={{
         backgroundColor: "white",
-        // 💡 影は2段目のNavigationの下に持っていくため、ここでは一旦クリア
         borderBottom: "1px solid #f3f4f6",
         padding: "0 20px",
-        height: "60px", // 💡 高さを60pxに完全固定
+        height: "60px",
         position: "sticky",
         top: 0,
-        zIndex: 101, // 💡 2段目のNavigation(100)より前面に保証
+        zIndex: 101,
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
@@ -33,7 +86,7 @@ function Header({ loginUser, handleLogout, setCurrentTab, myAppId }) {
         style={{
           color: "#ff4d4d",
           margin: 0,
-          fontSize: "22px", // 60pxの高さに最適化
+          fontSize: "22px",
           fontWeight: "bold",
           letterSpacing: "1px",
           cursor: "pointer",
@@ -42,20 +95,148 @@ function Header({ loginUser, handleLogout, setCurrentTab, myAppId }) {
       >
         次世代型フリマアプリ
       </h1>
+
       {loginUser && (
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "15px",
+            gap: "20px",
             fontSize: "14px",
             color: "#333",
+            position: "relative",
           }}
         >
-          {/* 💡 Firebaseの生セッションではなく、現在アクティブなユーザーのメアドを追従表示 */}
+          {/* 🔔 通知センターボタン */}
+          <div
+            style={{ position: "relative", cursor: "pointer" }}
+            onClick={() => setShowDropdown(!showDropdown)}
+          >
+            <span style={{ fontSize: "20px" }}>🔔</span>
+            {unreadCount > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "-4px",
+                  right: "-6px",
+                  backgroundColor: "#ff4d4d",
+                  color: "white",
+                  fontSize: "10px",
+                  fontWeight: "bold",
+                  padding: "2px 6px",
+                  borderRadius: "10px",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
+                }}
+              >
+                {unreadCount}
+              </span>
+            )}
+          </div>
+
+          {/* 通知ドロップダウンメニュー */}
+          {showDropdown && (
+            <div
+              style={{
+                position: "absolute",
+                top: "35px",
+                right: "120px",
+                backgroundColor: "white",
+                border: "1px solid #e5e7eb",
+                borderRadius: "12px",
+                width: "320px",
+                maxHeight: "360px",
+                overflowY: "auto",
+                boxShadow:
+                  "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                zIndex: 200,
+              }}
+            >
+              <div
+                style={{
+                  padding: "12px",
+                  fontSize: "13px",
+                  fontWeight: "bold",
+                  borderBottom: "1px solid #f3f4f6",
+                  color: "#4f46e5",
+                }}
+              >
+                お知らせ・新着通知
+              </div>
+              {notifications.length === 0 ? (
+                <div
+                  style={{
+                    padding: "20px",
+                    textAlign: "center",
+                    color: "#9ca3af",
+                    fontSize: "13px",
+                  }}
+                >
+                  現在、通知はありません
+                </div>
+              ) : (
+                notifications.map((notif) => (
+                  <div
+                    key={notif.id}
+                    onClick={() => handleNotificationClick(notif)}
+                    style={{
+                      padding: "12px",
+                      borderBottom: "1px solid #f9fafb",
+                      backgroundColor: notif.is_read ? "white" : "#f0f5ff",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s",
+                    }}
+                    onMouseOver={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#f3f4f6")
+                    }
+                    onMouseOut={(e) =>
+                      (e.currentTarget.style.backgroundColor = notif.is_read
+                        ? "white"
+                        : "#f0f5ff")
+                    }
+                  >
+                    <div
+                      style={{
+                        fontWeight: "bold",
+                        fontSize: "13px",
+                        color: "#1f2937",
+                      }}
+                    >
+                      {notif.title}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        color: "#4b5563",
+                        marginTop: "4px",
+                        lineHeight: "1.4",
+                      }}
+                    >
+                      {notif.message}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "10px",
+                        color: "#9ca3af",
+                        marginTop: "6px",
+                      }}
+                    >
+                      {new Date(notif.created_at).toLocaleDateString()}{" "}
+                      {new Date(notif.created_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* 👤 アクティブユーザーのメアド表示 */}
           <span style={{ fontWeight: "500" }}>
             👤 {currentActiveAccount.email}
           </span>
+
           <button
             onClick={handleLogout}
             style={{

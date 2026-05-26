@@ -11,6 +11,7 @@ import HistoryTab from "./components/HistoryTab";
 import SearchTab from "./components/SearchTab";
 import MyPageTab from "./components/MyPageTab";
 import HomeTab from "./components/HomeTab";
+import TransactionTab from "./components/TransactionTab";
 
 function App() {
   // 🔍 検索タブ用のアイテム（Ask AIの結果用）
@@ -41,7 +42,7 @@ function App() {
   const [currentTab, setCurrentTab] = useState("home");
   const [selectedItem, setSelectedItem] = useState(null);
   const [userLikes, setUserLikes] = useState([]);
-
+  const [activeTransactionId, setActiveTransactionId] = useState(null);
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
@@ -202,12 +203,15 @@ function App() {
       .then((response) => response.json())
       .then((data) => {
         if (data.status === "success") {
-          alert("ご購入ありがとうございました！");
+          // 💡 演出を変更：取引セッションの開始をユーザーにアナウンス
+          alert("商品の購入が完了しました！取引画面へ遷移します。");
           setSelectedItem(null);
           fetchAllItems();
-          fetchHomeRecommendations(myAppId); // 購買履歴ベースの再インファレンスを発火
+          fetchHomeRecommendations(myAppId);
           fetchUserLikes(myAppId);
-          if (currentTab === "mypage") setCurrentTab("home");
+
+          setActiveTransactionId(data.transaction_id);
+          setCurrentTab("transaction");
         } else {
           alert("購入に失敗しました。");
         }
@@ -268,6 +272,7 @@ function App() {
         handleLogout={handleLogout}
         setCurrentTab={setCurrentTab}
         myAppId={myAppId}
+        setActiveTransactionId={setActiveTransactionId}
       />
       <Navigation
         myAppId={myAppId}
@@ -333,6 +338,17 @@ function App() {
                 handlePurchaseItem={handlePurchaseItem}
                 setMyAppId={setMyAppId}
                 handleLogout={handleLogout}
+                setActiveTransactionId={setActiveTransactionId}
+                setCurrentTab={setCurrentTab}
+              />
+            )}
+
+            {/* 🚚 【新設：取引画面タブ】分岐条件をここに滑り込ませます */}
+            {currentTab === "transaction" && (
+              <TransactionTab
+                transactionId={activeTransactionId}
+                myAppId={myAppId}
+                setCurrentTab={setCurrentTab}
               />
             )}
 
