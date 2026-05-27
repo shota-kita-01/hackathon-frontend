@@ -14,11 +14,9 @@ import HomeTab from "./components/HomeTab";
 import TransactionTab from "./components/TransactionTab";
 
 function App() {
-  // 🔍 検索タブ用のアイテム（Ask AIの結果用）
   const [homeItems, setHomeItems] = useState([]);
   const [allItems, setAllItems] = useState([]);
 
-  // 🏠 【ホーム用】3段パーソナライズ専用のState
   const [homePersonalized, setHomePersonalized] = useState([]);
   const [homeUserFavorite, setHomeUserFavorite] = useState({
     title: "",
@@ -32,13 +30,11 @@ function App() {
   const [loginUser, setLoginUser] = useState(null);
   const [myAppId, setMyAppId] = useState(null);
 
-  // 🧠 AI推薦用の状態（State）
   const [moodText, setMoodText] = useState("");
   const [isRecommending, setIsRecommending] = useState(false);
   const [recommendMode, setRecommendMode] = useState("both");
   const [filterStatus, setFilterStatus] = useState("both");
 
-  // 🗺️ 画面遷移・モーダル・履歴用の状態（State）
   const [currentTab, setCurrentTab] = useState("home");
   const [selectedItem, setSelectedItem] = useState(null);
   const [userLikes, setUserLikes] = useState([]);
@@ -46,7 +42,6 @@ function App() {
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
-  // --- 1. ログイン状態の監視 ＆ バックエンド連動 ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(fireAuth, (user) => {
       if (user) {
@@ -87,7 +82,6 @@ function App() {
       .catch((error) => console.error("全件データの取得に失敗:", error));
   };
 
-  // 💡 新設したパーソナライズAPIを叩いて3段分のデータを一気に取得！
   const fetchHomeRecommendations = (userId) => {
     if (!userId) return;
     setIsRecommending(true);
@@ -112,7 +106,6 @@ function App() {
       fetchAllItems();
       fetchHomeRecommendations(myAppId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myAppId, filterStatus, recommendMode]);
 
   const fetchUserLikes = (userId) => {
@@ -125,7 +118,6 @@ function App() {
       .catch((err) => console.error("いいね一覧の取得に失敗:", err));
   };
 
-  // 💡 ホーム画面からの直接検索を受け付けるため、明示的な引数（explicitText）に対応
   const handleAiRecommend = (explicitText) => {
     const targetText =
       typeof explicitText === "string" ? explicitText : moodText;
@@ -145,7 +137,7 @@ function App() {
       body: JSON.stringify({
         user_id: myAppId,
         mood_text: targetText,
-        filter_status: "both", // 😎 【修正】選択状態に関わらず、常に売切を含む「both」で500件まるごとハント！
+        filter_status: "both",
       }),
     })
       .then((response) => response.json())
@@ -167,18 +159,16 @@ function App() {
       });
   };
 
-  // 💡 ホーム画面の検索バーから呼び出される中継・高速遷移ロケット関数
   const handleHomeSearch = (keyword) => {
-    setMoodText(keyword); // 1. 検索タブの入力テキストを同期
-    setCurrentTab("search"); // 2. 検索タブへ自動で切り替え
-    handleAiRecommend(keyword); // 3. State反映を待たずに、引数の文字で直接AI推薦を駆動！
+    setMoodText(keyword);
+    setCurrentTab("search");
+    handleAiRecommend(keyword);
     window.scrollTo(0, 0);
   };
 
-  // 💡 履歴タブの過去キーワードから呼ばれる「セット＆ジャンプ」中継関数（自動検索は非発火）
   const handleKeywordClick = (keyword) => {
-    setMoodText(keyword); // 1. 検索タブのテキストボックスに文字列を同期
-    setCurrentTab("search"); // 2. 検索タブに画面をスライド切り替え
+    setMoodText(keyword);
+    setCurrentTab("search");
     window.scrollTo(0, 0);
   };
 
@@ -203,7 +193,6 @@ function App() {
       .then((response) => response.json())
       .then((data) => {
         if (data.status === "success") {
-          // 💡 演出を変更：取引セッションの開始をユーザーにアナウンス
           alert("商品の購入が完了しました！取引画面へ遷移します。");
           setSelectedItem(null);
           fetchAllItems();
@@ -220,6 +209,16 @@ function App() {
         console.error("購入エラー:", error);
         alert("通信エラーが発生しました。");
       });
+  };
+
+  const handleNegotiationSuccess = (transactionId) => {
+    setSelectedItem(null);
+    fetchAllItems();
+    fetchHomeRecommendations(myAppId);
+    fetchUserLikes(myAppId);
+
+    setActiveTransactionId(transactionId);
+    setCurrentTab("transaction");
   };
 
   const handleLogout = () => {
@@ -299,7 +298,6 @@ function App() {
               />
             )}
 
-            {/* ✨ 【おすすめ・履歴タブ】 */}
             {currentTab === "history" && (
               <HistoryTab
                 myAppId={myAppId}
@@ -310,7 +308,6 @@ function App() {
               />
             )}
 
-            {/* 🔍 【検索タブ】 */}
             {currentTab === "search" && (
               <SearchTab
                 items={allItems}
@@ -329,7 +326,6 @@ function App() {
               />
             )}
 
-            {/* 👤 【マイページタブ】 */}
             {currentTab === "mypage" && (
               <MyPageTab
                 myAppId={myAppId}
@@ -343,7 +339,6 @@ function App() {
               />
             )}
 
-            {/* 🚚 【新設：取引画面タブ】分岐条件をここに滑り込ませます */}
             {currentTab === "transaction" && (
               <TransactionTab
                 transactionId={activeTransactionId}
@@ -352,7 +347,6 @@ function App() {
               />
             )}
 
-            {/* 📸 【出品タブ】 */}
             {currentTab === "sell" && (
               <ItemForm
                 sellerId={myAppId}
@@ -377,6 +371,7 @@ function App() {
         myAppId={myAppId}
         userLikes={userLikes}
         onLikeToggle={() => fetchUserLikes(myAppId)}
+        onNegotiationSuccess={handleNegotiationSuccess}
       />
     </div>
   );

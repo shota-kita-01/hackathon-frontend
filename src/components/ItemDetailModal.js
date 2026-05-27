@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import NegotiationSection from "./NegotiationSection";
+import DetailRecommendations from "./DetailRecommendations";
 
 function ItemDetailModal({
   selectedItem,
@@ -7,19 +9,16 @@ function ItemDetailModal({
   myAppId,
   userLikes,
   onLikeToggle,
+  onNegotiationSuccess,
 }) {
-  // 💡 2つの異なるAI推薦を格納するためにStateを分離
-  const [spaceItems, setSpaceItems] = useState([]); // 1. 空間的類似
-  const [timeItems, setTimeItems] = useState([]); // 2. 確率的時間遷移
+  const [spaceItems, setSpaceItems] = useState([]);
+  const [timeItems, setTimeItems] = useState([]);
   const [isCalculating, setIsCalculating] = useState(false);
-
-  // 💡 いいねの「即時反応」を実現するためのローカルステート
   const [localIsLiked, setLocalIsLiked] = useState(false);
 
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
-  // モーダルが開かれたら、親から渡されたいいねリストをもとに初期状態をセット
   useEffect(() => {
     if (selectedItem) {
       const isLikedInitially = userLikes.some(
@@ -32,14 +31,12 @@ function ItemDetailModal({
   useEffect(() => {
     if (!selectedItem || !myAppId) return;
 
-    // 🚀 ① 閲覧履歴API
     fetch(`${API_URL}/items/${selectedItem.id}/view`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: myAppId }),
     }).catch((err) => console.error("閲覧履歴記録エラー:", err));
 
-    // 🧠 ② 関連商品AI推薦（ハイブリッド2段ハント）
     setIsCalculating(true);
     setSpaceItems([]);
     setTimeItems([]);
@@ -48,7 +45,6 @@ function ItemDetailModal({
       .then((res) => res.json())
       .then((data) => {
         if (data) {
-          // 📊 抽出1: 同じカテゴリーから、意味（隠れ表現）が近いもの上位3つ
           if (
             data.carousel_space_similarity &&
             Array.isArray(data.carousel_space_similarity.items)
@@ -58,8 +54,6 @@ function ItemDetailModal({
             );
             setSpaceItems(filteredSpace.slice(0, 3));
           }
-
-          // 📊 抽出2: マルコフ遷移した未来のカテゴリーから、近いもの上位3つ
           if (
             data.carousel_time_transition &&
             Array.isArray(data.carousel_time_transition.items)
@@ -75,10 +69,8 @@ function ItemDetailModal({
       .finally(() => setIsCalculating(false));
   }, [selectedItem, myAppId]);
 
-  // いいねボタンが押された時の処理
   const handleLikeClick = () => {
     if (!myAppId || !selectedItem) return;
-
     setLocalIsLiked(!localIsLiked);
 
     fetch(`${API_URL}/items/${selectedItem.id}/like`, {
@@ -88,9 +80,7 @@ function ItemDetailModal({
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data.status === "success") {
-          onLikeToggle();
-        }
+        if (data.status === "success") onLikeToggle();
       })
       .catch((err) => {
         console.error("いいね通信エラー:", err);
@@ -99,9 +89,10 @@ function ItemDetailModal({
   };
 
   if (!selectedItem) return null;
-
-  // 💡 売り切れフラグ
   const isSoldOut = selectedItem.status === "sold_out";
+
+  // 💡 出品スタンスが「値下げは考えていない」に指定されている場合は交渉不可とする判定フラグ
+  const isNegotiable = selectedItem.seller_stance !== "値下げは考えていない";
 
   return (
     <div
@@ -162,7 +153,7 @@ function ItemDetailModal({
           🛍️ 商品詳細
         </h2>
 
-        {/* 💡 【修正】画像スタイルとエフェクトを HorizontalItemList と100%同期！ */}
+        {/* 商品画像 */}
         <div
           style={{
             position: "relative",
@@ -180,12 +171,11 @@ function ItemDetailModal({
               objectFit: "cover",
               borderRadius: "12px",
               display: "block",
-              opacity: isSoldOut ? 0.4 : 1, // ✨ 売り切れなら一律で 0.4 まで薄くする
-              filter: isSoldOut ? "grayscale(100%)" : "none", // ✨ 売り切れなら完全グレースケール（白黒）化
+              opacity: isSoldOut ? 0.4 : 1,
+              filter: isSoldOut ? "grayscale(100%)" : "none",
               transition: "all 0.3s ease",
             }}
           />
-          {/* ❌ 特大影付き斜めリボン（sold-ribbon-container-large） */}
           {isSoldOut && (
             <div className="sold-ribbon-container-large">
               <span className="sold-ribbon-text-large">SOLD</span>
@@ -193,6 +183,7 @@ function ItemDetailModal({
           )}
         </div>
 
+        {/* タイトル & いいね */}
         <div
           style={{
             display: "flex",
@@ -229,7 +220,7 @@ function ItemDetailModal({
           </button>
         </div>
 
-        {/* カテゴリーハッシュタグ */}
+        {/* タグ */}
         {selectedItem.tags && (
           <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
             <span
@@ -247,7 +238,7 @@ function ItemDetailModal({
           </div>
         )}
 
-        {/* 商品詳細メタデータシート */}
+        {/* メタデータシート */}
         <div
           style={{
             backgroundColor: "#f8fafc",
@@ -309,7 +300,7 @@ function ItemDetailModal({
           </div>
         </div>
 
-        {/* 商品説明文 */}
+        {/* 商品説明 */}
         <p
           style={{
             fontSize: "13px",
@@ -326,7 +317,7 @@ function ItemDetailModal({
           {selectedItem.description}
         </p>
 
-        {/* 価格 ＆ 購入セクション */}
+        {/* 💰 価格 & 今すぐ購入バー */}
         <div
           style={{
             display: "flex",
@@ -334,6 +325,7 @@ function ItemDetailModal({
             alignItems: "center",
             borderTop: "1px solid #eee",
             paddingTop: "15px",
+            marginBottom: "12px",
           }}
         >
           <span
@@ -348,7 +340,15 @@ function ItemDetailModal({
           </span>
 
           <button
-            onClick={() => handlePurchaseItem(selectedItem.id)}
+            onClick={() => {
+              if (
+                window.confirm(
+                  `${selectedItem.price.toLocaleString()}円でこの商品を購入しますか？`,
+                )
+              ) {
+                handlePurchaseItem(selectedItem.id);
+              }
+            }}
             disabled={isSoldOut}
             style={{
               padding: "10px 24px",
@@ -357,7 +357,7 @@ function ItemDetailModal({
               border: "none",
               borderRadius: "25px",
               fontWeight: "bold",
-              fontSize: "15px",
+              fontSize: "14px",
               cursor: isSoldOut ? "not-allowed" : "pointer",
               boxShadow: isSoldOut
                 ? "none"
@@ -365,205 +365,28 @@ function ItemDetailModal({
               transition: "all 0.2s",
             }}
           >
-            {isSoldOut ? "❌ 売り切れました" : "🛍️ 今すぐ購入する"}
+            {isSoldOut ? "❌ 売り切れました" : "🛍️ 今すぐ購入"}
           </button>
         </div>
 
-        {/* ===================================================
-            🔥 【ハイブリッド多次元AI推薦エリア（2段構成）】
-           =================================================== */}
-        <div
-          style={{
-            marginTop: "30px",
-            paddingTop: "5px",
-            borderTop: "1px solid #eee",
-            display: "flex",
-            flexDirection: "column",
-            gap: "25px",
-          }}
-        >
-          {/* 🥇 1段目：同じカテゴリーの空間類似推薦 */}
-          <div>
-            <h4
-              style={{
-                margin: "0 0 12px 0",
-                fontSize: "13px",
-                color: "#4f46e5",
-                fontWeight: "bold",
-              }}
-            >
-              🧠 この商品と似ているアイテム (空間的類似)
-            </h4>
-            {isCalculating ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  fontSize: "12px",
-                  color: "#666",
-                  padding: "10px",
-                }}
-              >
-                ⏳ 高速空間計算中...
-              </div>
-            ) : (
-              <div style={{ display: "flex", gap: "10px" }}>
-                {spaceItems.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => setSelectedItem(item)}
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      backgroundColor: "#f8fafc",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "12px",
-                      padding: "8px",
-                      cursor: "pointer",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "4px",
-                    }}
-                  >
-                    <img
-                      src={item.image_url}
-                      alt={item.name}
-                      style={{
-                        width: "100%",
-                        height: "70px",
-                        objectFit: "cover",
-                        borderRadius: "6px",
-                      }}
-                    />
-                    <div
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: "11px",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {item.name}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "11px",
-                        color: "#ff4d4d",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {item.price.toLocaleString()} 円
-                    </div>
-                  </div>
-                ))}
-                {spaceItems.length === 0 && (
-                  <div
-                    style={{
-                      fontSize: "11px",
-                      color: "#aaa",
-                      textAlign: "center",
-                      width: "100%",
-                      padding: "10px",
-                    }}
-                  >
-                    関連商品が見つかりませんでした
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+        {/* 💡 🥊 交渉セクション */}
+        {/* 一般出品 ＆ 販売中 ＆ 交渉許可（値下げ考えていない以外）の条件がすべて揃った時のみ、Flexボックスの下にフルサイズで表示 */}
+        {selectedItem.id >= 100000 && !isSoldOut && isNegotiable && (
+          <NegotiationSection
+            itemId={selectedItem.id}
+            currentPrice={selectedItem.price}
+            myAppId={myAppId}
+            onNegotiationSuccess={onNegotiationSuccess}
+          />
+        )}
 
-          {/* 🥈 2段目：マルコフ連鎖による時間遷移推薦 */}
-          <div>
-            <h4
-              style={{
-                margin: "0 0 12px 0",
-                fontSize: "13px",
-                color: "#10b981",
-                fontWeight: "bold",
-              }}
-            >
-              ✨ この商品を見ている人におすすめ (こんな商品も見ています)
-            </h4>
-            {isCalculating ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  fontSize: "12px",
-                  color: "#666",
-                  padding: "10px",
-                }}
-              >
-                ⏳ 確率遷移シミュレート中...
-              </div>
-            ) : (
-              <div style={{ display: "flex", gap: "10px" }}>
-                {timeItems.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => setSelectedItem(item)}
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      backgroundColor: "#f8fafc",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "12px",
-                      padding: "8px",
-                      cursor: "pointer",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "4px",
-                    }}
-                  >
-                    <img
-                      src={item.image_url}
-                      alt={item.name}
-                      style={{
-                        width: "100%",
-                        height: "70px",
-                        objectFit: "cover",
-                        borderRadius: "6px",
-                      }}
-                    />
-                    <div
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: "11px",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {item.name}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "11px",
-                        color: "#ff4d4d",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {item.price.toLocaleString()} 円
-                    </div>
-                  </div>
-                ))}
-                {timeItems.length === 0 && (
-                  <div
-                    style={{
-                      fontSize: "11px",
-                      color: "#aaa",
-                      textAlign: "center",
-                      width: "100%",
-                      padding: "10px",
-                    }}
-                  >
-                    次の候補が見つかりませんでした
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        {/* 🧠 2段多次元AI推薦エリア（空間的類似 ＆ マルコフ連鎖時間遷移） */}
+        <DetailRecommendations
+          isCalculating={isCalculating}
+          spaceItems={spaceItems}
+          timeItems={timeItems}
+          setSelectedItem={setSelectedItem}
+        />
       </div>
     </div>
   );
