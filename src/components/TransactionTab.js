@@ -10,7 +10,7 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
-  // ⏱️ 仕組み: 取引基本情報とメッセージ履歴をフェッチ（内部カプセル化により警告を抑止）
+  // ⏱️ 仕組み: 取引基本情報とメッセージ履歴をフェッチ
   useEffect(() => {
     if (!transactionId) return;
 
@@ -67,9 +67,14 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
   const handleProgressStep = () => {
     if (!txData) return;
 
+    // 💡 公式カタログ品（seller_idが無い）の場合は、倉庫ロボットが出荷するストーリーにする
+    const isOfficial = !txData.seller_id;
+
     const confirmMsg =
       txData.transaction_status === "shipping_pending"
-        ? "商品の発送を完了しましたか？（購入者へ通知されます）"
+        ? isOfficial
+          ? "【デモ操作】倉庫から商品を即時出荷させますか？"
+          : "商品の発送を完了しましたか？（購入者へ通知されます）"
         : "商品を受け取り、中身を確認しましたか？（取引が完了します）";
 
     if (!window.confirm(confirmMsg)) return;
@@ -95,6 +100,7 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
 
   const isSeller = myAppId === txData.seller_id;
   const isBuyer = myAppId === txData.buyer_id;
+  const isOfficialItem = !txData.seller_id; // 💡 公式カタログ品かどうかの判定フラグ
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -136,7 +142,9 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
           }}
         />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: "12px", color: "#6b7280" }}>取引中</div>
+          <div style={{ fontSize: "12px", color: "#6b7280" }}>
+            {isOfficialItem ? "🏢 公式ストア取引" : "🤝 ユーザー間取引"}
+          </div>
           <div style={{ fontWeight: "bold", color: "#333" }}>
             {txData.item_name}
           </div>
@@ -151,8 +159,8 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
       {/* 🚥 取引ステータス・アクションエリア */}
       <div
         style={{
-          backgroundColor: "#fff9f9",
-          border: "1px solid #ffcccc",
+          backgroundColor: isOfficialItem ? "#f5f3ff" : "#fff9f9", // 公式品なら上品な紫台座に
+          border: isOfficialItem ? "1px solid #ddd6fe" : "1px solid #ffcccc",
           padding: "20px",
           borderRadius: "16px",
           textAlign: "center",
@@ -166,9 +174,11 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
 
         <div style={{ fontSize: "13px", color: "#666", marginBottom: "15px" }}>
           {txData.transaction_status === "shipping_pending" &&
-            (isSeller
-              ? "商品を発送し、発送通知を送ってください。"
-              : "出品者からの発送通知をお待ちください。")}
+            (isOfficialItem
+              ? "公式カタログ品のため、システムが自動で発送準備を行っています。"
+              : isSeller
+                ? "商品を発送し、発送通知を送ってください。"
+                : "出品者からの発送通知をお待ちください。")}
           {txData.transaction_status === "shipped" &&
             (isBuyer
               ? "商品が届いたら内容を確認し、受取評価をしてください。"
@@ -178,23 +188,31 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
         </div>
 
         {/* 権利に応じたダイナミックボタン */}
-        {txData.transaction_status === "shipping_pending" && isSeller && (
-          <button
-            onClick={handleProgressStep}
-            style={{
-              width: "100%",
-              padding: "12px",
-              backgroundColor: "#ff4d4d",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
-          >
-            商品の発送を通知する
-          </button>
-        )}
+        {/* 💡 【デモ詰まり防止ハック】公式品の場合、発送通知ボタンを押せる出品者が不在なので、購入者が「倉庫から即時出荷する」ボタンを代わりに叩いてフェーズを進められるように救済 */}
+        {txData.transaction_status === "shipping_pending" &&
+          (isSeller || (isOfficialItem && isBuyer)) && (
+            <button
+              onClick={handleProgressStep}
+              style={{
+                width: "100%",
+                padding: "12px",
+                backgroundColor: isOfficialItem ? "#7c3aed" : "#ff4d4d", // 公式品ならメカニカルな紫
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                boxShadow: isOfficialItem
+                  ? "0 4px 12px rgba(124,58,237,0.2)"
+                  : "none",
+              }}
+            >
+              {isOfficialItem
+                ? "⚡ 【デモ用】倉庫から即時出荷する"
+                : "商品の発送を通知する"}
+            </button>
+          )}
+
         {txData.transaction_status === "shipped" && isBuyer && (
           <button
             onClick={handleProgressStep}
@@ -250,7 +268,40 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
           }}
         >
           {messages.map((msg, idx) => {
+            const isBot = msg.sender_id === 0; // 💡 公式システムBot判定
             const isMe = msg.sender_id === myAppId;
+
+            // 🤖 【UX大改造】公式Botからのメッセージは中央にシステム通知風にマウント
+            if (isBot) {
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    alignSelf: "center",
+                    maxWidth: "90%",
+                    margin: "6px 0",
+                    animation: "fadeIn 0.3s ease-out",
+                  }}
+                >
+                  <div
+                    style={{
+                      backgroundColor: "#f1f5f9", // スマートなスレートグレー
+                      color: "#475569",
+                      padding: "10px 14px",
+                      borderRadius: "12px",
+                      fontSize: "12px",
+                      lineHeight: "1.5",
+                      border: "1px solid #cbd5e1",
+                      textAlign: "center",
+                    }}
+                  >
+                    {msg.message}
+                  </div>
+                </div>
+              );
+            }
+
+            // 👤 通常のユーザー間チャットバブル
             return (
               <div
                 key={idx}
@@ -298,7 +349,7 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
                 marginTop: "20px",
               }}
             >
-              メッセージを送って挨拶しましょう
+              メッセージを送して挨拶しましょう
             </div>
           )}
         </div>

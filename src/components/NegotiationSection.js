@@ -5,6 +5,7 @@ function NegotiationSection({
   currentPrice,
   myAppId,
   onNegotiationSuccess,
+  setIsModalLocked, // 💡 親（ItemDetailModal）の画面拘束スイッチをPropsとしてハント
 }) {
   const [negoMode, setNegoMode] = useState("none");
   const [wishPrice, setWishPrice] = useState("");
@@ -15,10 +16,18 @@ function NegotiationSection({
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
+  // 🔒 安全に交渉状態を抜け出し、モーダルのロックを完全解除する専用ヘルパー
+  const resetNegoMode = () => {
+    setNegoMode("none");
+    if (setIsModalLocked) setIsModalLocked(false); // 💡 ユーザーをホールドから解放
+  };
+
   const handleLaunchNegotiation = (e) => {
     e.preventDefault();
     if (!wishPrice || !negoMessage.trim()) return;
 
+    // 💡 通信が始まる「loading」の瞬間に、画面遷移およびモーダルクローズを強制ロック！
+    if (setIsModalLocked) setIsModalLocked(true);
     setNegoMode("loading");
 
     fetch(`${API_URL}/items/${itemId}/negotiate`, {
@@ -32,13 +41,24 @@ function NegotiationSection({
     })
       .then((res) => res.json())
       .then((data) => {
+        // 🔒 【数理制約】サーバーから正常に応答が返ってきた時点で、成否に関わらず「人生で1回きりの権利」をブラウザに永久刻印
+        localStorage.setItem(
+          `fleamarket_negotiated_${myAppId}_${itemId}`,
+          "true",
+        );
+
         setNegoResult(data);
         setNegoMode("result");
+
+        // 一発成立（ACCEPT）した場合は即座にロックを外して、次の取引画面への自動ワープを滑らかにする
+        if (data.status === "ACCEPT" && setIsModalLocked) {
+          setIsModalLocked(false);
+        }
       })
       .catch((err) => {
         console.error("価格交渉エラー:", err);
         alert("交渉通信中にエラーが発生しました。");
-        setNegoMode("none");
+        resetNegoMode(); // エラーが起きた場合は安全にロックを解除して戻す
       });
   };
 
@@ -59,6 +79,7 @@ function NegotiationSection({
         alert(
           `🎉 交渉妥協案（${negoResult.settlement_price.toLocaleString()}円）での購入が確定しました！`,
         );
+        if (setIsModalLocked) setIsModalLocked(false); // 💡 ワープ直前に確実にロックを解除
         onNegotiationSuccess(data.transaction_id);
       })
       .catch((err) => {
@@ -72,7 +93,7 @@ function NegotiationSection({
     <div
       style={{ width: "100%", boxSizing: "border-box", marginBottom: "15px" }}
     >
-      {/* 💡 フルサイズ化により、デモでのアピール度と押しやすさを劇的に向上 */}
+      {/* 交渉開始ボタン */}
       {negoMode === "none" && (
         <button
           onClick={() => setNegoMode("input")}
@@ -94,7 +115,7 @@ function NegotiationSection({
         </button>
       )}
 
-      {/* ❶ 入力フォーム（幅計算を 100% 密着に変更して超綺麗に） */}
+      {/* ❶ 入力フォーム */}
       {negoMode === "input" && (
         <div
           style={{
@@ -117,6 +138,35 @@ function NegotiationSection({
           >
             🤖 AI代理調停システム起動中
           </div>
+
+          {/* 💡 🚨 ゲーム理論に基づいた総当たりハックを完全封殺するロゼピンクの警告バナー */}
+          <div
+            style={{
+              backgroundColor: "#fff1f2",
+              border: "1px solid #fecdd3",
+              borderRadius: "8px",
+              padding: "10px 12px",
+              fontSize: "11px",
+              color: "#e11d48",
+              lineHeight: "1.4",
+              marginTop: "-4px",
+              marginBottom: "14px",
+              textAlign: "left",
+              boxSizing: "border-box",
+              width: "100%",
+            }}
+          >
+            <strong>🚨 本商品への価格交渉は【1人1回限定】です</strong>
+            <div
+              style={{ marginTop: "3px", color: "#be123c", fontWeight: "500" }}
+            >
+              一度交渉が開始されると、成否（成立・決裂）にかかわらず枠が消費されます。
+              システムをハックする目的の連続打診を防ぐため、
+              <strong>決裂後の再ネゴシエーションは一切できません。</strong>
+              希望価格と熱意文は慎重に入力してください。
+            </div>
+          </div>
+
           <form
             onSubmit={handleLaunchNegotiation}
             style={{ display: "flex", flexDirection: "column", gap: "14px" }}
@@ -193,7 +243,7 @@ function NegotiationSection({
             >
               <button
                 type="button"
-                onClick={() => setNegoMode("none")}
+                onClick={resetNegoMode} // 💡 安全な共通リセット関数へ統合
                 style={{
                   padding: "8px 16px",
                   backgroundColor: "white",
@@ -226,7 +276,7 @@ function NegotiationSection({
         </div>
       )}
 
-      {/* ❷ ローディング */}
+      {/* ❷ ローディング (画面ロック中) */}
       {negoMode === "loading" && (
         <div
           style={{
@@ -257,7 +307,7 @@ function NegotiationSection({
         </div>
       )}
 
-      {/* ❸ 結果画面 */}
+      {/* ❸ 結果画面 (保留中は画面ロック継続) */}
       {negoMode === "result" && negoResult && (
         <div
           style={{
@@ -266,13 +316,14 @@ function NegotiationSection({
               negoResult.status === "ACCEPT"
                 ? "#f0fdf4"
                 : negoResult.status === "COUNTER"
-                  ? "#fef3c7"
+                  ? "#fffbeb"
                   : "#fef2f2",
             border: `1px solid ${negoResult.status === "ACCEPT" ? "#bbf7d0" : negoResult.status === "COUNTER" ? "#fde68a" : "#fca5a5"}`,
             borderRadius: "16px",
             boxSizing: "border-box",
           }}
         >
+          {/* A: 交渉成立（ACCEPT） */}
           {negoResult.status === "ACCEPT" && (
             <div
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
@@ -332,6 +383,7 @@ function NegotiationSection({
             </div>
           )}
 
+          {/* B: 妥協案提示（COUNTER） */}
           {negoResult.status === "COUNTER" && (
             <div
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
@@ -378,7 +430,7 @@ function NegotiationSection({
               </div>
               <div style={{ display: "flex", gap: "10px" }}>
                 <button
-                  onClick={() => setNegoMode("none")}
+                  onClick={resetNegoMode} // 💡 見送り時は安全にロックを解除
                   style={{
                     flex: 1,
                     padding: "10px",
@@ -413,6 +465,7 @@ function NegotiationSection({
             </div>
           )}
 
+          {/* C: 交渉決裂（REJECT） */}
           {negoResult.status === "REJECT" && (
             <div
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
@@ -440,7 +493,7 @@ function NegotiationSection({
                 「{negoResult.ai_message}」
               </div>
               <button
-                onClick={() => setNegoMode("none")}
+                onClick={resetNegoMode} // 💡 諦めて戻る時に安全にロックを解除
                 style={{
                   width: "100%",
                   padding: "10px",

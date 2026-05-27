@@ -12,6 +12,64 @@ function AiNegoFormSection({
   const isNegoEnabled =
     sellerStance === "売り切りたい" || sellerStance === "急いでいない";
 
+  // 🧠 各スタンスの数理ロジックを直感的に説明する動的テキスト辞書
+  const stanceDescriptions = {
+    売り切りたい: (
+      <div
+        style={{
+          fontSize: "12px",
+          color: "#16a34a",
+          backgroundColor: "#f0fdf4",
+          padding: "12px",
+          borderRadius: "8px",
+          border: "1px solid #bbf7d0",
+          lineHeight: "1.5",
+        }}
+      >
+        <strong>🕊️ すぐに売り切りたい（ハト派モード）</strong>
+        <br />
+        AIが値引き・即時成立に非常に寛容になります。入力いただいた最低価格以上で交渉された場合、相手の希望額のまま
+        <strong>交渉を自動で一発成立（即時決済）</strong>させます。
+      </div>
+    ),
+    急いでいない: (
+      <div
+        style={{
+          fontSize: "12px",
+          color: "#d97706",
+          backgroundColor: "#fffbeb",
+          padding: "12px",
+          borderRadius: "8px",
+          border: "1px solid #fef3c7",
+          lineHeight: "1.5",
+        }}
+      >
+        <strong>🦅 急いでいない（タカ派モード）</strong>
+        <br />
+        AIが出品者利益の最大化を狙って強気になります。入力いただいた最低価格以上の交渉であっても即座に承諾せず、現在価格と買い手希望額の中間付近を計算し、
+        <strong>AIがスマートな妥協案（カウンター）を提示して両者へ仲裁</strong>
+        します。
+      </div>
+    ),
+    値下げは考えていない: (
+      <div
+        style={{
+          fontSize: "12px",
+          color: "#2563eb",
+          backgroundColor: "#eff6ff",
+          padding: "12px",
+          borderRadius: "8px",
+          border: "1px solid #bfdbfe",
+          lineHeight: "1.5",
+        }}
+      >
+        <strong>🔒 値下げは考えていない（完全固定モード）</strong>
+        <br />
+        AI自動交渉を完全にオフにします。購入者側の画面には価格交渉ボタン自体が表示されなくなり、メルカリ本来の固定価格のみでのクリーンな販売となります。
+      </div>
+    ),
+  };
+
   return (
     <div
       style={{
@@ -33,6 +91,7 @@ function AiNegoFormSection({
             fontWeight: "bold",
             color: "#6b21a8",
             display: "block",
+            marginBottom: "2px",
           }}
         >
           🤖 AI代理交渉（おまかせ調停）のパラメータ設定
@@ -40,6 +99,26 @@ function AiNegoFormSection({
         <span style={{ fontSize: "11px", color: "#7c3aed" }}>
           購入者からの値引き打診をAIエージェントに自動返答させる裏ルールを定義します。
         </span>
+      </div>
+
+      {/* 🛡️ 🔑 矛盾を解消したセキュリティアナウンスバナー */}
+      <div
+        style={{
+          backgroundColor: "#faf5ff",
+          border: "1px solid #e9d5ff",
+          borderRadius: "8px",
+          padding: "10px 12px",
+          fontSize: "11px",
+          color: "#5b21b6",
+          lineHeight: "1.4",
+        }}
+      >
+        <strong>⚠️ 🔒 セキュリティルール（完全非公開情報）</strong>
+        <div style={{ marginTop: "3px", color: "#6b21a8" }}>
+          交渉有効時の<strong>【出品スタンス】</strong>
+          および<strong>【最低許容価格】</strong>
+          は、他のユーザー（買い手）にはシステム上一切開示されません。裏側のAI調停のロジックにのみ安全に使用されます。
+        </div>
       </div>
 
       {/* 🤝 出品スタンス */}
@@ -64,18 +143,18 @@ function AiNegoFormSection({
           }}
         >
           <option value="">-- 出品スタンスを選択してください --</option>
-          <option value="売り切りたい">
-            すぐに売り切りたい（AIが値引き・即時成立に寛容になります）
-          </option>
-          <option value="急いでいない">
-            急いでいない（AIが強気になり、中間価格での妥協案を提示しやすくなります）
-          </option>
-          {/* 💡 新設オプション */}
-          <option value="値下げは考えていない">
-            値下げは考えていない（AI交渉をオフにし、固定価格で販売します）
-          </option>
+          <option value="売り切りたい">すぐに売り切りたい</option>
+          <option value="急いでいない">急いでいない</option>
+          <option value="値下げは考えていない">値下げは考えていない</option>
         </select>
       </div>
+
+      {/* 💡 選んだスタンスに応じて、数理的な挙動説明を動的にマウントするエリア */}
+      {sellerStance && (
+        <div style={{ animation: "fadeIn 0.2s ease-out" }}>
+          {stanceDescriptions[sellerStance]}
+        </div>
+      )}
 
       {/* 🔒 最低許容価格（条件付きレンダリング） */}
       {isNegoEnabled && (
@@ -85,17 +164,21 @@ function AiNegoFormSection({
             flexDirection: "column",
             gap: "6px",
             animation: "fadeIn 0.2s ease-out",
+            marginTop: "4px",
           }}
         >
+          {/* 💡 ラベルに赤い必須マークを追加 */}
           <label
             style={{ fontSize: "12px", fontWeight: "bold", color: "#5b21b6" }}
           >
-            🔒 最低許容価格（裏のデッドライン価格 / 円）
+            🔒 最低許容価格（裏のデッドライン価格 / 円）{" "}
+            <span style={{ color: "#ff4d4d" }}>*</span>
           </label>
+          {/* 💡 プレースホルダーを必須用の文言に調整 */}
           <input
             type="number"
             min="0"
-            placeholder="空欄なら販売価格と同額（これ未満はAIが自動で門前払いします）"
+            placeholder="交渉に応じる最低許容金額を記入してください"
             value={minAcceptablePrice}
             onChange={(e) => handleMinPriceChange(e.target.value)}
             onKeyDown={(e) => {
@@ -119,8 +202,11 @@ function AiNegoFormSection({
               ⚠️ {minPriceError}
             </span>
           ) : (
-            <span style={{ color: "#7c3aed", fontSize: "11px" }}>
-              ※ この最低価格は他のユーザー（買い手）には一切開示されません。
+            <span
+              style={{ color: "#7c3aed", fontSize: "11px", fontWeight: "500" }}
+            >
+              ※
+              繰り返しますが、あなたが設定したデッドライン金額や内部パラメータが買い手に漏れることは絶対にありません。
             </span>
           )}
         </div>

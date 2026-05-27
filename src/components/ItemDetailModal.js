@@ -10,11 +10,16 @@ function ItemDetailModal({
   userLikes,
   onLikeToggle,
   onNegotiationSuccess,
+  setEditingItem, // 💡 親から引き継いだ編集データセット関数をキャッチ
+  setCurrentTab, // 💡 親から引き継いだタブ切り替え関数をキャッチ
 }) {
   const [spaceItems, setSpaceItems] = useState([]);
   const [timeItems, setTimeItems] = useState([]);
   const [isCalculating, setIsCalculating] = useState(false);
   const [localIsLiked, setLocalIsLiked] = useState(false);
+
+  // 🔒 【新設】AIが計算中、または妥協案提示の保留中にモーダルを強制ロックするState
+  const [isModalLocked, setIsModalLocked] = useState(false);
 
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
@@ -94,8 +99,31 @@ function ItemDetailModal({
   // 💡 出品スタンスが「値下げは考えていない」に指定されている場合は交渉不可とする判定フラグ
   const isNegotiable = selectedItem.seller_stance !== "値下げは考えていない";
 
+  // 💡 【重要数理】この商品の出品者が、今ログインしている自分（myAppId）かどうかを厳格に判定
+  const isMyItem =
+    selectedItem.seller_id &&
+    Number(selectedItem.seller_id) === Number(myAppId);
+
+  // 🛑 【数理制約】過去にこの商品を値切ったことがあるかをlocalStorageのトークンからハント
+  const hasAlreadyNegotiated =
+    localStorage.getItem(
+      `fleamarket_negotiated_${myAppId}_${selectedItem.id}`,
+    ) === "true";
+
+  // 📝 訂正ボタンが押された時のフォーム復元ワープ処理
+  const handleEditClick = () => {
+    setEditingItem(selectedItem); // 1. この商品のすべてのデータを「編集対象」として親のStateにロックオン
+    setCurrentTab("sell"); // 2. 画面のタブを出品フォーム（"sell"）に強制ワープ
+    setSelectedItem(null); // 3. 開いている詳細モーダルを綺麗にクローズ
+  };
+
   return (
     <div
+      onClick={() => {
+        // 💡 交渉中（モーダルロック時）は背景をクリックしても絶対に閉じないようにガード
+        if (isModalLocked) return;
+        setSelectedItem(null);
+      }}
       style={{
         position: "fixed",
         top: 0,
@@ -111,6 +139,7 @@ function ItemDetailModal({
       }}
     >
       <div
+        onClick={(e) => e.stopPropagation()} // モーダル本体のクリックによるクローズを防止
         style={{
           backgroundColor: "white",
           borderRadius: "20px",
@@ -125,13 +154,14 @@ function ItemDetailModal({
       >
         {/* ✕ボタン */}
         <button
-          onClick={() => setSelectedItem(null)}
+          onClick={() => !isModalLocked && setSelectedItem(null)} // 💡 ロック中はクローズ関数を完全遮断
+          disabled={isModalLocked}
           style={{
             position: "absolute",
             top: "15px",
             right: "15px",
             border: "none",
-            backgroundColor: "#f3f4f6",
+            backgroundColor: isModalLocked ? "#e5e7eb" : "#f3f4f6", // ロック時はグレーに
             borderRadius: "50%",
             width: "32px",
             height: "32px",
@@ -139,7 +169,7 @@ function ItemDetailModal({
             justifyContent: "center",
             alignItems: "center",
             fontSize: "16px",
-            cursor: "pointer",
+            cursor: isModalLocked ? "not-allowed" : "pointer", // 禁止マークスタイル
             color: "#6b7280",
             transition: "background-color 0.2s",
           }}
@@ -279,7 +309,7 @@ function ItemDetailModal({
               ✨ 商品の状態
             </span>
             <span style={{ fontWeight: "700", color: "#334155" }}>
-              {selectedItem.item_condition || "新品・未使用"}
+              {selectedItem.item_condition || "目立った傷や汚れなし"}
             </span>
           </div>
           <div
@@ -339,48 +369,94 @@ function ItemDetailModal({
             {selectedItem.price.toLocaleString()} 円
           </span>
 
-          <button
-            onClick={() => {
-              if (
-                window.confirm(
-                  `${selectedItem.price.toLocaleString()}円でこの商品を購入しますか？`,
-                )
-              ) {
-                handlePurchaseItem(selectedItem.id);
-              }
-            }}
-            disabled={isSoldOut}
-            style={{
-              padding: "10px 24px",
-              backgroundColor: isSoldOut ? "#cbd5e1" : "#ff4d4d",
-              color: isSoldOut ? "#94a3b8" : "white",
-              border: "none",
-              borderRadius: "25px",
-              fontWeight: "bold",
-              fontSize: "14px",
-              cursor: isSoldOut ? "not-allowed" : "pointer",
-              boxShadow: isSoldOut
-                ? "none"
-                : "0 4px 12px rgba(255, 77, 77, 0.2)",
-              transition: "all 0.2s",
-            }}
-          >
-            {isSoldOut ? "❌ 売り切れました" : "🛍️ 今すぐ購入"}
-          </button>
+          {isMyItem && !isSoldOut ? (
+            <button
+              onClick={handleEditClick}
+              style={{
+                padding: "10px 24px",
+                backgroundColor: "#4f46e5",
+                color: "white",
+                border: "none",
+                borderRadius: "25px",
+                fontWeight: "bold",
+                fontSize: "14px",
+                cursor: "pointer",
+                boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
+                transition: "all 0.2s",
+              }}
+            >
+              📝 出品内容を訂正する
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                if (
+                  window.confirm(
+                    `${selectedItem.price.toLocaleString()}円でこの商品を購入しますか？`,
+                  )
+                ) {
+                  handlePurchaseItem(selectedItem.id);
+                }
+              }}
+              disabled={isSoldOut}
+              style={{
+                padding: "10px 24px",
+                backgroundColor: isSoldOut ? "#cbd5e1" : "#ff4d4d",
+                color: isSoldOut ? "#94a3b8" : "white",
+                border: "none",
+                borderRadius: "25px",
+                fontWeight: "bold",
+                fontSize: "14px",
+                cursor: isSoldOut ? "not-allowed" : "pointer",
+                boxShadow: isSoldOut
+                  ? "none"
+                  : "0 4px 12px rgba(255, 77, 77, 0.2)",
+                transition: "all 0.2s",
+              }}
+            >
+              {isSoldOut ? "❌ 売り切れました" : "🛍️ 今すぐ購入"}
+            </button>
+          )}
         </div>
 
         {/* 💡 🥊 交渉セクション */}
-        {/* 一般出品 ＆ 販売中 ＆ 交渉許可（値下げ考えていない以外）の条件がすべて揃った時のみ、Flexボックスの下にフルサイズで表示 */}
-        {selectedItem.id >= 100000 && !isSoldOut && isNegotiable && (
-          <NegotiationSection
-            itemId={selectedItem.id}
-            currentPrice={selectedItem.price}
-            myAppId={myAppId}
-            onNegotiationSuccess={onNegotiationSuccess}
-          />
+        {/* 条件式に 「かつ、まだ過去に一度も交渉していないこと（!hasAlreadyNegotiated）」を厳格に追記 */}
+        {selectedItem.id >= 100000 &&
+          !isSoldOut &&
+          isNegotiable &&
+          !isMyItem &&
+          !hasAlreadyNegotiated && (
+            <NegotiationSection
+              itemId={selectedItem.id}
+              currentPrice={selectedItem.price}
+              myAppId={myAppId}
+              onNegotiationSuccess={onNegotiationSuccess}
+              setIsModalLocked={setIsModalLocked} // 💡 【追記】交渉コンポーネントにロック関数を引き渡す
+            />
+          )}
+
+        {/* 🛑 交渉履歴バナー：すでに交渉済みの場合は、枠の代わりに警告警告表示を出す */}
+        {hasAlreadyNegotiated && !isSoldOut && !isMyItem && (
+          <div
+            style={{
+              marginTop: "15px",
+              padding: "12px",
+              backgroundColor: "#fff1f2",
+              border: "1px solid #fecdd3",
+              borderRadius: "12px",
+              color: "#e11d48",
+              fontSize: "12px",
+              fontWeight: "bold",
+              textAlign: "center",
+              animation: "fadeIn 0.2s ease-out",
+            }}
+          >
+            ⚠️
+            この商品に対するあなたのAI代理交渉枠（1人1商品につき1回限定）は既に消費されています。
+          </div>
         )}
 
-        {/* 🧠 2段多次元AI推薦エリア（空間的類似 ＆ マルコフ連鎖時間遷移） */}
+        {/* 🧠 2段多次元AI推薦エリア */}
         <DetailRecommendations
           isCalculating={isCalculating}
           spaceItems={spaceItems}

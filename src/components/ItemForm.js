@@ -8,25 +8,47 @@ import {
 } from "./FormConstants";
 import AiNegoFormSection from "./AiNegoFormSection";
 
-function ItemForm({ sellerId, onSuccess }) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [tags, setTags] = useState("");
-  const [itemCondition, setItemCondition] = useState("");
-  const [sellerName, setSellerName] = useState("");
-  const [shippingDays, setShippingDays] = useState("");
+function ItemForm({ sellerId, editingItem, onSuccess }) {
+  // 💡 editingItem が存在する場合は、その既存データを初期値にハント（自動復元）する
+  const [name, setName] = useState(editingItem ? editingItem.name : "");
+  const [description, setDescription] = useState(
+    editingItem ? editingItem.description : "",
+  );
+  const [price, setPrice] = useState(editingItem ? editingItem.price : "");
+  const [imageUrl, setImageUrl] = useState(
+    editingItem ? editingItem.image_url : "",
+  );
+  const [tags, setTags] = useState(editingItem ? editingItem.tags : "");
+  const [itemCondition, setItemCondition] = useState(
+    editingItem ? editingItem.item_condition : "",
+  );
+  const [sellerName, setSellerName] = useState(
+    editingItem ? editingItem.seller_nickname || editingItem.seller_name : "",
+  );
+  const [shippingDays, setShippingDays] = useState(
+    editingItem ? editingItem.shipping_days : "",
+  );
   const [priceError, setPriceError] = useState("");
 
   // 🥊 AI自動交渉管理用のState
-  const [minAcceptablePrice, setMinAcceptablePrice] = useState("");
-  const [sellerStance, setSellerStance] = useState("");
+  const [minAcceptablePrice, setMinAcceptablePrice] = useState(
+    editingItem ? editingItem.min_acceptable_price : "",
+  );
+  const [sellerStance, setSellerStance] = useState(
+    editingItem ? editingItem.seller_stance : "",
+  );
   const [minPriceError, setMinPriceError] = useState("");
 
-  const [isAiChecked, setIsAiChecked] = useState(false);
+  // 🛡️ AI安全チェック管理用のState
+  // 💡 編集モードの場合は、すでに過去の審査をパスして出品されているため、デフォルトでチェック済(true)にする親切数理設計
+  const [isAiChecked, setIsAiChecked] = useState(editingItem ? true : false);
   const [isCheckingSafety, setIsCheckingSafety] = useState(false);
-  const [safetyCheckMessage, setSafetyCheckMessage] = useState("");
+  const [safetyCheckMessage, setSafetyCheckMessage] = useState(
+    editingItem
+      ? "📝 出品内容の訂正モードです（再チェックを省略して上書き保存できます）"
+      : "",
+  );
+
   const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
   const [isEstimatingPrice, setIsEstimatingPrice] = useState(false);
 
@@ -207,6 +229,16 @@ function ItemForm({ sellerId, onSuccess }) {
     }
 
     if (
+      sellerStance !== "値下げは考えていない" &&
+      !String(minAcceptablePrice).trim()
+    ) {
+      alert(
+        "交渉を受け付ける場合は、最低許容価格（デッドライン価格）を入力してください！",
+      );
+      return;
+    }
+
+    if (
       !name ||
       !description ||
       !tags ||
@@ -233,8 +265,14 @@ function ItemForm({ sellerId, onSuccess }) {
           ? parseInt(minAcceptablePrice, 10)
           : parseInt(price, 10);
 
-    fetch(`${BASE_API_URL}/items`, {
-      method: "POST",
+    // 💡 【重要】編集モードかどうかに応じて、叩くAPIのエンドポイントとリクエストメソッドをシームレスに切り替える
+    const targetUrl = editingItem
+      ? `${BASE_API_URL}/items/${editingItem.id}`
+      : `${BASE_API_URL}/items`;
+    const targetMethod = editingItem ? "PUT" : "POST";
+
+    fetch(targetUrl, {
+      method: targetMethod,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: name,
@@ -267,13 +305,13 @@ function ItemForm({ sellerId, onSuccess }) {
           setMinPriceError("");
           setIsAiChecked(false);
           setSafetyCheckMessage("");
-          onSuccess();
+          onSuccess(); // 🚀 親へ成功を通知 (App.js側でメッセージ分岐とリロードが走ります)
         } else {
-          alert("出品に失敗しました: " + data.message);
+          alert("処理に失敗しました: " + data.message);
         }
       })
       .catch((error) => {
-        console.error("出品エラー:", error);
+        console.error("通信エラー:", error);
         alert("通信エラーが発生しました。");
       });
   };
@@ -288,6 +326,14 @@ function ItemForm({ sellerId, onSuccess }) {
   const isCheckBtnDisabled =
     isCheckingSafety || !name.trim() || !description.trim();
 
+  // 💡 【リファクタリング】4箇所に乱立していたバリデーション判定を一本の定数に集約 (DRY原則)
+  // 💡 交渉有効（考えていない以外）のとき、最低価格が「空（未入力）」または「数理エラー」ならボタンを無効化！
+  const isSubmitDisabled =
+    !isAiChecked ||
+    !!priceError ||
+    (sellerStance !== "値下げは考えていない" &&
+      (!String(minAcceptablePrice).trim() || !!minPriceError));
+
   return (
     <div
       style={{
@@ -299,6 +345,7 @@ function ItemForm({ sellerId, onSuccess }) {
         boxSizing: "border-box",
       }}
     >
+      {/* 💡 編集状態かどうかに応じて見出しテキストを動的に切り替え */}
       <h2
         style={{
           fontSize: "18px",
@@ -307,7 +354,7 @@ function ItemForm({ sellerId, onSuccess }) {
           margin: "0 0 20px 0",
         }}
       >
-        📸 商品を出品する
+        {editingItem ? "📝 出品内容を訂正する" : "📸 商品を出品する"}
       </h2>
 
       <form
@@ -383,7 +430,7 @@ function ItemForm({ sellerId, onSuccess }) {
           />
         </div>
 
-        {/* 🛡️ AI規約自動チェック特設セクション (1行スマート統合スタイル) */}
+        {/* 🛡️ AI規約自動チェック特設セクション (1行スマートスタイルを完全維持) */}
         <div
           style={{
             display: "flex",
@@ -406,7 +453,6 @@ function ItemForm({ sellerId, onSuccess }) {
               boxSizing: "border-box",
             }}
           >
-            {/* 💡 縦並びのdivを撤廃し、alignItems: "baseline" で1行に一直線に整流 */}
             <div
               style={{
                 display: "flex",
@@ -704,44 +750,29 @@ function ItemForm({ sellerId, onSuccess }) {
           />
         </div>
 
-        {/* 出品ボタン */}
+        {/* 💡 集約した定数 isSubmitDisabled を使って、完全にDRY原則に落とし込んだ美しい送信ボタン */}
         <button
           type="submit"
-          disabled={
-            !isAiChecked ||
-            !!priceError ||
-            (sellerStance !== "値下げは考えていない" && !!minPriceError)
-          }
+          disabled={isSubmitDisabled}
           style={{
             marginTop: "10px",
             padding: "12px",
-            backgroundColor:
-              !isAiChecked ||
-              !!priceError ||
-              (sellerStance !== "値下げは考えていない" && !!minPriceError)
-                ? "#cbd5e1"
-                : "#ff4d4d",
+            backgroundColor: isSubmitDisabled ? "#cbd5e1" : "#ff4d4d",
             color: "white",
             border: "none",
             borderRadius: "8px",
             fontSize: "15px",
             fontWeight: "bold",
-            cursor:
-              !isAiChecked ||
-              !!priceError ||
-              (sellerStance !== "値下げは考えていない" && !!minPriceError)
-                ? "not-allowed"
-                : "pointer",
-            boxShadow:
-              !isAiChecked ||
-              !!priceError ||
-              (sellerStance !== "値下げは考えていない" && !!minPriceError)
-                ? "none"
-                : "0 4px 12px rgba(255, 77, 77, 0.2)",
+            cursor: isSubmitDisabled ? "not-allowed" : "pointer",
+            boxShadow: isSubmitDisabled
+              ? "none"
+              : "0 4px 12px rgba(255, 77, 77, 0.2)",
             transition: "background-color 0.2s",
           }}
         >
-          🚀 この内容でタイムラインに出品する
+          {editingItem
+            ? "🆙 出品内容を上書き保存する"
+            : "🚀 この内容でタイムラインに出品する"}
         </button>
       </form>
     </div>
