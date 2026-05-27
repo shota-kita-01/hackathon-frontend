@@ -8,13 +8,51 @@ function HomeTab({
   handleCardClick,
   handlePurchaseItem,
   onHomeSearch,
-  setCurrentTab, // 💡 親からタブ切り替え関数を受け取る！
+  setCurrentTab,
 }) {
   const [localKeyword, setLocalKeyword] = useState("");
+  const [newWishText, setNewWishText] = useState(""); // 💡 【新設】ホーム登録用のState
+
+  const API_URL =
+    "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
   // 🥇 1段目（あなたへのおすすめ）の表示用切り分け
   const firstHeroItem = homePersonalized[0];
   const remainingScrollItems = homePersonalized.slice(1);
+
+  // 📡 【新設】ホーム画面から直接入荷待ち（ウィッシュリスト）をコミットする関数
+  const handleAddToWishlistFromHome = (e) => {
+    e.preventDefault();
+    if (!newWishText.trim()) return;
+
+    // キャッシュから現在ログイン中の会員IDを動的にハント
+    const savedAccounts = JSON.parse(
+      localStorage.getItem("fleamarket_authenticated_accounts") || "[]",
+    );
+    const activeAccount = savedAccounts[0];
+    const userId = activeAccount ? activeAccount.id : 1; // フォールバック
+
+    fetch(`${API_URL}/wishlists`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: userId,
+        keywords: newWishText.trim(),
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === "success") {
+          alert(
+            `🎯 AI入荷待ち登録が完了しました！\n今後、他のユーザーから「${newWishText.trim()}」にマッチする商品が出品された瞬間に、🔔通知センターへリアルタイムにアラートが届きます！`,
+          );
+          setNewWishText(""); // 入力欄をクリア
+        }
+      })
+      .catch((err) =>
+        console.error("ホームからのウィッシュリスト登録エラー:", err),
+      );
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "45px" }}>
@@ -90,11 +128,11 @@ function HomeTab({
         </div>
       </div>
 
-      {/* 📸 【新設】出品インフォメーション・特製ワイドバナー */}
+      {/* 📸 出品インフォメーション・特製ワイドバナー */}
       <div
-        onClick={() => setCurrentTab("sell")} // 💡 タップされた瞬間、一撃で出品タブへワープ！
+        onClick={() => setCurrentTab("sell")}
         style={{
-          backgroundColor: "#f0fdf4", // 出品の楽しさと安心感を刺激する爽やかなライトグリーン
+          backgroundColor: "#f0fdf4",
           border: "1px solid #bbf7d0",
           borderRadius: "20px",
           padding: "16px 20px",
@@ -103,8 +141,7 @@ function HomeTab({
           alignItems: "center",
           cursor: "pointer",
           boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.02)",
-          marginTop: "-25px", // 検索バーとの視覚的パッケージ感を出すための極上マージン数理
-          marginBottom: "-10px",
+          marginTop: "-25px",
           transition: "all 0.2s ease",
         }}
         onMouseEnter={(e) =>
@@ -139,6 +176,93 @@ function HomeTab({
         >
           ➔
         </span>
+      </div>
+
+      {/* 🎯 【新設】AIウィッシュリスト・ホームアピール窓（お気に入りの紫基調を100%再現・下段登録専用フォーム） */}
+      <div
+        style={{
+          backgroundColor: "#f5f3ff",
+          border: "1px solid #ddd6fe",
+          borderRadius: "20px",
+          padding: "20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "16px",
+          boxShadow: "0 4px 6px -1px rgba(109, 40, 217, 0.03)",
+          marginTop: "-25px", // 上のバナーとのパッケージ感を保つ極上数理マージン
+          marginBottom: "-10px",
+        }}
+      >
+        {/* メインタイトル */}
+        <div
+          style={{
+            fontSize: "14px",
+            fontWeight: "bold",
+            color: "#6d28d9",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+          }}
+        >
+          🎯 見つからない商品はAI入荷待ちへ登録！
+        </div>
+
+        {/* 白抜き追加フォーム（仕様と文字サイズをマイページと完全同期） */}
+        <div
+          style={{
+            backgroundColor: "white",
+            padding: "16px",
+            borderRadius: "12px",
+            border: "1px solid #e9d5ff",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "13px",
+              fontWeight: "bold",
+              color: "#7c3aed",
+              marginBottom: "10px",
+            }}
+          >
+            ✨
+            欲しい商品のイメージを登録しておくと、出品された瞬間にリアルタイムでお知らせします
+          </div>
+          <form
+            onSubmit={handleAddToWishlistFromHome}
+            style={{ display: "flex", gap: "10px" }}
+          >
+            <input
+              type="text"
+              placeholder="例：レトロな木製スピーカー、1990年代の古着ジャケット"
+              value={newWishText}
+              onChange={(e) => setNewWishText(e.target.value)}
+              style={{
+                flex: 1,
+                padding: "10px 14px",
+                borderRadius: "10px",
+                border: "1px solid #bfdbfe",
+                outline: "none",
+                fontSize: "13px",
+              }}
+            />
+            <button
+              type="submit"
+              disabled={!newWishText.trim()}
+              style={{
+                padding: "0 18px",
+                backgroundColor: newWishText.trim() ? "#7c3aed" : "#c084fc",
+                color: "white",
+                border: "none",
+                borderRadius: "10px",
+                fontSize: "13px",
+                fontWeight: "bold",
+                cursor: newWishText.trim() ? "pointer" : "not-allowed",
+              }}
+            >
+              登録する
+            </button>
+          </form>
+        </div>
       </div>
 
       {/* 🥇 1段目：あなたへのおすすめ（Top 5） */}
@@ -384,7 +508,8 @@ function HomeTab({
             </span>
             <br />
             <span style={{ fontSize: "11px", color: "#cbd5e1" }}>
-              商品を購入したり、お気に入り・閲覧をすると、AIがあなたの好みを数理分析して専用の特設カテゴリーを自動生成します。
+              商品を購入したり、お気に入り・閲覧をすると、AIがあなたの好みを数理分析して専用
+              of 特設カテゴリーを自動生成します。
             </span>
           </div>
         )}

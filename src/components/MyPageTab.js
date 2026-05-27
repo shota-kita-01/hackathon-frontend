@@ -15,6 +15,8 @@ function MyPageTab({
   const [myProducts, setMyProducts] = useState([]); // 出品履歴
   const [activeTransactions, setActiveTransactions] = useState([]); // 進行中の取引
   const [completedTransactions, setCompletedTransactions] = useState([]); // 完了済みの過去取引
+  const [wishlists, setWishlists] = useState([]); // 入荷待ちキーワードリスト
+  const [newWishText, setNewWishText] = useState(""); // マイページ直接登録用
   const [isLoading, setIsLoading] = useState(true);
 
   // 👥 ブラウザの永続ストレージからロード
@@ -26,63 +28,88 @@ function MyPageTab({
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
-  // 🔄 仕組み1: アカウントの自動蓄積・同期
-  useEffect(() => {
-    if (!myAppId || !loginUser?.email) return;
-
-    const currentAccount = {
-      id: myAppId,
-      name: loginUser.email.split("@")[0],
-      email: loginUser.email,
-    };
-
-    setAccountList((prevList) => {
-      if (prevList.some((acc) => String(acc.id) === String(myAppId)))
-        return prevList;
-      const updatedList = [...prevList, currentAccount];
-      localStorage.setItem(
-        "fleamarket_authenticated_accounts",
-        JSON.stringify(updatedList),
-      );
-      return updatedList;
-    });
-  }, [myAppId, loginUser]);
-
-  // 🛒 仕組み2: 4本のAPIを一斉に並列高速フェッチ ＆ 3秒自動同期
-  useEffect(() => {
+  const fetchMyPageData = () => {
     if (!myAppId) return;
-    setIsLoading(true);
 
-    const fetchMyPageData = () => {
-      const p1 = fetch(`${API_URL}/users/${myAppId}/purchases`).then((res) =>
-        res.json(),
-      );
-      const p2 = fetch(`${API_URL}/users/${myAppId}/products`).then((res) =>
-        res.json(),
-      );
-      const p3 = fetch(`${API_URL}/users/${myAppId}/transactions`).then((res) =>
-        res.json(),
-      );
-      const p4 = fetch(
-        `${API_URL}/users/${myAppId}/transactions/completed`,
-      ).then((res) => res.json());
+    const p1 = fetch(`${API_URL}/users/${myAppId}/purchases`).then((res) =>
+      res.json(),
+    );
+    const p2 = fetch(`${API_URL}/users/${myAppId}/products`).then((res) =>
+      res.json(),
+    );
+    const p3 = fetch(`${API_URL}/users/${myAppId}/transactions`).then((res) =>
+      res.json(),
+    );
+    const p4 = fetch(`${API_URL}/users/${myAppId}/transactions/completed`).then(
+      (res) => res.json(),
+    );
+    const p5 = fetch(`${API_URL}/users/${myAppId}/wishlists`).then((res) =>
+      res.json(),
+    );
 
-      Promise.all([p1, p2, p3, p4])
-        .then(([purchasesData, productsData, txData, completedTxData]) => {
+    Promise.all([p1, p2, p3, p4, p5])
+      .then(
+        ([
+          purchasesData,
+          productsData,
+          txData,
+          completedTxData,
+          wishlistData,
+        ]) => {
           if (Array.isArray(purchasesData)) setPurchasedItems(purchasesData);
           if (Array.isArray(productsData)) setMyProducts(productsData);
           if (Array.isArray(txData)) setActiveTransactions(txData);
           if (Array.isArray(completedTxData))
             setCompletedTransactions(completedTxData);
-        })
-        .catch((err) => console.error("マイページデータ取得エラー:", err))
-        .finally(() => setIsLoading(false));
-    };
+          if (Array.isArray(wishlistData)) setWishlists(wishlistData);
+        },
+      )
+      .catch((err) => console.error("マイページデータ取得エラー:", err))
+      .finally(() => setIsLoading(false));
+  };
 
+  useEffect(() => {
+    if (!myAppId) return;
+    setIsLoading(true);
     fetchMyPageData();
     const timer = setInterval(fetchMyPageData, 3000);
     return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myAppId]);
+
+  const handleAddWishlistFromMyPage = (e) => {
+    e.preventDefault();
+    if (!newWishText.trim()) return;
+
+    fetch(`${API_URL}/wishlists`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: myAppId,
+        keywords: newWishText.trim(),
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === "success") {
+          setNewWishText("");
+          fetchMyPageData();
+        }
+      })
+      .catch((err) => console.error("ウィッシュリスト登録エラー:", err));
+  };
+
+  const handleDeleteWishlist = (wishlistId, keywords) => {
+    if (!window.confirm(`「${keywords}」の入荷待ちアラートを解除しますか？`))
+      return;
+
+    fetch(`${API_URL}/wishlists/${wishlistId}`, { method: "DELETE" })
+      .then((res) => res.json())
+      .then(() => {
+        fetchMyPageData();
+      })
+      .catch((err) => console.error("入荷待ち解除エラー:", err));
+  };
 
   const handleAddAccount = () => {
     if (
@@ -176,7 +203,7 @@ function MyPageTab({
         </div>
       </div>
 
-      {/* 🚚 ❷ 【最優先】進行中の取引レーン（取引中は常に一番上に出現！） */}
+      {/* 🚚 ❷ 進行中の取引レーン */}
       {activeTransactions.length > 0 && (
         <div
           style={{
@@ -422,11 +449,160 @@ function MyPageTab({
         </button>
       </div>
 
-      {/* 🛍️ ❹ 通常の商品履歴レーン（購入した商品・出品した商品の一覧） */}
+      {/* 🎯 ❹ AIウィッシュリスト（紫基調・文字サイズ標準・上が過去リスト・下が追加窓） */}
+      <div
+        style={{
+          backgroundColor: "#f5f3ff",
+          border: "1px solid #ddd6fe",
+          borderRadius: "20px",
+          padding: "20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "16px",
+          boxShadow: "0 4px 6px -1px rgba(109, 40, 217, 0.03)",
+        }}
+      >
+        {/* メインタイトル */}
+        <div
+          style={{
+            fontSize: "14px",
+            fontWeight: "bold",
+            color: "#6d28d9",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+          }}
+        >
+          🎯 あなたのAI入荷待ちウィッシュリスト
+        </div>
+
+        {/* 過去に登録したキーワード一覧 */}
+        <div>
+          {wishlists.length > 0 ? (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              {wishlists.map((wish) => (
+                <div
+                  key={wish.id}
+                  style={{
+                    backgroundColor: "white",
+                    border: "1px solid #dbeafe",
+                    borderRadius: "20px",
+                    padding: "6px 14px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: "bold",
+                      color: "#1e3a8a",
+                    }}
+                  >
+                    ✨ {wish.keywords}
+                  </span>
+                  <button
+                    onClick={() => handleDeleteWishlist(wish.id, wish.keywords)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#93c5fd",
+                      cursor: "pointer",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      padding: 0,
+                    }}
+                    onMouseOver={(e) =>
+                      (e.currentTarget.style.color = "#ef4444")
+                    }
+                    onMouseOut={(e) =>
+                      (e.currentTarget.style.color = "#93c5fd")
+                    }
+                    title="入荷待ちを解除"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              style={{
+                fontSize: "12px",
+                color: "#a78bfa",
+                fontStyle: "italic",
+                padding: "4px 0",
+              }}
+            >
+              現在、登録中の入荷待ちイメージはありません。
+            </div>
+          )}
+        </div>
+
+        {/* 白抜き追加フォーム */}
+        <div
+          style={{
+            backgroundColor: "white",
+            padding: "16px",
+            borderRadius: "12px",
+            border: "1px solid #e9d5ff",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "13px",
+              fontWeight: "bold",
+              color: "#7c3aed",
+              marginBottom: "10px",
+            }}
+          >
+            ✨ 新しい欲しいイメージを追加したいですか？
+          </div>
+          <form
+            onSubmit={handleAddWishlistFromMyPage}
+            style={{ display: "flex", gap: "10px" }}
+          >
+            <input
+              type="text"
+              placeholder="例：レトロな木製スピーカー、1990年代の古着ジャケット"
+              value={newWishText}
+              onChange={(e) => setNewWishText(e.target.value)}
+              style={{
+                flex: 1,
+                padding: "10px 14px",
+                borderRadius: "10px",
+                border: "1px solid #bfdbfe",
+                outline: "none",
+                fontSize: "13px",
+              }}
+            />
+            <button
+              type="submit"
+              disabled={!newWishText.trim()}
+              style={{
+                padding: "0 18px",
+                backgroundColor: newWishText.trim() ? "#7c3aed" : "#c084fc",
+                color: "white",
+                border: "none",
+                borderRadius: "10px",
+                fontSize: "13px",
+                fontWeight: "bold",
+                cursor: newWishText.trim() ? "pointer" : "not-allowed",
+              }}
+            >
+              登録する
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* 🛍️ ❺ 通常の商品履歴レーン */}
       {isLoading ? (
         <div
           style={{
-            textAlign: "center",
+            textAlignment: "center",
             color: "#9ca3af",
             padding: "40px 0",
             fontSize: "14px",
@@ -479,7 +655,7 @@ function MyPageTab({
         </div>
       )}
 
-      {/* 🏁 ❺ 【最下部へ移動完了】過去の取引履歴アーカイブ */}
+      {/* 🏁 ❻ 過去の取引履歴アーカイブ */}
       {completedTransactions.length > 0 && (
         <div
           style={{
@@ -510,7 +686,7 @@ function MyPageTab({
                   padding: "12px",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between",
+                  justifyBetween: "space-between",
                   gap: "15px",
                 }}
               >

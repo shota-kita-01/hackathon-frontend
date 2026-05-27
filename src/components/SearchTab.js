@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ItemList from "./ItemList";
 
-// 📚 検索画面専用：日本語ユーザーの直感に最適化された22カテゴリ
+// 📚 検索画面専用：日本語ユーザーの直感に最適化された22カテゴリー
 const AMAZON_CATEGORIES_FOR_SEARCH = [
   // ✨ 1. ファッション・ビューティー
   {
@@ -97,6 +97,10 @@ function SearchTab({
 
   const [sortOrder, setSortOrder] = useState("ai_match");
   const [visibleCount, setVisibleCount] = useState(20);
+  const [isWishlisting, setIsWishlisting] = useState(false);
+
+  const API_URL =
+    "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
   // 検索条件が変わったら表示件数をリセット
   useEffect(() => {
@@ -113,6 +117,48 @@ function SearchTab({
   // AI検索結果があればそれを、なければ全アイテムをベースにする
   const baseItems =
     Array.isArray(homeItems) && homeItems.length > 0 ? homeItems : items;
+
+  // ===================================================
+  // 📡 入荷待ち（潜在空間ウィッシュリスト）登録ロジック
+  // ===================================================
+  const handleAddToWishlist = () => {
+    if (!(moodText || "").trim()) {
+      alert("欲しい商品のイメージ（キーワード）を入力してください！");
+      return;
+    }
+
+    const savedAccounts = JSON.parse(
+      localStorage.getItem("fleamarket_authenticated_accounts") || "[]",
+    );
+    const activeAccount = savedAccounts[0];
+    const userId = activeAccount ? activeAccount.id : 1;
+
+    setIsWishlisting(true);
+
+    fetch(`${API_URL}/wishlists`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: userId,
+        keywords: moodText.trim(),
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === "success") {
+          alert(
+            `🎯 AI入荷待ち登録が完了しました！\n\n今後、他のユーザーから「${moodText.trim()}」の脳内イメージにマッチする商品が出品された瞬間に、右上の🔔通知センターへリアルタイムにアラートが届きます！`,
+          );
+        } else {
+          alert("入荷待ち登録に失敗しました。");
+        }
+      })
+      .catch((err) => {
+        console.error("ウィッシュリスト登録エラー:", err);
+        alert("通信エラーが発生しました。");
+      })
+      .finally(() => setIsWishlisting(false));
+  };
 
   // ===================================================
   // 🔍 フィルターロジック
@@ -166,9 +212,6 @@ function SearchTab({
   } else if (sortOrder === "price_desc") {
     sortedItems.sort((a, b) => b.price - a.price);
   }
-
-  // 💡【修正】売切商品を強制的に下に追いやる2次ソートロジックを完全撤去しました！
-  // これにより、選択したsortOrder（特にai_match順）の純粋な並び順が維持されます。
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
@@ -269,6 +312,59 @@ function SearchTab({
                 {isRecommending ? "⏳ 計算中..." : "検索する"}
               </button>
             </div>
+
+            {/* 🎯 【デザイン改修】ホームとマイページに完全同期させたパープル入荷待ちボード */}
+            {(moodText || "").trim() && (
+              <div
+                style={{
+                  marginTop: "8px",
+                  padding: "14px 16px",
+                  backgroundColor: "#f5f3ff", // 💜 統一感のあるエモパープル背景
+                  border: "1px solid #ddd6fe", // 💜 紫の細線ボーダー
+                  borderRadius: "12px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "15px",
+                  animation: "fadeIn 0.3s ease-out",
+                  boxShadow: "0 4px 6px -1px rgba(109, 40, 217, 0.03)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "13px",
+                    color: "#6d28d9",
+                    lineHeight: "1.5",
+                    flex: 1,
+                    fontWeight: "500",
+                  }}
+                >
+                  💡 欲しい商品が見つかりませんか？ このキーワード「
+                  <strong>{moodText}</strong>
+                  」を登録しておくと、条件に合致する品が新しく出品された瞬間に通知します！
+                </div>
+                <button
+                  onClick={handleAddToWishlist}
+                  disabled={isWishlisting}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: isWishlisting ? "#c084fc" : "#7c3aed", // 💜 登録ボタンも美しい紫のグラデーション/単色
+                    color: "white",
+                    border: "none",
+                    borderRadius: "10px",
+                    fontSize: "13px",
+                    fontWeight: "bold",
+                    cursor: isWishlisting ? "not-allowed" : "pointer",
+                    whiteSpace: "nowrap",
+                    boxShadow: isWishlisting
+                      ? "none"
+                      : "0 4px 6px rgba(124, 58, 237, 0.2)",
+                  }}
+                >
+                  {isWishlisting ? "登録中..." : "🔔 入荷待ち登録"}
+                </button>
+              </div>
+            )}
 
             {baseItems === homeItems && homeItems.length > 0 && (
               <div style={{ textAlign: "right" }}>
@@ -409,7 +505,6 @@ function SearchTab({
 
           {/* ❷ セレクトボックス群 */}
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-            {/* カテゴリ選択 */}
             <div
               style={{
                 flex: "1 1 220px",
@@ -453,7 +548,6 @@ function SearchTab({
               </select>
             </div>
 
-            {/* 商品の状態選択 */}
             <div
               style={{
                 flex: "1 1 220px",
