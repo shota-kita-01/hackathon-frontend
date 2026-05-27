@@ -213,6 +213,8 @@ function Header({
                     >
                       {notif.message}
                     </div>
+
+                    {/* 🛠️ 【改修】世界標準時文字列を安全にJST（日本時間）へフォーマットする特設ブロック */}
                     <div
                       style={{
                         fontSize: "10px",
@@ -220,11 +222,29 @@ function Header({
                         marginTop: "6px",
                       }}
                     >
-                      {new Date(notif.created_at).toLocaleDateString()}{" "}
-                      {new Date(notif.created_at).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {(() => {
+                        const raw = notif.created_at;
+                        // 文字列にタイムゾーン識別子(Zや+)がない場合、末尾にZを付加して強制的にUTCとしてJavaScriptに認識させる
+                        const utcString =
+                          raw.includes("Z") || raw.includes("+")
+                            ? raw
+                            : `${raw.replace(" ", "T")}Z`;
+                        const dateObj = new Date(utcString);
+
+                        // 有効な日付に変換できなかった場合の安全なフォールバック
+                        const finalDate = isNaN(dateObj.getTime())
+                          ? new Date(raw)
+                          : dateObj;
+
+                        return finalDate.toLocaleString("ja-JP", {
+                          timeZone: "Asia/Tokyo",
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        });
+                      })()}
                     </div>
                   </div>
                 ))

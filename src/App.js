@@ -39,6 +39,10 @@ function App() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [userLikes, setUserLikes] = useState([]);
   const [activeTransactionId, setActiveTransactionId] = useState(null);
+
+  // 📝 【新設】現在「訂正（編集）モード」に入っている商品の情報を保持するState
+  const [editingItem, setEditingItem] = useState(null);
+
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
@@ -106,6 +110,7 @@ function App() {
       fetchAllItems();
       fetchHomeRecommendations(myAppId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myAppId, filterStatus, recommendMode]);
 
   const fetchUserLikes = (userId) => {
@@ -350,8 +355,14 @@ function App() {
             {currentTab === "sell" && (
               <ItemForm
                 sellerId={myAppId}
+                editingItem={editingItem} // 💡 編集対象の商品を渡す
                 onSuccess={() => {
-                  alert("出品が完了しました！");
+                  alert(
+                    editingItem
+                      ? "商品の更新が完了しました！"
+                      : "出品が完了しました！",
+                  );
+                  setEditingItem(null); // 💡 編集が終わったら状態をクリア
                   fetchAllItems();
                   fetchHomeRecommendations(myAppId);
                   setCurrentTab("home");
@@ -372,6 +383,8 @@ function App() {
         userLikes={userLikes}
         onLikeToggle={() => fetchUserLikes(myAppId)}
         onNegotiationSuccess={handleNegotiationSuccess}
+        setEditingItem={setEditingItem} // 💡 モーダルに編集用関数を渡す
+        setCurrentTab={setCurrentTab} // 💡 タブ切り替え関数を渡す
       />
     </div>
   );
