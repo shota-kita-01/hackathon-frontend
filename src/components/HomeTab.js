@@ -218,7 +218,7 @@ function HomeTab({
         >
           <div
             style={{
-              fontSize: "13px",
+              fontSize: "12.3px",
               fontWeight: "bold",
               color: "#7c3aed",
               marginBottom: "10px",

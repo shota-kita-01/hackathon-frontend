@@ -1,185 +1,12 @@
 import React, { useState } from "react";
-
-// 📚 日本語ユーザーの直感に最適化された21カテゴリ
-const AMAZON_CATEGORIES = [
-  {
-    value: "Clothing_Shoes_and_Jewelry",
-    label: "服・靴・ファッション小物 (Clothing_Shoes_and_Jewelry)",
-  },
-  {
-    value: "Beauty_and_Personal_Care",
-    label: "コスメ・パーソナルケア (Beauty_and_Personal_Care)",
-  },
-  { value: "All_Beauty", label: "ビューティー・コスメ全般 (All_Beauty)" },
-  {
-    value: "Cell_Phones_and_Accessories",
-    label: "スマートフォン・携帯アクセサリ (Cell_Phones_and_Accessories)",
-  },
-  { value: "Electronics", label: "家電・カメラ・オーディオ (Electronics)" },
-  { value: "Video_Games", label: "テレビゲーム・機材 (Video_Games)" },
-  { value: "Appliances", label: "大型家電・家庭用機器 (Appliances)" },
-  {
-    value: "Toys_and_Games",
-    label: "おもちゃ・ホビー・ゲーム (Toys_and_Games)",
-  },
-  { value: "Books", label: "本・書籍 (Books)" },
-  { value: "CDs_and_Vinyl", label: "CD・レコード・音楽 (CDs_and_Vinyl)" },
-  { value: "Movies_and_TV", label: "DVD・ブルーレイ・映画 (Movies_and_TV)" },
-  {
-    value: "Musical_Instruments",
-    label: "楽器・音響機器 (Musical_Instruments)",
-  },
-  { value: "Handmade_Products", label: "ハンドメイド作品 (Handmade_Products)" },
-  {
-    value: "Home_and_Kitchen",
-    label: "ホーム＆キッチン・家具 (Home_and_Kitchen)",
-  },
-  { value: "Office_Products", label: "オフィス用品・文房具 (Office_Products)" },
-  { value: "Pet_Supplies", label: "ペット用品 (Pet_Supplies)" },
-  {
-    value: "Grocery_and_Gourmet_Food",
-    label: "食品・飲料・お酒 (Grocery_and_Gourmet_Food)",
-  },
-  {
-    value: "Sports_and_Outdoors",
-    label: "スポーツ＆アウトドア (Sports_and_Outdoors)",
-  },
-  {
-    value: "Tools_and_Home_Improvement",
-    label: "工具・DIY・住宅設備 (Tools_and_Home_Improvement)",
-  },
-  {
-    value: "Patio_Lawn_and_Garden",
-    label: "ガーデン・エクステリア (Patio_Lawn_and_Garden)",
-  },
-  { value: "Automotive", label: "車・バイク用品 (Automotive)" },
-];
-
-const ITEM_CONDITIONS = [
-  "新品・未使用",
-  "未使用に近い",
-  "目立った傷や汚れなし",
-  "やや傷や汚れあり",
-  "傷や汚れあり",
-  "全体的に状態が悪い",
-];
-
-const SHIPPING_DAYS_OPTIONS = [
-  { value: "1〜2日で発送", label: "1〜2日以内に発送" },
-  { value: "3〜4日で発送", label: "3〜4日以内に発送" },
-  { value: "5〜6日で発送", label: "5〜6日以内に発送" },
-  { value: "7日以上で発送", label: "7日以上（1週間以降）で発送" },
-];
-
-const CATEGORY_IMAGE_POOLS = {
-  All_Beauty: [
-    "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600",
-    "https://images.unsplash.com/photo-1612817288484-6f916006741a?w=600",
-    "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600",
-  ],
-  Appliances: [
-    "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600",
-    "https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?w=600",
-    "https://images.unsplash.com/photo-1527018601619-a508a2be00cd?w=600",
-  ],
-  Automotive: [
-    "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=600",
-    "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=600",
-    "https://images.unsplash.com/photo-1563720223185-11003d516935?w=600",
-  ],
-  Beauty_and_Personal_Care: [
-    "https://images.unsplash.com/photo-1608248597481-496100c80836?w=600",
-    "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600",
-    "https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?w=600",
-  ],
-  Books: [
-    "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=600",
-    "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600",
-    "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600",
-  ],
-  CDs_and_Vinyl: [
-    "https://images.unsplash.com/photo-1539628399213-d6aa19c93074?w=600",
-    "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=600",
-    "https://images.unsplash.com/photo-1542208998-f6dbbb27a72f?w=600",
-  ],
-  Cell_Phones_and_Accessories: [
-    "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600",
-    "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600",
-    "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=600",
-  ],
-  Clothing_Shoes_and_Jewelry: [
-    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600",
-    "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600",
-    "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600",
-  ],
-  Electronics: [
-    "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600",
-    "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600",
-    "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600",
-  ],
-  Grocery_and_Gourmet_Food: [
-    "https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=600",
-    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600",
-    "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600",
-  ],
-  Handmade_Products: [
-    "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=600",
-    "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600",
-    "https://images.unsplash.com/photo-1561715276-a2d087060f1d?w=600",
-  ],
-  Home_and_Kitchen: [
-    "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=600",
-    "https://images.unsplash.com/photo-1581428982868-e410dd047a90?w=600",
-    "https://images.unsplash.com/photo-1534349762230-e0cadf78f5db?w=600",
-  ],
-  Movies_and_TV: [
-    "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600",
-    "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600",
-    "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=600",
-  ],
-  Musical_Instruments: [
-    "https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=600",
-    "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600",
-    "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=600",
-  ],
-  Office_Products: [
-    "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=600",
-    "https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?w=600",
-    "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=600",
-  ],
-  Patio_Lawn_and_Garden: [
-    "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=600",
-    "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600",
-    "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=600",
-  ],
-  Pet_Supplies: [
-    "https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=600",
-    "https://images.unsplash.com/photo-1541599540903-216a46cc1ad6?w=600",
-    "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=600",
-  ],
-  Sports_and_Outdoors: [
-    "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600",
-    "https://images.unsplash.com/photo-1502904585520-fa4514c950bf?w=600",
-    "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600",
-  ],
-  Tools_and_Home_Improvement: [
-    "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600",
-    "https://images.unsplash.com/photo-1534224039826-c7a0dea0e66a?w=600",
-    "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=600",
-  ],
-  Toys_and_Games: [
-    "https://images.unsplash.com/photo-1531651008558-ed1740375b39?w=600",
-    "https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=600",
-    "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=600",
-  ],
-  Video_Games: [
-    "https://images.unsplash.com/photo-1605901309584-818e25960a8f?w=600",
-    "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=600",
-    "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=600",
-  ],
-};
-
-const ALL_FLAT_IMAGES = Object.values(CATEGORY_IMAGE_POOLS).flat();
+import {
+  AMAZON_CATEGORIES,
+  ITEM_CONDITIONS,
+  SHIPPING_DAYS_OPTIONS,
+  CATEGORY_IMAGE_POOLS,
+  ALL_FLAT_IMAGES,
+} from "./FormConstants";
+import AiNegoFormSection from "./AiNegoFormSection";
 
 function ItemForm({ sellerId, onSuccess }) {
   const [name, setName] = useState("");
@@ -192,22 +19,23 @@ function ItemForm({ sellerId, onSuccess }) {
   const [shippingDays, setShippingDays] = useState("");
   const [priceError, setPriceError] = useState("");
 
-  // 🛡️ AI安全チェック管理用のトリプルState
+  // 🥊 AI自動交渉管理用のState
+  const [minAcceptablePrice, setMinAcceptablePrice] = useState("");
+  const [sellerStance, setSellerStance] = useState("");
+  const [minPriceError, setMinPriceError] = useState("");
+
   const [isAiChecked, setIsAiChecked] = useState(false);
   const [isCheckingSafety, setIsCheckingSafety] = useState(false);
   const [safetyCheckMessage, setSafetyCheckMessage] = useState("");
-
   const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
   const [isEstimatingPrice, setIsEstimatingPrice] = useState(false);
 
   const BASE_API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
-  // 💡 文字が書き換えられたら、安全性を担保するため自動的に「未チェック状態」へ数理リセットする関数
   const handleTextChange = (type, value) => {
     if (type === "name") setName(value);
     if (type === "description") setDescription(value);
-
     setIsAiChecked(false);
     setSafetyCheckMessage("");
   };
@@ -253,18 +81,26 @@ function ItemForm({ sellerId, onSuccess }) {
         if (data.status === "success") {
           setPrice(data.suggested_price);
           setPriceError("");
+
+          if (
+            sellerStance === "売り切りたい" ||
+            sellerStance === "急いでいない"
+          ) {
+            const autoMin = Math.floor(data.suggested_price * 0.9);
+            setMinAcceptablePrice(autoMin);
+          }
+          setMinPriceError("");
         } else {
           alert(data.detail || "価格査定に失敗しました。");
         }
       })
       .catch((err) => {
-        console.error(`AI価格査定エラー: ${err}`); // 💡 構文エラーを修正しました！
+        console.error(`AI価格査定エラー: ${err}`);
         alert("通信エラーが発生しました。");
       })
       .finally(() => setIsEstimatingPrice(false));
   };
 
-  // 💡 フロントエンドから新設APIを叩く、AI安全審査駆動ハンドラー
   const handleAiSafetyCheck = () => {
     if (!name.trim() || !description.trim()) {
       alert("商品名と商品説明を先に入力してください！");
@@ -317,6 +153,37 @@ function ItemForm({ sellerId, onSuccess }) {
     }
     setPrice(value);
     setPriceError("");
+
+    if (
+      sellerStance !== "値下げは考えていない" &&
+      minAcceptablePrice &&
+      Number(minAcceptablePrice) > Number(value)
+    ) {
+      setMinPriceError("最低許容価格が販売価格を上回っています。");
+    } else {
+      setMinPriceError("");
+    }
+  };
+
+  const handleMinPriceChange = (value) => {
+    if (value === "") {
+      setMinAcceptablePrice("");
+      setMinPriceError("");
+      return;
+    }
+    if (Number(value) < 0) {
+      setMinPriceError("金額に負の数字は入力できません。");
+      return;
+    }
+    if (price && Number(value) > Number(price)) {
+      setMinAcceptablePrice(value);
+      setMinPriceError(
+        "最低許容価格は、販売価格以下の金額に設定してください。",
+      );
+      return;
+    }
+    setMinAcceptablePrice(value);
+    setMinPriceError("");
   };
 
   const handleSubmit = (e) => {
@@ -334,13 +201,19 @@ function ItemForm({ sellerId, onSuccess }) {
       return;
     }
 
+    if (sellerStance !== "値下げは考えていない" && minPriceError) {
+      alert("最低許容価格の設定に数理的なエラーがあります。修正してください。");
+      return;
+    }
+
     if (
       !name ||
       !description ||
       !tags ||
       !itemCondition ||
       !sellerName ||
-      !shippingDays
+      !shippingDays ||
+      !sellerStance
     ) {
       alert("未入力、または未選択の必須項目があります！");
       return;
@@ -353,6 +226,13 @@ function ItemForm({ sellerId, onSuccess }) {
       finalImageUrl = targetPool[randomIndex];
     }
 
+    const finalMinPrice =
+      sellerStance === "値下げは考えていない"
+        ? parseInt(price, 10)
+        : minAcceptablePrice
+          ? parseInt(minAcceptablePrice, 10)
+          : parseInt(price, 10);
+
     fetch(`${BASE_API_URL}/items`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -360,6 +240,8 @@ function ItemForm({ sellerId, onSuccess }) {
         name: name,
         description: description,
         price: parseInt(price, 10),
+        min_acceptable_price: finalMinPrice,
+        seller_stance: sellerStance,
         image_url: finalImageUrl,
         seller_id: sellerId,
         tags: tags,
@@ -374,12 +256,15 @@ function ItemForm({ sellerId, onSuccess }) {
           setName("");
           setDescription("");
           setPrice("");
+          setMinAcceptablePrice("");
+          setSellerStance("");
           setImageUrl("");
           setTags("");
           setItemCondition("");
           setSellerName("");
           setShippingDays("");
           setPriceError("");
+          setMinPriceError("");
           setIsAiChecked(false);
           setSafetyCheckMessage("");
           onSuccess();
@@ -400,8 +285,6 @@ function ItemForm({ sellerId, onSuccess }) {
     !description.trim() ||
     !tags ||
     !itemCondition;
-
-  // 💡 チェックボタンを活性化させる条件（両方のテキストが入っていること）
   const isCheckBtnDisabled =
     isCheckingSafety || !name.trim() || !description.trim();
 
@@ -413,6 +296,7 @@ function ItemForm({ sellerId, onSuccess }) {
         borderRadius: "16px",
         boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
         border: "1px solid #e5e7eb",
+        boxSizing: "border-box",
       }}
     >
       <h2
@@ -430,7 +314,7 @@ function ItemForm({ sellerId, onSuccess }) {
         onSubmit={handleSubmit}
         style={{ display: "flex", flexDirection: "column", gap: "16px" }}
       >
-        {/* 商品名入力 */}
+        {/* 商品名 */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <label
             style={{ fontSize: "13px", fontWeight: "bold", color: "#4b5563" }}
@@ -452,7 +336,7 @@ function ItemForm({ sellerId, onSuccess }) {
           />
         </div>
 
-        {/* AI自動商品説明セクション */}
+        {/* AI商品説明生成 */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <button
             type="button"
@@ -475,7 +359,7 @@ function ItemForm({ sellerId, onSuccess }) {
           </button>
         </div>
 
-        {/* 商品説明 */}
+        {/* 商品説明本文 */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <label
             style={{ fontSize: "13px", fontWeight: "bold", color: "#4b5563" }}
@@ -499,16 +383,18 @@ function ItemForm({ sellerId, onSuccess }) {
           />
         </div>
 
-        {/* 🛡️ AI規約自動チェック特設セクション */}
+        {/* 🛡️ AI規約自動チェック特設セクション (1行スマート統合スタイル) */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             gap: "6px",
             backgroundColor: "#f8fafc",
-            padding: "16px",
+            padding: "10px",
             borderRadius: "12px",
             border: "1px solid #e2e8f0",
+            width: "100%",
+            boxSizing: "border-box",
           }}
         >
           <div
@@ -516,24 +402,44 @@ function ItemForm({ sellerId, onSuccess }) {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              width: "100%",
+              boxSizing: "border-box",
             }}
           >
+            {/* 💡 縦並びのdivを撤廃し、alignItems: "baseline" で1行に一直線に整流 */}
             <div
-              style={{ display: "flex", flexDirection: "column", gap: "2px" }}
+              style={{
+                display: "flex",
+                gap: "10px",
+                alignItems: "center",
+                flex: 1,
+                marginRight: "10px",
+              }}
             >
-              <span
+              <div
                 style={{
-                  fontSize: "13px",
-                  fontWeight: "bold",
-                  color: "#1e293b",
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: "8px",
+                  flexWrap: "wrap",
                 }}
               >
-                🛡️ AI規約自動チェック（リアルタイムコンプライアンス）
-              </span>
-              <span style={{ fontSize: "11px", color: "#64748b" }}>
-                出品ポリシー違反（偽ブランド、危険物など）がないか自動検査します。
-              </span>
+                <span
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: "bold",
+                    color: "#1e293b",
+                    flexShrink: 0,
+                  }}
+                >
+                  🛡️ AI自動チェック　
+                </span>
+                <span style={{ fontSize: "11px", color: "#64748b" }}>
+                  出品ポリシー違反がないか自動検査します。
+                </span>
+              </div>
             </div>
+
             <button
               type="button"
               onClick={handleAiSafetyCheck}
@@ -555,16 +461,16 @@ function ItemForm({ sellerId, onSuccess }) {
                   ? "none"
                   : "0 4px 10px rgba(79, 70, 229, 0.15)",
                 transition: "all 0.2s",
+                flexShrink: 0,
               }}
             >
               {isCheckingSafety
                 ? "⏳ 審査中..."
                 : isAiChecked
                   ? "✓ 審査完了"
-                  : "安全性を確認する"}
+                  : "チェックを行う"}
             </button>
           </div>
-
           {safetyCheckMessage && (
             <div
               style={{
@@ -576,6 +482,8 @@ function ItemForm({ sellerId, onSuccess }) {
                 backgroundColor: isAiChecked ? "#ecfdf5" : "#fef2f2",
                 color: isAiChecked ? "#065f46" : "#991b1b",
                 border: isAiChecked ? "1px solid #a7f3d0" : "1px solid #fca5a5",
+                width: "100%",
+                boxSizing: "border-box",
               }}
             >
               {safetyCheckMessage}
@@ -583,13 +491,12 @@ function ItemForm({ sellerId, onSuccess }) {
           )}
         </div>
 
-        {/* 出品ジャンル */}
+        {/* ジャンル */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <label
             style={{ fontSize: "13px", fontWeight: "bold", color: "#4b5563" }}
           >
-            出品ジャンル（AI解析カテゴリ）{" "}
-            <span style={{ color: "#ff4d4d" }}>*</span>
+            出品ジャンル <span style={{ color: "#ff4d4d" }}>*</span>
           </label>
           <select
             value={tags}
@@ -613,7 +520,7 @@ function ItemForm({ sellerId, onSuccess }) {
           </select>
         </div>
 
-        {/* 商品の状態 */}
+        {/* 状態 */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <label
             style={{ fontSize: "13px", fontWeight: "bold", color: "#4b5563" }}
@@ -642,7 +549,7 @@ function ItemForm({ sellerId, onSuccess }) {
           </select>
         </div>
 
-        {/* AI価格査定セクション */}
+        {/* AI価格査定 */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <button
             type="button"
@@ -651,7 +558,7 @@ function ItemForm({ sellerId, onSuccess }) {
             style={{
               padding: "10px",
               backgroundColor: isPriceBtnDisabled ? "#f1f5f9" : "#ecfdf5",
-              color: isPriceBtnDisabled ? "#94a3b8" : "#065f46",
+              color: isPriceBtnDisabled ? "#065f46" : "#34d399",
               border: isPriceBtnDisabled
                 ? "1px solid #cbd5e1"
                 : "1px solid #34d399",
@@ -665,7 +572,7 @@ function ItemForm({ sellerId, onSuccess }) {
           </button>
         </div>
 
-        {/* 価格入力 */}
+        {/* 販売価格 */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <label
             style={{ fontSize: "13px", fontWeight: "bold", color: "#4b5563" }}
@@ -679,15 +586,7 @@ function ItemForm({ sellerId, onSuccess }) {
             value={price}
             onChange={(e) => handlePriceChange(e.target.value)}
             onKeyDown={(e) => {
-              if (
-                e.key === "-" ||
-                e.key === "+" ||
-                e.key === "e" ||
-                e.key === "E" ||
-                e.key === "."
-              ) {
-                e.preventDefault();
-              }
+              if (["-", "+", "e", "E", "."].includes(e.key)) e.preventDefault();
             }}
             style={{
               padding: "10px 12px",
@@ -713,7 +612,7 @@ function ItemForm({ sellerId, onSuccess }) {
           )}
         </div>
 
-        {/* 出品者ニックネーム入力欄 */}
+        {/* ニックネーム */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <label
             style={{ fontSize: "13px", fontWeight: "bold", color: "#4b5563" }}
@@ -735,7 +634,7 @@ function ItemForm({ sellerId, onSuccess }) {
           />
         </div>
 
-        {/* 発送までの目安 */}
+        {/* 発送目安 */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <label
             style={{ fontSize: "13px", fontWeight: "bold", color: "#4b5563" }}
@@ -764,7 +663,17 @@ function ItemForm({ sellerId, onSuccess }) {
           </select>
         </div>
 
-        {/* 商品画像URL入力 */}
+        {/* 🤖 AI自動交渉の設定サブセクション */}
+        <AiNegoFormSection
+          price={price}
+          minAcceptablePrice={minAcceptablePrice}
+          sellerStance={sellerStance}
+          setSellerStance={setSellerStance}
+          minPriceError={minPriceError}
+          handleMinPriceChange={handleMinPriceChange}
+        />
+
+        {/* 画像URL */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <label
             style={{ fontSize: "13px", fontWeight: "bold", color: "#4b5563" }}
@@ -782,7 +691,7 @@ function ItemForm({ sellerId, onSuccess }) {
           </label>
           <input
             type="text"
-            placeholder="特定の画像にしたい場合はURLを入力（空欄ならAIが最適画像を自動セット！✨）"
+            placeholder="空欄ならAIが最適画像を自動セット！✨"
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             style={{
@@ -798,20 +707,35 @@ function ItemForm({ sellerId, onSuccess }) {
         {/* 出品ボタン */}
         <button
           type="submit"
-          disabled={!isAiChecked || !!priceError}
+          disabled={
+            !isAiChecked ||
+            !!priceError ||
+            (sellerStance !== "値下げは考えていない" && !!minPriceError)
+          }
           style={{
             marginTop: "10px",
             padding: "12px",
             backgroundColor:
-              !isAiChecked || !!priceError ? "#cbd5e1" : "#ff4d4d",
+              !isAiChecked ||
+              !!priceError ||
+              (sellerStance !== "値下げは考えていない" && !!minPriceError)
+                ? "#cbd5e1"
+                : "#ff4d4d",
             color: "white",
             border: "none",
             borderRadius: "8px",
             fontSize: "15px",
             fontWeight: "bold",
-            cursor: !isAiChecked || !!priceError ? "not-allowed" : "pointer",
+            cursor:
+              !isAiChecked ||
+              !!priceError ||
+              (sellerStance !== "値下げは考えていない" && !!minPriceError)
+                ? "not-allowed"
+                : "pointer",
             boxShadow:
-              !isAiChecked || !!priceError
+              !isAiChecked ||
+              !!priceError ||
+              (sellerStance !== "値下げは考えていない" && !!minPriceError)
                 ? "none"
                 : "0 4px 12px rgba(255, 77, 77, 0.2)",
             transition: "background-color 0.2s",
