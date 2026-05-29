@@ -3,8 +3,6 @@ import {
   AMAZON_CATEGORIES,
   ITEM_CONDITIONS,
   SHIPPING_DAYS_OPTIONS,
-  CATEGORY_IMAGE_POOLS,
-  ALL_FLAT_IMAGES,
 } from "./FormConstants";
 import AiNegoFormSection from "./AiNegoFormSection";
 
@@ -40,7 +38,6 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
   const [minPriceError, setMinPriceError] = useState("");
 
   // 🛡️ AI安全チェック管理用のState
-  // 💡 編集モードの場合は、すでに過去の審査をパスして出品されているため、デフォルトでチェック済(true)にする親切数理設計
   const [isAiChecked, setIsAiChecked] = useState(editingItem ? true : false);
   const [isCheckingSafety, setIsCheckingSafety] = useState(false);
   const [safetyCheckMessage, setSafetyCheckMessage] = useState(
@@ -51,6 +48,9 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
 
   const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
   const [isEstimatingPrice, setIsEstimatingPrice] = useState(false);
+
+  // ✨【連打防止ハック】非同期リクエスト中の多重送信を完全にブロックする防弾State
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const BASE_API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
@@ -251,12 +251,10 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
       return;
     }
 
-    let finalImageUrl = imageUrl.trim();
-    if (!finalImageUrl) {
-      const targetPool = CATEGORY_IMAGE_POOLS[tags] || ALL_FLAT_IMAGES;
-      const randomIndex = Math.floor(Math.random() * targetPool.length);
-      finalImageUrl = targetPool[randomIndex];
-    }
+    // 🔒 バリデーションをすべて通過した瞬間、送信中フラグを立ててボタンを瞬時にロック！
+    setIsSubmitting(true);
+
+    const finalImageUrl = imageUrl.trim();
 
     const finalMinPrice =
       sellerStance === "値下げは考えていない"
@@ -265,7 +263,6 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           ? parseInt(minAcceptablePrice, 10)
           : parseInt(price, 10);
 
-    // 💡 【重要】編集モードかどうかに応じて、叩くAPIのエンドポイントとリクエストメソッドをシームレスに切り替える
     const targetUrl = editingItem
       ? `${BASE_API_URL}/items/${editingItem.id}`
       : `${BASE_API_URL}/items`;
@@ -305,7 +302,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           setMinPriceError("");
           setIsAiChecked(false);
           setSafetyCheckMessage("");
-          onSuccess(); // 🚀 親へ成功を通知 (App.js側でメッセージ分岐とリロードが走ります)
+          onSuccess();
         } else {
           alert("処理に失敗しました: " + data.message);
         }
@@ -313,24 +310,29 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
       .catch((error) => {
         console.error("通信エラー:", error);
         alert("通信エラーが発生しました。");
+      })
+      // 🔓 成功・失敗・例外処理に関わらず、非同期トランザクションが終了したらロックを完全解除
+      .finally(() => {
+        setIsSubmitting(false);
       });
   };
 
-  const isDescBtnDisabled = isGeneratingDesc || !name.trim();
+  const isDescBtnDisabled = isGeneratingDesc || !name.trim() || isSubmitting;
   const isPriceBtnDisabled =
     isEstimatingPrice ||
     !name.trim() ||
     !description.trim() ||
     !tags ||
-    !itemCondition;
+    !itemCondition ||
+    isSubmitting;
   const isCheckBtnDisabled =
-    isCheckingSafety || !name.trim() || !description.trim();
+    isCheckingSafety || !name.trim() || !description.trim() || isSubmitting;
 
-  // 💡 【リファクタリング】4箇所に乱立していたバリデーション判定を一本の定数に集約 (DRY原則)
-  // 💡 交渉有効（考えていない以外）のとき、最低価格が「空（未入力）」または「数理エラー」ならボタンを無効化！
+  // 💡【DRY原則集約】既存のバリデーションロジックに加え、「送信中（isSubmitting）」なら無条件でボタンを無効化する
   const isSubmitDisabled =
     !isAiChecked ||
     !!priceError ||
+    isSubmitting || // 👈 追記
     (sellerStance !== "値下げは考えていない" &&
       (!String(minAcceptablePrice).trim() || !!minPriceError));
 
@@ -345,7 +347,6 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
         boxSizing: "border-box",
       }}
     >
-      {/* 💡 編集状態かどうかに応じて見出しテキストを動的に切り替え */}
       <h2
         style={{
           fontSize: "18px",
@@ -372,6 +373,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
             type="text"
             placeholder="商品名を入力"
             value={name}
+            disabled={isSubmitting} // 👈 送信中は入力フォームも安全のためにロック
             onChange={(e) => handleTextChange("name", e.target.value)}
             style={{
               padding: "10px 12px",
@@ -379,6 +381,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
               border: "1px solid #d1d5db",
               fontSize: "14px",
               outline: "none",
+              backgroundColor: isSubmitting ? "#f1f5f9" : "white",
             }}
           />
         </div>
@@ -416,6 +419,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           <textarea
             placeholder="商品の詳細な説明文"
             value={description}
+            disabled={isSubmitting} // 👈 ロック
             onChange={(e) => handleTextChange("description", e.target.value)}
             rows={5}
             style={{
@@ -426,11 +430,12 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
               outline: "none",
               resize: "none",
               fontFamily: "inherit",
+              backgroundColor: isSubmitting ? "#f1f5f9" : "white",
             }}
           />
         </div>
 
-        {/* 🛡️ AI規約自動チェック特設セクション (1行スマートスタイルを完全維持) */}
+        {/* 🛡️ AI規約自動チェック特設セクション */}
         <div
           style={{
             display: "flex",
@@ -546,15 +551,16 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           </label>
           <select
             value={tags}
+            disabled={isSubmitting} // 👈 ロック
             onChange={(e) => setTags(e.target.value)}
             style={{
               padding: "10px 12px",
               borderRadius: "8px",
               border: "1px solid #d1d5db",
               fontSize: "14px",
-              backgroundColor: "white",
+              backgroundColor: isSubmitting ? "#f1f5f9" : "white",
               outline: "none",
-              cursor: "pointer",
+              cursor: isSubmitting ? "not-allowed" : "pointer",
             }}
           >
             <option value="">-- ジャンルを選択してください --</option>
@@ -575,15 +581,16 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           </label>
           <select
             value={itemCondition}
+            disabled={isSubmitting} // 👈 ロック
             onChange={(e) => setItemCondition(e.target.value)}
             style={{
               padding: "10px 12px",
               borderRadius: "8px",
               border: "1px solid #d1d5db",
               fontSize: "14px",
-              backgroundColor: "white",
+              backgroundColor: isSubmitting ? "#f1f5f9" : "white",
               outline: "none",
-              cursor: "pointer",
+              cursor: isSubmitting ? "not-allowed" : "pointer",
             }}
           >
             <option value="">-- 商品の状態を選択してください --</option>
@@ -630,6 +637,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
             min="0"
             placeholder="金額を入力"
             value={price}
+            disabled={isSubmitting} // 👈 ロック
             onChange={(e) => handlePriceChange(e.target.value)}
             onKeyDown={(e) => {
               if (["-", "+", "e", "E", "."].includes(e.key)) e.preventDefault();
@@ -640,7 +648,11 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
               border: priceError ? "1px solid #ff4d4d" : "1px solid #d1d5db",
               fontSize: "14px",
               outline: "none",
-              backgroundColor: priceError ? "#fef2f2" : "white",
+              backgroundColor: priceError
+                ? "#fef2f2"
+                : isSubmitting
+                  ? "#f1f5f9"
+                  : "white",
               transition: "all 0.2s",
             }}
           />
@@ -669,6 +681,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
             type="text"
             placeholder="出品者の名前を入力してください"
             value={sellerName}
+            disabled={isSubmitting} // 👈 ロック
             onChange={(e) => setSellerName(e.target.value)}
             style={{
               padding: "10px 12px",
@@ -676,6 +689,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
               border: "1px solid #d1d5db",
               fontSize: "14px",
               outline: "none",
+              backgroundColor: isSubmitting ? "#f1f5f9" : "white",
             }}
           />
         </div>
@@ -689,15 +703,16 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           </label>
           <select
             value={shippingDays}
+            disabled={isSubmitting} // 👈 ロック
             onChange={(e) => setShippingDays(e.target.value)}
             style={{
               padding: "10px 12px",
               borderRadius: "8px",
               border: "1px solid #d1d5db",
               fontSize: "14px",
-              backgroundColor: "white",
+              backgroundColor: isSubmitting ? "#f1f5f9" : "white",
               outline: "none",
-              cursor: "pointer",
+              cursor: isSubmitting ? "not-allowed" : "pointer",
             }}
           >
             <option value="">-- 発送までの日数を選択してください --</option>
@@ -717,6 +732,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           setSellerStance={setSellerStance}
           minPriceError={minPriceError}
           handleMinPriceChange={handleMinPriceChange}
+          disabled={isSubmitting} // 👈 必要に応じてサブセクション側にも状態を伝播
         />
 
         {/* 画像URL */}
@@ -739,6 +755,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
             type="text"
             placeholder="空欄ならAIが最適画像を自動セット！✨"
             value={imageUrl}
+            disabled={isSubmitting} // 👈 ロック
             onChange={(e) => setImageUrl(e.target.value)}
             style={{
               padding: "10px 12px",
@@ -746,11 +763,12 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
               border: "1px solid #d1d5db",
               fontSize: "14px",
               outline: "none",
+              backgroundColor: isSubmitting ? "#f1f5f9" : "white",
             }}
           />
         </div>
 
-        {/* 💡 集約した定数 isSubmitDisabled を使って、完全にDRY原則に落とし込んだ美しい送信ボタン */}
+        {/* 💡【進化版メインボタン】送信状態に応じてテキストを動的にチェンジ */}
         <button
           type="submit"
           disabled={isSubmitDisabled}
@@ -770,9 +788,11 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
             transition: "background-color 0.2s",
           }}
         >
-          {editingItem
-            ? "🆙 出品内容を上書き保存する"
-            : "🚀 この内容でタイムラインに出品する"}
+          {isSubmitting
+            ? "⏳ タイムラインに出品中..."
+            : editingItem
+              ? "🆙 出品内容を上書き保存する"
+              : "🚀 この内容でタイムラインに出品する"}
         </button>
       </form>
     </div>

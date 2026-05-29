@@ -18,7 +18,7 @@ function ItemDetailModal({
   const [isCalculating, setIsCalculating] = useState(false);
   const [localIsLiked, setLocalIsLiked] = useState(false);
 
-  // 🔒 【新設】AIが計算中、または妥協案提示の保留中にモーダルを強制ロックするState
+  // 🔒 【新設】AIが計算中, または妥協案提示の保留中にモーダルを強制ロックするState
   const [isModalLocked, setIsModalLocked] = useState(false);
 
   const API_URL =
@@ -90,6 +90,34 @@ function ItemDetailModal({
       .catch((err) => {
         console.error("いいね通信エラー:", err);
         setLocalIsLiked((prev) => !prev);
+      });
+  };
+
+  // 🗑️【新設】バックエンドの特権削除APIをシームレスにスナイプする非同期関数
+  const handleDeleteItem = () => {
+    if (
+      !window.confirm(
+        "この商品の出品を取り消しますか？（この操作は戻せません）",
+      )
+    )
+      return;
+
+    fetch(`${API_URL}/items/${selectedItem.id}`, {
+      method: "DELETE",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === "success") {
+          alert("出品を取り消しました。");
+          setSelectedItem(null); // 1. モーダルを綺麗にクローズ
+          window.location.reload(); // 2. タイムラインのデータを最新状態に再読込
+        } else {
+          alert("削除に失敗しました: " + data.message);
+        }
+      })
+      .catch((err) => {
+        console.error("削除エラー:", err);
+        alert("通信エラーが発生しました。");
       });
   };
 
@@ -419,8 +447,44 @@ function ItemDetailModal({
           )}
         </div>
 
+        {/* 🗑️【進化版ボタン】フレックスコンテナに入れて右揃え ＆ 幅を自動にハック */}
+        {isMyItem && selectedItem.status === "on_sale" && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginBottom: "16px",
+            }}
+          >
+            <button
+              onClick={handleDeleteItem}
+              style={{
+                padding: "10px 20px", // パディングを横長にしてホールド感を調整
+                backgroundColor: "#ffffff",
+                color: "#ef4444",
+                border: "1px solid #fca5a5",
+                borderRadius: "25px", // 「訂正する」ボタンと合わせてカプセル型に
+                fontSize: "14px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                boxShadow: "0 2px 4px rgba(239, 68, 68, 0.05)",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#fef2f2";
+                e.currentTarget.style.borderColor = "#ef4444";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#ffffff";
+                e.currentTarget.style.borderColor = "#fca5a5";
+              }}
+            >
+              🗑️ この出品を取り消す
+            </button>
+          </div>
+        )}
+
         {/* 💡 🥊 交渉セクション */}
-        {/* 条件式に 「かつ、まだ過去に一度も交渉していないこと（!hasAlreadyNegotiated）」を厳格に追記 */}
         {selectedItem.id >= 100000 &&
           !isSoldOut &&
           isNegotiable &&
@@ -431,11 +495,11 @@ function ItemDetailModal({
               currentPrice={selectedItem.price}
               myAppId={myAppId}
               onNegotiationSuccess={onNegotiationSuccess}
-              setIsModalLocked={setIsModalLocked} // 💡 【追記】交渉コンポーネントにロック関数を引き渡す
+              setIsModalLocked={setIsModalLocked}
             />
           )}
 
-        {/* 🛑 交渉履歴バナー：すでに交渉済みの場合は、枠の代わりに警告警告表示を出す */}
+        {/* 🛑 交渉履歴バナー */}
         {hasAlreadyNegotiated && !isSoldOut && !isMyItem && (
           <div
             style={{
