@@ -13,7 +13,6 @@ function AiRecommendForm({
 }) {
   return (
     <div className="ai-magic-box">
-      {/* 💡 コメントはここ（親要素の内側）であれば安全に記述できます */}
       <div
         style={{
           display: "flex",

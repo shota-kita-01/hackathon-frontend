@@ -1,4 +1,6 @@
 import React from "react";
+// 💡 多次元空間の類似性と確率的遷移を美しく記号化するアイコンを召喚
+import { Brain, TrendingUp, Loader2 } from "lucide-react";
 
 function DetailRecommendations({
   isCalculating,
@@ -25,20 +27,31 @@ function DetailRecommendations({
             fontSize: "13px",
             color: "#4f46e5",
             fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
           }}
         >
-          🧠 この商品と似ているアイテム (空間的類似)
+          <Brain size={14} color="#4f46e5" />{" "}
+          {/* 💡 🧠をシャープなBrainアイコンへ */}
+          <span>この商品と似ているアイテム (空間的類似)</span>
         </h4>
         {isCalculating ? (
           <div
             style={{
               textAlign: "center",
               fontSize: "12px",
-              color: "#666",
-              padding: "10px",
+              color: "#6b7280",
+              padding: "20px 10px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
             }}
           >
-            ⏳ 高速空間計算中...
+            <Loader2 size={14} className="animate-spin" color="#6b7280" />{" "}
+            {/* 💡 ⏳を滑らかな回転インジケーターへ */}
+            <span>高速空間計算中...</span>
           </div>
         ) : (
           <div style={{ display: "flex", gap: "10px" }}>
@@ -57,6 +70,15 @@ function DetailRecommendations({
                   display: "flex",
                   flexDirection: "column",
                   gap: "4px",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f8fafc";
+                  e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
                 <img
@@ -95,10 +117,13 @@ function DetailRecommendations({
               <div
                 style={{
                   fontSize: "11px",
-                  color: "#aaa",
+                  color: "#9ca3af",
                   textAlign: "center",
                   width: "100%",
-                  padding: "10px",
+                  padding: "20px 10px",
+                  border: "1px dashed #e5e7eb",
+                  borderRadius: "12px",
+                  backgroundColor: "#fafafa",
                 }}
               >
                 関連商品が見つかりませんでした
@@ -116,20 +141,30 @@ function DetailRecommendations({
             fontSize: "13px",
             color: "#10b981",
             fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
           }}
         >
-          ✨ この商品を見ている人におすすめ (こんな商品も見ています)
+          <TrendingUp size={14} color="#10b981" />{" "}
+          {/* 💡 ✨をマルコフ連鎖の流れを示すTrendingUpへ */}
+          <span>この商品を見ている人におすすめ (こんな商品も見ています)</span>
         </h4>
         {isCalculating ? (
           <div
             style={{
               textAlign: "center",
               fontSize: "12px",
-              color: "#666",
-              padding: "10px",
+              color: "#6b7280",
+              padding: "20px 10px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
             }}
           >
-            ⏳ 確率遷移シミュレート中...
+            <Loader2 size={14} className="animate-spin" color="#6b7280" />
+            <span>確率遷移シミュレート中...</span>
           </div>
         ) : (
           <div style={{ display: "flex", gap: "10px" }}>
@@ -148,6 +183,15 @@ function DetailRecommendations({
                   display: "flex",
                   flexDirection: "column",
                   gap: "4px",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f8fafc";
+                  e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
                 <img
@@ -186,10 +230,13 @@ function DetailRecommendations({
               <div
                 style={{
                   fontSize: "11px",
-                  color: "#aaa",
+                  color: "#9ca3af",
                   textAlign: "center",
                   width: "100%",
-                  padding: "10px",
+                  padding: "20px 10px",
+                  border: "1px dashed #e5e7eb",
+                  borderRadius: "12px",
+                  backgroundColor: "#fafafa",
                 }}
               >
                 次の候補が見つかりませんでした

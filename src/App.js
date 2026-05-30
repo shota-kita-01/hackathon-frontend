@@ -40,7 +40,6 @@ function App() {
   const [userLikes, setUserLikes] = useState([]);
   const [activeTransactionId, setActiveTransactionId] = useState(null);
 
-  // 📝 【新設】現在「訂正（編集）モード」に入っている商品の情報を保持するState
   const [editingItem, setEditingItem] = useState(null);
 
   const API_URL =
@@ -228,7 +227,7 @@ function App() {
 
   const handleLogout = () => {
     signOut(fireAuth)
-      .then(() => alert("ログアウトしました！"))
+      .then(() => alert("ログアウトしました"))
       .catch((err) => alert(err.message));
   };
 
@@ -355,14 +354,14 @@ function App() {
             {currentTab === "sell" && (
               <ItemForm
                 sellerId={myAppId}
-                editingItem={editingItem} // 💡 編集対象の商品を渡す
+                editingItem={editingItem}
                 onSuccess={() => {
                   alert(
                     editingItem
                       ? "商品の更新が完了しました！"
                       : "出品が完了しました！",
                   );
-                  setEditingItem(null); // 💡 編集が終わったら状態をクリア
+                  setEditingItem(null);
                   fetchAllItems();
                   fetchHomeRecommendations(myAppId);
                   setCurrentTab("home");
@@ -383,8 +382,8 @@ function App() {
         userLikes={userLikes}
         onLikeToggle={() => fetchUserLikes(myAppId)}
         onNegotiationSuccess={handleNegotiationSuccess}
-        setEditingItem={setEditingItem} // 💡 モーダルに編集用関数を渡す
-        setCurrentTab={setCurrentTab} // 💡 タブ切り替え関数を渡す
+        setEditingItem={setEditingItem}
+        setCurrentTab={setCurrentTab}
       />
     </div>
   );

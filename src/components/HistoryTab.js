@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import HorizontalItemList from "./HorizontalItemList";
+// 💡 履歴・おすすめ画面の各セクションを記号化する精鋭アイコンたちをインポート
+import { History, Heart, Eye, Search, Sparkles, Loader2 } from "lucide-react";
 
 function HistoryTab({
   myAppId,
   userLikes,
   handleCardClick,
   handlePurchaseItem,
-  onKeywordClick, // 💡 親（App.js）からセット＆ジャンプ用の関数を受け取る
+  onKeywordClick,
 }) {
   const [viewedItems, setViewedItems] = useState([]);
   const [searchKeywords, setSearchKeywords] = useState([]);
@@ -20,7 +22,7 @@ function HistoryTab({
     if (!myAppId) return;
     setIsLoading(true);
 
-    // 📡 3つのエンドポイントから本物のデータを並行して超高速一括ハント
+    // 3つのエンドポイントから本物のデータを並行して一括ハント
     const pViews = fetch(`${API_URL}/users/${myAppId}/views`).then((res) =>
       res.json(),
     );
@@ -44,7 +46,7 @@ function HistoryTab({
           setViewedItems(Array.from(uniqueItemsMap.values()));
         }
 
-        // ② 本物の検索キーワードの格納（重複を綺麗に抜く数理フィルター）
+        // ② 本物の検索キーワードの格納
         if (Array.isArray(keywordsData)) {
           const uniqueWords = Array.from(
             new Set(keywordsData.map((k) => k.keyword)),
@@ -52,7 +54,7 @@ function HistoryTab({
           setSearchKeywords(uniqueWords);
         }
 
-        // ③ 4段目：AIによるあなたへの特別推薦（ホームの高度なパーソナライズデータを流用ドッキング！）
+        // ③ 4段目：AIによるあなたへの特別推薦
         if (
           homeData &&
           homeData.status === "success" &&
@@ -65,6 +67,7 @@ function HistoryTab({
       .finally(() => setIsLoading(false));
   }, [myAppId]);
 
+  // ⏳ ローディング画面の超スタイリッシュ化
   if (isLoading) {
     return (
       <div
@@ -73,25 +76,36 @@ function HistoryTab({
           color: "#9ca3af",
           padding: "60px 0",
           fontSize: "14px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
         }}
       >
-        ⏳ あなたの興味関心を分析中...
+        <Loader2 size={16} className="animate-spin" />{" "}
+        {/* 💡 ⏳を回転するインジケーターへリプレイス */}
+        <span>あなたの興味関心を分析中...</span>
       </div>
     );
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "35px" }}>
+      {/* 📖 メインタイトルのスマート化 */}
       <h2
         style={{
           fontSize: "18px",
           fontWeight: "bold",
           color: "#333",
           margin: "0",
-          textAlign: "center",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
         }}
       >
-        📖 あなたの興味・おすすめ
+        <History size={20} color="#333" />
+        <span>あなたの興味・おすすめ</span>
       </h2>
 
       {/* 1段目：❤️ いいねした商品 */}
@@ -107,7 +121,9 @@ function HistoryTab({
             gap: "6px",
           }}
         >
-          ❤️ いいねした商品 ({userLikes.length})
+          <Heart size={16} color="#ff4d4d" fill="#ff4d4d" />{" "}
+          {/* 💡 赤いフィルのハートでパッと見やすく */}
+          <span>いいねした商品 ({userLikes.length})</span>
         </h3>
         <HorizontalItemList
           items={userLikes}
@@ -129,7 +145,9 @@ function HistoryTab({
             gap: "6px",
           }}
         >
-          👁️ 最近チェックした商品 ({viewedItems.length})
+          <Eye size={16} color="#111827" />{" "}
+          {/* 💡 👁️をシャープなEyeアイコンへ */}
+          <span>最近チェックした商品 ({viewedItems.length})</span>
         </h3>
         <HorizontalItemList
           items={viewedItems}
@@ -138,7 +156,7 @@ function HistoryTab({
         />
       </div>
 
-      {/* 3段目：🔍 最近の検索キーワード（完全リアルデータ） */}
+      {/* 3段目：🔍 最近の検索キーワード */}
       <div>
         <h3
           style={{
@@ -151,7 +169,9 @@ function HistoryTab({
             gap: "6px",
           }}
         >
-          🔍 最近の検索キーワード
+          <Search size={16} color="#111827" />{" "}
+          {/* 💡 🔍を一貫性のある虫眼鏡アイコンへ */}
+          <span>最近の検索キーワード</span>
         </h3>
         {searchKeywords.length > 0 ? (
           <div
@@ -224,7 +244,9 @@ function HistoryTab({
             gap: "6px",
           }}
         >
-          ✨ AIが分析したおすすめ商品
+          <Sparkles size={16} color="#4f46e5" />{" "}
+          {/* 💡 ✨をインテリジェントなパープルスパークルへ */}
+          <span>AIが分析したおすすめ商品</span>
         </h3>
         {aiRecommendations.length > 0 ? (
           <HorizontalItemList

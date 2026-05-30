@@ -5,6 +5,21 @@ import {
   SHIPPING_DAYS_OPTIONS,
 } from "./FormConstants";
 import AiNegoFormSection from "./AiNegoFormSection";
+// 💡 出品フォームの高度な機能を洗練されたメタに変換するアイコン群をフル召喚
+import {
+  SquarePen,
+  Camera,
+  Loader2,
+  Brain,
+  ShieldCheck,
+  CheckCircle2,
+  Sparkles,
+  XCircle,
+  Check,
+  CircleDollarSign,
+  AlertTriangle,
+  Rocket,
+} from "lucide-react";
 
 function ItemForm({ sellerId, editingItem, onSuccess }) {
   // 💡 editingItem が存在する場合は、その既存データを初期値にハント（自動復元）する
@@ -37,12 +52,12 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
   );
   const [minPriceError, setMinPriceError] = useState("");
 
-  // 🛡️ AI安全チェック管理用のState
+  // 🛡️ AI安全チェック管理用のState（💡 テキスト内から絵文字のノイズを事前に引き算）
   const [isAiChecked, setIsAiChecked] = useState(editingItem ? true : false);
   const [isCheckingSafety, setIsCheckingSafety] = useState(false);
   const [safetyCheckMessage, setSafetyCheckMessage] = useState(
     editingItem
-      ? "📝 出品内容の訂正モードです（再チェックを省略して上書き保存できます）"
+      ? "出品内容の訂正モードです（再チェックを省略して上書き保存できます）"
       : "",
   );
 
@@ -142,11 +157,11 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           if (data.is_safe) {
             setIsAiChecked(true);
             setSafetyCheckMessage(
-              "✅ AI規約審査クリア！安全な商品と認定されました。✨",
+              "AI規約審査クリア！安全な商品と認定されました。", // 💡 混入していた記号表現を完全クリーン化
             );
           } else {
             setIsAiChecked(false);
-            setSafetyCheckMessage(`❌ 出品制限: ${data.reason}`);
+            setSafetyCheckMessage(`出品制限: ${data.reason}`);
           }
         } else {
           alert(data.message || "AI審査システムとの通信に失敗しました。");
@@ -328,11 +343,11 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
   const isCheckBtnDisabled =
     isCheckingSafety || !name.trim() || !description.trim() || isSubmitting;
 
-  // 💡【DRY原則集約】既存のバリデーションロジックに加え、「送信中（isSubmitting）」なら無条件でボタンを無効化する
+  // 【DRY原則集約】既存のバリデーションロジックに加え、「送信中（isSubmitting）」なら無条件でボタンを無効化する
   const isSubmitDisabled =
     !isAiChecked ||
     !!priceError ||
-    isSubmitting || // 👈 追記
+    isSubmitting ||
     (sellerStance !== "値下げは考えていない" &&
       (!String(minAcceptablePrice).trim() || !!minPriceError));
 
@@ -347,15 +362,29 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
         boxSizing: "border-box",
       }}
     >
+      {/* 📝 / 📸 の動的見出しタイトルをフレックス整列 */}
       <h2
         style={{
           fontSize: "18px",
           fontWeight: "bold",
           color: "#333",
           margin: "0 0 20px 0",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
         }}
       >
-        {editingItem ? "📝 出品内容を訂正する" : "📸 商品を出品する"}
+        {editingItem ? (
+          <>
+            <SquarePen size={18} color="#333" />
+            <span>出品内容を訂正する</span>
+          </>
+        ) : (
+          <>
+            <Camera size={18} color="#333" />
+            <span>商品を出品する</span>
+          </>
+        )}
       </h2>
 
       <form
@@ -373,7 +402,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
             type="text"
             placeholder="商品名を入力"
             value={name}
-            disabled={isSubmitting} // 👈 送信中は入力フォームも安全のためにロック
+            disabled={isSubmitting} // 送信中は入力フォームも安全のためにロック
             onChange={(e) => handleTextChange("name", e.target.value)}
             style={{
               padding: "10px 12px",
@@ -386,7 +415,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           />
         </div>
 
-        {/* AI商品説明生成 */}
+        {/* 🧠 AI商品説明生成ボタンの記号化 */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <button
             type="button"
@@ -403,9 +432,23 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
               fontSize: "12px",
               fontWeight: "bold",
               cursor: isDescBtnDisabled ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
             }}
           >
-            {isGeneratingDesc ? "⏳ AI執筆中..." : "🧠 AI自動商品説明文の生成"}
+            {isGeneratingDesc ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                <span>AI執筆中...</span>
+              </>
+            ) : (
+              <>
+                <Brain size={14} />
+                <span>AI自動商品説明文の生成</span>
+              </>
+            )}
           </button>
         </div>
 
@@ -419,7 +462,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           <textarea
             placeholder="商品の詳細な説明文"
             value={description}
-            disabled={isSubmitting} // 👈 ロック
+            disabled={isSubmitting} // ロック
             onChange={(e) => handleTextChange("description", e.target.value)}
             rows={5}
             style={{
@@ -440,9 +483,9 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: "6px",
+            gap: "16px",
             backgroundColor: "#f8fafc",
-            padding: "10px",
+            padding: "16px",
             borderRadius: "12px",
             border: "1px solid #e2e8f0",
             width: "100%",
@@ -470,11 +513,12 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
               <div
                 style={{
                   display: "flex",
-                  alignItems: "baseline",
-                  gap: "8px",
+                  alignItems: "center",
+                  gap: "6px",
                   flexWrap: "wrap",
                 }}
               >
+                <ShieldCheck size={16} color="#1e293b" />
                 <span
                   style={{
                     fontSize: "13px",
@@ -483,7 +527,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
                     flexShrink: 0,
                   }}
                 >
-                  🛡️ AI自動チェック　
+                  AI自動チェック
                 </span>
                 <span style={{ fontSize: "11px", color: "#64748b" }}>
                   出品ポリシー違反がないか自動検査します。
@@ -513,19 +557,31 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
                   : "0 4px 10px rgba(79, 70, 229, 0.15)",
                 transition: "all 0.2s",
                 flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
               }}
             >
-              {isCheckingSafety
-                ? "⏳ 審査中..."
-                : isAiChecked
-                  ? "✓ 審査完了"
-                  : "チェックを行う"}
+              {isCheckingSafety ? (
+                <>
+                  <Loader2 size={12} className="animate-spin" />
+                  <span>審査中...</span>
+                </>
+              ) : isAiChecked ? (
+                <>
+                  <Check size={12} />
+                  <span>審査完了</span>
+                </>
+              ) : (
+                "チェックを行う"
+              )}
             </button>
           </div>
+
+          {/* 🔍 審査メッセージボードの条件分岐・アイコン完全統制 */}
           {safetyCheckMessage && (
             <div
               style={{
-                marginTop: "10px",
                 padding: "10px 12px",
                 borderRadius: "8px",
                 fontSize: "12px",
@@ -535,15 +591,28 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
                 border: isAiChecked ? "1px solid #a7f3d0" : "1px solid #fca5a5",
                 width: "100%",
                 boxSizing: "border-box",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
               }}
             >
-              {safetyCheckMessage}
+              {isAiChecked ? (
+                <CheckCircle2 size={14} color="#065f46" />
+              ) : editingItem &&
+                !isAiChecked &&
+                safetyCheckMessage.includes("訂正モード") ? (
+                <SquarePen size={14} color="#991b1b" />
+              ) : (
+                <XCircle size={14} color="#991b1b" />
+              )}
+              <span>{safetyCheckMessage}</span>
+              {isAiChecked && <Sparkles size={12} color="#065f46" />}
             </div>
           )}
         </div>
 
         {/* ジャンル */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <label
             style={{ fontSize: "13px", fontWeight: "bold", color: "#4b5563" }}
           >
@@ -551,7 +620,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           </label>
           <select
             value={tags}
-            disabled={isSubmitting} // 👈 ロック
+            disabled={isSubmitting} // ロック
             onChange={(e) => setTags(e.target.value)}
             style={{
               padding: "10px 12px",
@@ -581,7 +650,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           </label>
           <select
             value={itemCondition}
-            disabled={isSubmitting} // 👈 ロック
+            disabled={isSubmitting} // ロック
             onChange={(e) => setItemCondition(e.target.value)}
             style={{
               padding: "10px 12px",
@@ -602,7 +671,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           </select>
         </div>
 
-        {/* AI価格査定 */}
+        {/* 💰 AI価格査定ボタン */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <button
             type="button"
@@ -619,9 +688,23 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
               fontSize: "12px",
               fontWeight: "bold",
               cursor: isPriceBtnDisabled ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
             }}
           >
-            {isEstimatingPrice ? "⏳ 査定中..." : "💰 AI適正価格査定"}
+            {isEstimatingPrice ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                <span>査定中...</span>
+              </>
+            ) : (
+              <>
+                <CircleDollarSign size={14} />
+                <span>AI適正価格査定</span>
+              </>
+            )}
           </button>
         </div>
 
@@ -637,7 +720,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
             min="0"
             placeholder="金額を入力"
             value={price}
-            disabled={isSubmitting} // 👈 ロック
+            disabled={isSubmitting} // ロック
             onChange={(e) => handlePriceChange(e.target.value)}
             onKeyDown={(e) => {
               if (["-", "+", "e", "E", "."].includes(e.key)) e.preventDefault();
@@ -663,9 +746,13 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
                 fontSize: "12px",
                 fontWeight: "bold",
                 marginTop: "2px",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
               }}
             >
-              ⚠️ {priceError}
+              <AlertTriangle size={12} />
+              <span>{priceError}</span>
             </span>
           )}
         </div>
@@ -681,7 +768,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
             type="text"
             placeholder="出品者の名前を入力してください"
             value={sellerName}
-            disabled={isSubmitting} // 👈 ロック
+            disabled={isSubmitting} // ロック
             onChange={(e) => setSellerName(e.target.value)}
             style={{
               padding: "10px 12px",
@@ -703,7 +790,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           </label>
           <select
             value={shippingDays}
-            disabled={isSubmitting} // 👈 ロック
+            disabled={isSubmitting} // ロック
             onChange={(e) => setShippingDays(e.target.value)}
             style={{
               padding: "10px 12px",
@@ -732,7 +819,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           setSellerStance={setSellerStance}
           minPriceError={minPriceError}
           handleMinPriceChange={handleMinPriceChange}
-          disabled={isSubmitting} // 👈 必要に応じてサブセクション側にも状態を伝播
+          disabled={isSubmitting} // 必要に応じてサブセクション側にも状態を伝播
         />
 
         {/* 画像URL */}
@@ -753,9 +840,9 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           </label>
           <input
             type="text"
-            placeholder="空欄ならAIが最適画像を自動セット！✨"
+            placeholder="空欄ならAIが最適画像を自動セット！"
             value={imageUrl}
-            disabled={isSubmitting} // 👈 ロック
+            disabled={isSubmitting} // ロック
             onChange={(e) => setImageUrl(e.target.value)}
             style={{
               padding: "10px 12px",
@@ -768,7 +855,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           />
         </div>
 
-        {/* 💡【進化版メインボタン】送信状態に応じてテキストを動的にチェンジ */}
+        {/* 🚀 / 📝 メインアクションボタンの動的線画化 */}
         <button
           type="submit"
           disabled={isSubmitDisabled}
@@ -786,13 +873,28 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
               ? "none"
               : "0 4px 12px rgba(255, 77, 77, 0.2)",
             transition: "background-color 0.2s",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
           }}
         >
-          {isSubmitting
-            ? "⏳ タイムラインに出品中..."
-            : editingItem
-              ? "🆙 出品内容を上書き保存する"
-              : "🚀 この内容でタイムラインに出品する"}
+          {isSubmitting ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              <span>タイムラインに出品中...</span>
+            </>
+          ) : editingItem ? (
+            <>
+              <SquarePen size={16} />
+              <span>出品内容を上書き保存する</span>
+            </>
+          ) : (
+            <>
+              <Rocket size={16} />
+              <span>この内容でタイムラインに出品する</span>
+            </>
+          )}
         </button>
       </form>
     </div>

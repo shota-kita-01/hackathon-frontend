@@ -1,6 +1,5 @@
 import React from "react";
 
-// 🆕 引数（プロップス）に handleCardClick を追加
 function HorizontalItemList({ items, handlePurchaseItem, handleCardClick }) {
   if (!items || items.length === 0) {
     return (
@@ -36,7 +35,6 @@ function HorizontalItemList({ items, handlePurchaseItem, handleCardClick }) {
         <div
           key={item.id}
           className="item-card"
-          // 🆕 1つ1つの商品カードがクリックされたときに、その商品単体のオブジェクト(item)を投げるように修正
           onClick={() => handleCardClick && handleCardClick(item)}
           style={{
             minWidth: "160px",

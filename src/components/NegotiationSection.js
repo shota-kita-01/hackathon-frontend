@@ -1,4 +1,17 @@
 import React, { useState } from "react";
+// 💡 ゲーム理論的な調停フェーズや緊迫感をシャープに具現化するアイコン群を召喚
+import {
+  Bot,
+  AlertTriangle,
+  CircleDollarSign,
+  Heart,
+  Sparkles,
+  Loader2,
+  PartyPopper,
+  ArrowRight,
+  Handshake,
+  XCircle,
+} from "lucide-react";
 
 function NegotiationSection({
   itemId,
@@ -26,7 +39,7 @@ function NegotiationSection({
     e.preventDefault();
     if (!wishPrice || !negoMessage.trim()) return;
 
-    // 💡 通信が始まる「loading」の瞬間に、画面遷移およびモーダルクローズを強制ロック！
+    // 💡 通信が始まる「loading」の瞬さに、画面遷移およびモーダルクローズを強制ロック！
     if (setIsModalLocked) setIsModalLocked(true);
     setNegoMode("loading");
 
@@ -77,7 +90,7 @@ function NegotiationSection({
       .then((res) => res.json())
       .then((data) => {
         alert(
-          `🎉 交渉妥協案（${negoResult.settlement_price.toLocaleString()}円）での購入が確定しました！`,
+          `交渉妥協案（${negoResult.settlement_price.toLocaleString()}円）での購入が確定しました。`,
         );
         if (setIsModalLocked) setIsModalLocked(false); // 💡 ワープ直前に確実にロックを解除
         onNegotiationSuccess(data.transaction_id);
@@ -93,7 +106,7 @@ function NegotiationSection({
     <div
       style={{ width: "100%", boxSizing: "border-box", marginBottom: "15px" }}
     >
-      {/* 交渉開始ボタン */}
+      {/* 交渉開始ボタンの近代化 */}
       {negoMode === "none" && (
         <button
           onClick={() => setNegoMode("input")}
@@ -109,9 +122,14 @@ function NegotiationSection({
             cursor: "pointer",
             boxShadow: "0 4px 12px rgba(124, 58, 237, 0.25)",
             transition: "all 0.2s",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
           }}
         >
-          🤖 AIにおまかせ価格交渉（自動利害調停）
+          <Bot size={16} color="white" />
+          <span>AIにおまかせ価格交渉（自動利害調停）</span>
         </button>
       )}
 
@@ -134,12 +152,17 @@ function NegotiationSection({
               color: "#6d28d9",
               marginBottom: "12px",
               textAlign: "center",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "4px",
             }}
           >
-            🤖 AI代理調停システム起動中
+            <Bot size={16} />
+            <span>AI代理調停システム起動中</span>
           </div>
 
-          {/* 💡 🚨 ゲーム理論に基づいた総当たりハックを完全封殺するロゼピンクの警告バナー */}
+          {/* 💡 🚨 総当たりハックを完全封殺する警告バナー */}
           <div
             style={{
               backgroundColor: "#fff1f2",
@@ -154,16 +177,32 @@ function NegotiationSection({
               textAlign: "left",
               boxSizing: "border-box",
               width: "100%",
+              display: "flex",
+              alignItems: "start",
+              gap: "6px",
             }}
           >
-            <strong>🚨 本商品への価格交渉は【1人1回限定】です</strong>
-            <div
-              style={{ marginTop: "3px", color: "#be123c", fontWeight: "500" }}
-            >
-              一度交渉が開始されると、成否（成立・決裂）にかかわらず枠が消費されます。
-              システムをハックする目的の連続打診を防ぐため、
-              <strong>決裂後の再ネゴシエーションは一切できません。</strong>
-              希望価格と熱意文は慎重に入力してください。
+            <AlertTriangle
+              size={14}
+              color="#e11d48"
+              style={{ marginTop: "2px", flexShrink: 0 }}
+            />
+            <div>
+              <strong style={{ fontWeight: "bold" }}>
+                本商品への価格交渉は【1人1回限定】です
+              </strong>
+              <div
+                style={{
+                  marginTop: "3px",
+                  color: "#be123c",
+                  fontWeight: "500",
+                }}
+              >
+                一度交渉が開始されると、成否（成立・決裂）にかかわらず枠が消費されます。
+                システムをハックする目的の連続打診を防ぐため、
+                <strong>決裂後の再ネゴシエーションは一切できません。</strong>
+                希望価格と熱意文は慎重に入力してください。
+              </div>
             </div>
           </div>
 
@@ -177,11 +216,14 @@ function NegotiationSection({
                   fontSize: "12px",
                   fontWeight: "bold",
                   color: "#7c3aed",
-                  display: "block",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
                   marginBottom: "6px",
                 }}
               >
-                💰 あなたの希望購入価格（円）
+                <CircleDollarSign size={13} />
+                <span>あなたの希望購入価格（円）</span>
               </label>
               <input
                 type="number"
@@ -207,14 +249,17 @@ function NegotiationSection({
                   fontSize: "12px",
                   fontWeight: "bold",
                   color: "#7c3aed",
-                  display: "block",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
                   marginBottom: "6px",
                 }}
               >
-                ❤️ 商品への熱意・理由（AIが出品者へ提示します）
+                <Heart size={13} />
+                <span>商品への熱意・理由（AIが出品者へ提示します）</span>
               </label>
               <textarea
-                placeholder="例: 大変貴重な書籍のため、ぜひ拝読したく思っております。サークル予算の関係上、もし可能であればお値下げの調停をお願いできないでしょうか？"
+                placeholder="例: 大変貴重な商品のため、ぜひ拝読したく思っております。予算の関係上、もし可能であればお値下げの調停をお願いできないでしょうか？"
                 value={negoMessage}
                 onChange={(e) => setNegoMessage(e.target.value)}
                 required
@@ -243,7 +288,7 @@ function NegotiationSection({
             >
               <button
                 type="button"
-                onClick={resetNegoMode} // 💡 安全な共通リセット関数へ統合
+                onClick={resetNegoMode}
                 style={{
                   padding: "8px 16px",
                   backgroundColor: "white",
@@ -267,9 +312,13 @@ function NegotiationSection({
                   fontSize: "13px",
                   fontWeight: "bold",
                   cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
                 }}
               >
-                交渉をAIに一任する 🪄
+                <span>交渉をAIに一任する</span>
+                <Sparkles size={13} />
               </button>
             </div>
           </form>
@@ -285,17 +334,18 @@ function NegotiationSection({
             border: "1px solid #ddd6fe",
             borderRadius: "16px",
             textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          <div
-            style={{
-              fontSize: "28px",
-              marginBottom: "10px",
-              animation: "spin 1.5s linear infinite",
-            }}
-          >
-            ⏳
-          </div>
+          <Loader2
+            size={24}
+            color="#7c3aed"
+            className="animate-spin"
+            style={{ marginBottom: "10px" }}
+          />
           <div
             style={{ fontSize: "14px", fontWeight: "bold", color: "#6d28d9" }}
           >
@@ -333,9 +383,13 @@ function NegotiationSection({
                   fontSize: "14px",
                   fontWeight: "bold",
                   color: "#166534",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
                 }}
               >
-                🎉 交渉一発成立！即時取引が確定しました
+                <PartyPopper size={16} color="#166534" />
+                <span>交渉一発成立！即時取引が確定しました</span>
               </div>
               <div
                 style={{
@@ -376,9 +430,14 @@ function NegotiationSection({
                   fontWeight: "bold",
                   fontSize: "14px",
                   cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "4px",
                 }}
               >
-                取引画面へ進む ➔
+                <span>取引画面へ進む</span>
+                <ArrowRight size={14} />
               </button>
             </div>
           )}
@@ -393,9 +452,13 @@ function NegotiationSection({
                   fontSize: "14px",
                   fontWeight: "bold",
                   color: "#92400e",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
                 }}
               >
-                🤝 AIから両者の利害を一致させる妥協案の提示
+                <Handshake size={16} color="#92400e" />
+                <span>AIから両者の利害を一致させる妥協案の提示</span>
               </div>
               <div
                 style={{
@@ -475,9 +538,13 @@ function NegotiationSection({
                   fontSize: "14px",
                   fontWeight: "bold",
                   color: "#991b1b",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
                 }}
               >
-                ❌ 条件不一致による交渉決裂
+                <XCircle size={16} color="#991b1b" />
+                <span>条件不一致による交渉決裂</span>
               </div>
               <div
                 style={{

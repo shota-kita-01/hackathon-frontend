@@ -1,4 +1,5 @@
 import React from "react";
+import { Home, Search, Sparkles, Camera, User } from "lucide-react";
 
 function Navigation({ myAppId, currentTab, setCurrentTab }) {
   if (!myAppId) return null;
@@ -10,15 +11,15 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
         display: "flex",
         justifyContent: "center",
         gap: "12px",
-        position: "sticky", // 💡 ナビゲーションも固定化
-        top: "60px", // 💡 Header(60px)の真下にピタッと吸着させる数理設計
-        zIndex: 100, // 💡 コンテンツより上で、Headerより下のレイヤー
-        // 💡 スクロールした時に、アプリ全体が下に潜り込んで浮き出て見えるシャドウ効果
+        position: "sticky",
+        top: "60px",
+        zIndex: 100,
         boxShadow:
           "0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)",
         borderBottom: "1px solid #e5e7eb",
       }}
     >
+      {/* ホーム */}
       <button
         onClick={() => setCurrentTab("home")}
         style={{
@@ -33,11 +34,17 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
           fontWeight: "bold",
           fontSize: "14px",
           cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          transition: "all 0.2s ease",
         }}
       >
-        🏠 ホーム
+        <Home size={16} />
+        <span>ホーム</span>
       </button>
 
+      {/* 検索 */}
       <button
         onClick={() => setCurrentTab("search")}
         style={{
@@ -52,11 +59,17 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
           fontWeight: "bold",
           fontSize: "14px",
           cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          transition: "all 0.2s ease",
         }}
       >
-        🔍 検索
+        <Search size={16} />
+        <span>検索</span>
       </button>
 
+      {/* おすすめ・履歴 */}
       <button
         onClick={() => setCurrentTab("history")}
         style={{
@@ -71,12 +84,17 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
           fontWeight: "bold",
           fontSize: "14px",
           cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          transition: "all 0.2s ease",
         }}
       >
-        ✨ おすすめ・履歴
+        <Sparkles size={16} />
+        <span>おすすめ・履歴</span>
       </button>
 
-      {/* 📸 【順番変更】出品タブを左側へスライド */}
+      {/* 出品 */}
       <button
         onClick={() => setCurrentTab("sell")}
         style={{
@@ -91,12 +109,17 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
           fontWeight: "bold",
           fontSize: "14px",
           cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          transition: "all 0.2s ease",
         }}
       >
-        📸 出品
+        <Camera size={16} />
+        <span>出品</span>
       </button>
 
-      {/* 👤 【順番変更】マイページタブを一番右端（最後尾）へ配置 */}
+      {/* マイページ */}
       <button
         onClick={() => setCurrentTab("mypage")}
         style={{
@@ -111,9 +134,14 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
           fontWeight: "bold",
           fontSize: "14px",
           cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          transition: "all 0.2s ease",
         }}
       >
-        👤 マイページ
+        <User size={16} />
+        <span>マイページ</span>
       </button>
     </div>
   );

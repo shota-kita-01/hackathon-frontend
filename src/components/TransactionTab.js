@@ -1,4 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
+import {
+  ArrowLeft,
+  Store,
+  Handshake,
+  Truck,
+  Box,
+  CheckCircle2,
+  Zap,
+  MessageSquare,
+  Send,
+} from "lucide-react";
 
 function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
   const [txData, setTxData] = useState(null);
@@ -10,7 +21,7 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
-  // ⏱️ 仕組み: 取引基本情報とメッセージ履歴をフェッチ
+  // 📡 仕組み: 取引基本情報とメッセージ履歴をフェッチ
   useEffect(() => {
     if (!transactionId) return;
 
@@ -93,30 +104,42 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
 
   if (!txData)
     return (
-      <div style={{ textAlign: "center", padding: "40px" }}>
+      <div
+        style={{
+          textAlign: "center",
+          padding: "40px",
+          color: "#9ca3af",
+          fontSize: "14px",
+        }}
+      >
         取引データを読み込み中...
       </div>
     );
 
   const isSeller = myAppId === txData.seller_id;
   const isBuyer = myAppId === txData.buyer_id;
-  const isOfficialItem = !txData.seller_id; // 💡 公式カタログ品かどうかの判定フラグ
+  const isOfficialItem = !txData.seller_id; // 公式カタログ品かどうかの判定フラグ
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      {/* 🔙 戻るボタン */}
+      {/* 🔙 戻るボタンの近代化 */}
       <button
         onClick={() => setCurrentTab("home")}
         style={{
           alignSelf: "flex-start",
           border: "none",
           background: "none",
-          color: "#666",
+          color: "#6b7280",
           cursor: "pointer",
           fontSize: "14px",
+          display: "flex",
+          alignItems: "center",
+          gap: "4px",
+          fontWeight: "500",
         }}
       >
-        ← ホームへ戻る
+        <ArrowLeft size={16} />
+        <span>ホームへ戻る</span>
       </button>
 
       {/* 📦 商品情報ヘッダー */}
@@ -142,14 +165,34 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
           }}
         />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: "12px", color: "#6b7280" }}>
-            {isOfficialItem ? "🏢 公式ストア取引" : "🤝 ユーザー間取引"}
+          <div
+            style={{
+              fontSize: "12px",
+              color: "#6b7280",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              marginBottom: "2px",
+            }}
+          >
+            {/* 💡 取引種別に応じてアイコンを美麗にスイッチ */}
+            {isOfficialItem ? (
+              <Store size={13} color="#6b7280" />
+            ) : (
+              <Handshake size={13} color="#6b7280" />
+            )}
+            <span>{isOfficialItem ? "公式ストア取引" : "ユーザー間取引"}</span>
           </div>
-          <div style={{ fontWeight: "bold", color: "#333" }}>
+          <div style={{ fontWeight: "bold", color: "#333", fontSize: "15px" }}>
             {txData.item_name}
           </div>
           <div
-            style={{ color: "#ff4d4d", fontWeight: "bold", fontSize: "14px" }}
+            style={{
+              color: "#ff4d4d",
+              fontWeight: "bold",
+              fontSize: "14px",
+              marginTop: "2px",
+            }}
           >
             ¥{txData.item_price.toLocaleString()}
           </div>
@@ -166,13 +209,47 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
           textAlign: "center",
         }}
       >
-        <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#333" }}>
-          {txData.transaction_status === "shipping_pending" && "🚚 発送待ち"}
-          {txData.transaction_status === "shipped" && "📦 発送済み・受取待ち"}
-          {txData.transaction_status === "completed" && "🏁 取引完了"}
+        {/* 状態見出しの記号化 */}
+        <h3
+          style={{
+            margin: "0 0 10px 0",
+            fontSize: "16px",
+            color: "#333",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
+            fontWeight: "bold",
+          }}
+        >
+          {txData.transaction_status === "shipping_pending" && (
+            <>
+              <Truck size={18} color="#333" />
+              <span>発送待ち</span>
+            </>
+          )}
+          {txData.transaction_status === "shipped" && (
+            <>
+              <Box size={18} color="#333" />
+              <span>発送済み・受取待ち</span>
+            </>
+          )}
+          {txData.transaction_status === "completed" && (
+            <>
+              <CheckCircle2 size={18} color="#16a34a" />
+              <span style={{ color: "#16a34a" }}>取引完了</span>
+            </>
+          )}
         </h3>
 
-        <div style={{ fontSize: "13px", color: "#666", marginBottom: "15px" }}>
+        <div
+          style={{
+            fontSize: "13px",
+            color: "#666",
+            marginBottom: "15px",
+            lineHeight: "1.5",
+          }}
+        >
           {txData.transaction_status === "shipping_pending" &&
             (isOfficialItem
               ? "公式カタログ品のため、システムが自動で発送準備を行っています。"
@@ -187,8 +264,7 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
             "この取引は無事に完了しました。ご利用ありがとうございました！"}
         </div>
 
-        {/* 権利に応じたダイナミックボタン */}
-        {/* 💡 【デモ詰まり防止ハック】公式品の場合、発送通知ボタンを押せる出品者が不在なので、購入者が「倉庫から即時出荷する」ボタンを代わりに叩いてフェーズを進められるように救済 */}
+        {/* 権利に応じたダイナミックボタンの線画化 */}
         {txData.transaction_status === "shipping_pending" &&
           (isSeller || (isOfficialItem && isBuyer)) && (
             <button
@@ -205,11 +281,20 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
                 boxShadow: isOfficialItem
                   ? "0 4px 12px rgba(124,58,237,0.2)"
                   : "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
               }}
             >
-              {isOfficialItem
-                ? "⚡ 【デモ用】倉庫から即時出荷する"
-                : "商品の発送を通知する"}
+              {isOfficialItem ? (
+                <>
+                  <Zap size={16} fill="white" />
+                  <span>【デモ用】倉庫から即時出荷する</span>
+                </>
+              ) : (
+                "商品の発送を通知する"
+              )}
             </button>
           )}
 
@@ -225,9 +310,14 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
               borderRadius: "8px",
               fontWeight: "bold",
               cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
             }}
           >
-            商品を受け取ったので評価する
+            <CheckCircle2 size={16} />
+            <span>商品を受け取ったので評価する</span>
           </button>
         )}
       </div>
@@ -245,14 +335,20 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
       >
         <div
           style={{
-            padding: "10px",
+            padding: "12px",
             textAlign: "center",
             borderBottom: "1px solid #f3f4f6",
             fontSize: "12px",
-            color: "#999",
+            color: "#9ca3af",
+            fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "4px",
           }}
         >
-          取引メッセージ
+          <MessageSquare size={14} color="#9ca3af" />
+          <span>取引メッセージ</span>
         </div>
 
         {/* メッセージリスト */}
@@ -268,10 +364,10 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
           }}
         >
           {messages.map((msg, idx) => {
-            const isBot = msg.sender_id === 0; // 💡 公式システムBot判定
+            const isBot = msg.sender_id === 0; // 公式システムBot判定
             const isMe = msg.sender_id === myAppId;
 
-            // 🤖 【UX大改造】公式Botからのメッセージは中央にシステム通知風にマウント
+            // 🤖 公式システムBotからの通知バブルのスマート化
             if (isBot) {
               return (
                 <div
@@ -285,7 +381,7 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
                 >
                   <div
                     style={{
-                      backgroundColor: "#f1f5f9", // スマートなスレートグレー
+                      backgroundColor: "#f1f5f9",
                       color: "#475569",
                       padding: "10px 14px",
                       borderRadius: "12px",
@@ -327,7 +423,7 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
                 <div
                   style={{
                     fontSize: "10px",
-                    color: "#999",
+                    color: "#9ca3af",
                     textAlign: isMe ? "right" : "left",
                     marginTop: "4px",
                   }}
@@ -344,17 +440,22 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
             <div
               style={{
                 textAlign: "center",
-                color: "#ccc",
+                color: "#9ca3af",
                 fontSize: "13px",
-                marginTop: "20px",
+                marginTop: "4px",
+                padding: "40px 0",
+                border: "1px dashed #e5e7eb",
+                borderRadius: "12px",
+                backgroundColor: "#fafafa",
+                margin: "15px",
               }}
             >
-              メッセージを送して挨拶しましょう
+              メッセージを送信して挨拶しましょう
             </div>
           )}
         </div>
 
-        {/* 送信フォーム */}
+        {/* 送信フォームのボタン線画化 */}
         {txData.transaction_status !== "completed" && (
           <form
             onSubmit={handleSendMessage}
@@ -372,9 +473,9 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
               placeholder="メッセージを入力..."
               style={{
                 flex: 1,
-                padding: "10px",
+                padding: "10px 16px",
                 borderRadius: "20px",
-                border: "1px solid #ddd",
+                border: "1px solid #d1d5db",
                 outline: "none",
                 fontSize: "14px",
               }}
@@ -386,14 +487,19 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
                 backgroundColor: "#ff4d4d",
                 color: "white",
                 border: "none",
-                padding: "0 20px",
+                padding: "0 16px",
                 borderRadius: "20px",
                 fontWeight: "bold",
                 cursor: "pointer",
                 opacity: inputText.trim() ? 1 : 0.5,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "4px",
               }}
             >
-              送信
+              <Send size={14} />
+              <span>送信</span>
             </button>
           </form>
         )}

@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from "react";
 import NegotiationSection from "./NegotiationSection";
 import DetailRecommendations from "./DetailRecommendations";
+import {
+  X,
+  ShoppingBag,
+  Heart,
+  User,
+  Sliders,
+  Truck,
+  SquarePen,
+  XCircle,
+  Trash2,
+  AlertTriangle,
+} from "lucide-react";
 
 function ItemDetailModal({
   selectedItem,
@@ -10,15 +22,15 @@ function ItemDetailModal({
   userLikes,
   onLikeToggle,
   onNegotiationSuccess,
-  setEditingItem, // 💡 親から引き継いだ編集データセット関数をキャッチ
-  setCurrentTab, // 💡 親から引き継いだタブ切り替え関数をキャッチ
+  setEditingItem,
+  setCurrentTab,
 }) {
   const [spaceItems, setSpaceItems] = useState([]);
   const [timeItems, setTimeItems] = useState([]);
   const [isCalculating, setIsCalculating] = useState(false);
   const [localIsLiked, setLocalIsLiked] = useState(false);
 
-  // 🔒 【新設】AIが計算中, または妥協案提示の保留中にモーダルを強制ロックするState
+  // AIが計算中, または妥協案提示の保留中にモーダルを強制ロックするState
   const [isModalLocked, setIsModalLocked] = useState(false);
 
   const API_URL =
@@ -93,7 +105,7 @@ function ItemDetailModal({
       });
   };
 
-  // 🗑️【新設】バックエンドの特権削除APIをシームレスにスナイプする非同期関数
+  // バックエンドの特権削除APIをシームレスにスナイプする非同期関数
   const handleDeleteItem = () => {
     if (
       !window.confirm(
@@ -124,21 +136,21 @@ function ItemDetailModal({
   if (!selectedItem) return null;
   const isSoldOut = selectedItem.status === "sold_out";
 
-  // 💡 出品スタンスが「値下げは考えていない」に指定されている場合は交渉不可とする判定フラグ
+  // 出品スタンスが「値下げは考えていない」に指定されている場合は交渉不可とする判定フラグ
   const isNegotiable = selectedItem.seller_stance !== "値下げは考えていない";
 
-  // 💡 【重要数理】この商品の出品者が、今ログインしている自分（myAppId）かどうかを厳格に判定
+  // この商品の出品者が、今ログインしている自分（myAppId）かどうかを厳格に判定
   const isMyItem =
     selectedItem.seller_id &&
     Number(selectedItem.seller_id) === Number(myAppId);
 
-  // 🛑 【数理制約】過去にこの商品を値切ったことがあるかをlocalStorageのトークンからハント
+  // 過去にこの商品を値切ったことがあるかをlocalStorageのトークンからハント
   const hasAlreadyNegotiated =
     localStorage.getItem(
       `fleamarket_negotiated_${myAppId}_${selectedItem.id}`,
     ) === "true";
 
-  // 📝 訂正ボタンが押された時のフォーム復元ワープ処理
+  // 訂正ボタンが押された時のフォーム復元ワープ処理
   const handleEditClick = () => {
     setEditingItem(selectedItem); // 1. この商品のすべてのデータを「編集対象」として親のStateにロックオン
     setCurrentTab("sell"); // 2. 画面のタブを出品フォーム（"sell"）に強制ワープ
@@ -180,7 +192,7 @@ function ItemDetailModal({
           overflowY: "auto",
         }}
       >
-        {/* ✕ボタン */}
+        {/* ✕ボタンのモダン線画化 */}
         <button
           onClick={() => !isModalLocked && setSelectedItem(null)} // 💡 ロック中はクローズ関数を完全遮断
           disabled={isModalLocked}
@@ -196,19 +208,25 @@ function ItemDetailModal({
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            fontSize: "16px",
             cursor: isModalLocked ? "not-allowed" : "pointer", // 禁止マークスタイル
             color: "#6b7280",
             transition: "background-color 0.2s",
           }}
         >
-          ✕
+          <X size={15} />
         </button>
 
         <h2
-          style={{ margin: "0 0 15px 0", fontSize: "20px", fontWeight: "bold" }}
+          style={{
+            margin: "0 0 15px 0",
+            fontSize: "20px",
+            fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
         >
-          🛍️ 商品詳細
+          <ShoppingBag size={20} color="#333" /> <span>商品詳細</span>
         </h2>
 
         {/* 商品画像 */}
@@ -269,12 +287,17 @@ function ItemDetailModal({
               fontSize: "13px",
               display: "flex",
               alignItems: "center",
-              gap: "4px",
+              gap: "6px",
               transition: "all 0.2s",
               flexShrink: 0,
             }}
           >
-            {localIsLiked ? "❤️ いいね中" : "🤍 いいね"}
+            <Heart
+              size={14}
+              fill={localIsLiked ? "#f43f5e" : "transparent"}
+              color={localIsLiked ? "#f43f5e" : "#9ca3af"}
+            />
+            <span>{localIsLiked ? "いいね中" : "いいね"}</span>
           </button>
         </div>
 
@@ -296,7 +319,7 @@ function ItemDetailModal({
           </div>
         )}
 
-        {/* メタデータシート */}
+        {/* メタデータシートの記号化 */}
         <div
           style={{
             backgroundColor: "#f8fafc",
@@ -317,8 +340,17 @@ function ItemDetailModal({
               alignItems: "center",
             }}
           >
-            <span style={{ color: "#64748b", fontWeight: "600" }}>
-              👤 出品者
+            <span
+              style={{
+                color: "#64748b",
+                fontWeight: "600",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <User size={14} color="#64748b" />
+              <span>出品者</span>
             </span>
             <span style={{ fontWeight: "700", color: "#334155" }}>
               {selectedItem.seller_name || "公式出品"}
@@ -333,8 +365,16 @@ function ItemDetailModal({
               paddingTop: "8px",
             }}
           >
-            <span style={{ color: "#64748b", fontWeight: "600" }}>
-              ✨ 商品の状態
+            <span
+              style={{
+                color: "#64748b",
+                fontWeight: "600",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <Sliders size={14} color="#64748b" /> <span>商品の状態</span>
             </span>
             <span style={{ fontWeight: "700", color: "#334155" }}>
               {selectedItem.item_condition || "目立った傷や汚れなし"}
@@ -349,8 +389,17 @@ function ItemDetailModal({
               paddingTop: "8px",
             }}
           >
-            <span style={{ color: "#64748b", fontWeight: "600" }}>
-              🚚 発送日の目安
+            <span
+              style={{
+                color: "#64748b",
+                fontWeight: "600",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <Truck size={14} color="#64748b" />
+              <span>発送日の目安</span>
             </span>
             <span style={{ fontWeight: "700", color: "#334155" }}>
               {selectedItem.shipping_days || "1〜2日で発送"}
@@ -411,9 +460,13 @@ function ItemDetailModal({
                 cursor: "pointer",
                 boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
                 transition: "all 0.2s",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
               }}
             >
-              📝 出品内容を訂正する
+              <SquarePen size={16} />
+              <span>出品内容を訂正する</span>
             </button>
           ) : (
             <button
@@ -440,14 +493,28 @@ function ItemDetailModal({
                   ? "none"
                   : "0 4px 12px rgba(255, 77, 77, 0.2)",
                 transition: "all 0.2s",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
               }}
             >
-              {isSoldOut ? "❌ 売り切れました" : "🛍️ 今すぐ購入"}
+              {/* 💡 ボタン内の売り切れ・購入絵文字を完全リプレイス */}
+              {isSoldOut ? (
+                <>
+                  <XCircle size={16} />
+                  <span>売り切れました</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingBag size={16} />
+                  <span>今すぐ購入</span>
+                </>
+              )}
             </button>
           )}
         </div>
 
-        {/* 🗑️【進化版ボタン】フレックスコンテナに入れて右揃え ＆ 幅を自動にハック */}
+        {/* 🗑️ 出品取り消しセクション */}
         {isMyItem && selectedItem.status === "on_sale" && (
           <div
             style={{
@@ -459,16 +526,19 @@ function ItemDetailModal({
             <button
               onClick={handleDeleteItem}
               style={{
-                padding: "10px 20px", // パディングを横長にしてホールド感を調整
+                padding: "10px 20px",
                 backgroundColor: "#ffffff",
                 color: "#ef4444",
                 border: "1px solid #fca5a5",
-                borderRadius: "25px", // 「訂正する」ボタンと合わせてカプセル型に
+                borderRadius: "25px",
                 fontSize: "14px",
                 fontWeight: "bold",
                 cursor: "pointer",
                 boxShadow: "0 2px 4px rgba(239, 68, 68, 0.05)",
                 transition: "all 0.2s",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#fef2f2";
@@ -479,12 +549,13 @@ function ItemDetailModal({
                 e.currentTarget.style.borderColor = "#fca5a5";
               }}
             >
-              🗑️ この出品を取り消す
+              <Trash2 size={14} />
+              <span>この出品を取り消す</span>
             </button>
           </div>
         )}
 
-        {/* 💡 🥊 交渉セクション */}
+        {/* 交渉セクション */}
         {selectedItem.id >= 100000 &&
           !isSoldOut &&
           isNegotiable &&
@@ -499,7 +570,7 @@ function ItemDetailModal({
             />
           )}
 
-        {/* 🛑 交渉履歴バナー */}
+        {/* 交渉履歴バナー */}
         {hasAlreadyNegotiated && !isSoldOut && !isMyItem && (
           <div
             style={{
@@ -513,14 +584,20 @@ function ItemDetailModal({
               fontWeight: "bold",
               textAlign: "center",
               animation: "fadeIn 0.2s ease-out",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
             }}
           >
-            ⚠️
-            この商品に対するあなたのAI代理交渉枠（1人1商品につき1回限定）は既に消費されています。
+            <AlertTriangle size={14} style={{ flexShrink: 0 }} />{" "}
+            <span>
+              この商品に対するあなたのAI代理交渉枠（1人1商品につき1回限定）は既に消費されています。
+            </span>
           </div>
         )}
 
-        {/* 🧠 2段多次元AI推薦エリア */}
+        {/* 2段多次元AI推薦エリア */}
         <DetailRecommendations
           isCalculating={isCalculating}
           spaceItems={spaceItems}

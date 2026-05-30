@@ -1,4 +1,5 @@
 import React from "react";
+import { User, ShoppingBag, XCircle } from "lucide-react";
 
 function ItemList({ items, handlePurchaseItem }) {
   return (
@@ -76,8 +77,17 @@ function ItemList({ items, handlePurchaseItem }) {
             </h3>
           </div>
 
-          <div style={{ fontSize: "12px", color: "#9ca3af" }}>
-            👤 出品者: {item.seller_name || "Amazon公式"}
+          <div
+            style={{
+              fontSize: "12px",
+              color: "#9ca3af",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <User size={13} color="#9ca3af" />
+            <span>出品者: {item.seller_name || "Amazon公式"}</span>
           </div>
 
           <p
@@ -95,7 +105,7 @@ function ItemList({ items, handlePurchaseItem }) {
             {item.description}
           </p>
 
-          {/* 💡 【安全防弾ガード】item.tags が文字列のときだけ安全にスプリットしてループを回す */}
+          {/* 【安全防弾ガード】item.tags が文字列のときだけ安全にスプリットしてループを回す */}
           {item.tags && typeof item.tags === "string" && (
             <div
               style={{
@@ -134,6 +144,7 @@ function ItemList({ items, handlePurchaseItem }) {
               marginTop: "4px",
             }}
           >
+            {/* 🛡️【重要】オプショナルチェーニング (?.) とフォールバック (|| 0) で即死クラッシュを完全無効化 */}
             <span
               style={{
                 fontSize: "18px",
@@ -141,7 +152,7 @@ function ItemList({ items, handlePurchaseItem }) {
                 color: item.status === "sold_out" ? "#9ca3af" : "#ff4d4d",
               }}
             >
-              {item.price.toLocaleString()} 円
+              {(item.price ?? 0).toLocaleString()} 円
             </span>
 
             {item.status === "sold_out" ? (
@@ -156,9 +167,14 @@ function ItemList({ items, handlePurchaseItem }) {
                   fontSize: "13px",
                   fontWeight: "bold",
                   cursor: "not-allowed",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
                 }}
               >
-                ❌ 売り切れ
+                <XCircle size={14} color="#9ca3af" />{" "}
+                {/* 💡 ❌をXCircleへ変更 */}
+                <span>売り切れ</span>
               </button>
             ) : (
               <button
@@ -173,9 +189,14 @@ function ItemList({ items, handlePurchaseItem }) {
                   fontWeight: "bold",
                   cursor: "pointer",
                   boxShadow: "0 2px 4px rgba(255,77,77,0.2)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
                 }}
               >
-                🛍️ 購入する
+                <ShoppingBag size={14} color="white" />{" "}
+                {/* 💡 🛍️をShoppingBagへ変更 */}
+                <span>購入する</span>
               </button>
             )}
           </div>
