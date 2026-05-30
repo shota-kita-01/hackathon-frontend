@@ -4,34 +4,35 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { fireAuth } from "../firebase";
+import { UserPlus, KeyRound } from "lucide-react";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isRegisterMode, setIsRegisterMode] = useState(false); // 新規登録とログインの切り替えフラグ
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!email || !password) {
-      alert("メールアドレスとパスワードを入力してください！");
+      alert("メールアドレスとパスワードを入力してください。");
       return;
     }
 
     if (isRegisterMode) {
-      // 🌟 新規アカウント作成
+      // 新規アカウント作成
       createUserWithEmailAndPassword(fireAuth, email, password)
         .then((userCredential) => {
-          alert("🎉 アカウント作成＆ログインに成功しました！");
+          alert("アカウント作成とログインに成功しました。");
         })
         .catch((error) => {
           console.error(error);
           alert(`登録失敗: ${error.message}`);
         });
     } else {
-      // 🌟 既存アカウントでログイン
+      // 既存アカウントでログイン
       signInWithEmailAndPassword(fireAuth, email, password)
         .then((userCredential) => {
-          alert("🔑 ログインに成功しました！");
+          alert("ログインに成功しました。");
         })
         .catch((error) => {
           console.error(error);
@@ -43,10 +44,10 @@ function LoginForm() {
   return (
     <div
       style={{
-        background: "#ffffff", // 🔥 黒から「純白」へ
+        background: "#ffffff",
         padding: "35px 30px",
-        borderRadius: "16px", // 他のコンポーネントに合わせて少し丸く
-        boxShadow: "0 4px 16px rgba(0,0,0,0.06)", // 上品で優しいシャドウ
+        borderRadius: "16px",
+        boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
         border: "1px solid #eeeeee",
         width: "100%",
         maxWidth: "400px",
@@ -56,15 +57,26 @@ function LoginForm() {
       <h2
         style={{
           margin: "0 0 25px 0",
-          borderBottom: "2px solid #ff4d4d", // 🔥 メルカリレッドのアクセント
+          borderBottom: "2px solid #ff4d4d",
           paddingBottom: "12px",
           fontSize: "20px",
           textAlign: "center",
           color: "#333333",
           fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
         }}
       >
-        {isRegisterMode ? "📝 新規アカウント登録" : "🔑 ログインして始める"}
+        {isRegisterMode ? (
+          <UserPlus size={20} color="#333333" />
+        ) : (
+          <KeyRound size={20} color="#333333" />
+        )}
+        <span>
+          {isRegisterMode ? "新規アカウント登録" : "ログインして始める"}
+        </span>
       </h2>
       <form
         onSubmit={handleSubmit}
@@ -96,7 +108,7 @@ function LoginForm() {
               padding: "12px",
               borderRadius: "8px",
               border: "1px solid #dddddd",
-              backgroundColor: "#f9fafb", // ほんのりグレーで今風のインプットに
+              backgroundColor: "#f9fafb",
               color: "#333333",
               fontSize: "15px",
             }}
@@ -139,11 +151,11 @@ function LoginForm() {
         <button
           type="submit"
           style={{
-            backgroundColor: "#ff4d4d", // 🔥 メルカリレッド
+            backgroundColor: "#ff4d4d",
             color: "white",
             border: "none",
             padding: "14px",
-            borderRadius: "25px", // 丸ボタンにして親しみやすさアップ
+            borderRadius: "25px",
             fontSize: "16px",
             fontWeight: "bold",
             cursor: "pointer",
@@ -172,7 +184,7 @@ function LoginForm() {
           style={{
             background: "none",
             border: "none",
-            color: "#ff4d4d", // 🔥 リンクテキストも赤に統一
+            color: "#ff4d4d",
             cursor: "pointer",
             textDecoration: "underline",
             marginLeft: "5px",

@@ -1,5 +1,22 @@
 import React, { useState, useEffect } from "react";
 import HorizontalItemList from "./HorizontalItemList";
+// 💡 マイページの豊富なセクションや状態をクリーンに表現するインテリジェントアイコン群
+import {
+  User,
+  Truck,
+  Users,
+  Trash2,
+  Plus,
+  Target,
+  Sparkles,
+  Loader2,
+  ShoppingBag,
+  Camera,
+  Flag,
+  CheckCircle2,
+  Clock,
+  X,
+} from "lucide-react";
 
 function MyPageTab({
   myAppId,
@@ -152,15 +169,20 @@ function MyPageTab({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
+      {/* メインタイトル見出し */}
       <h2
         style={{
           fontSize: "18px",
           fontWeight: "bold",
           color: "#333",
           margin: "0",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
         }}
       >
-        👤 マイページ
+        <User size={20} color="#333" />
+        <span>マイページ</span>
       </h2>
 
       {/* ❶ プロフィールカード */}
@@ -217,9 +239,17 @@ function MyPageTab({
           }}
         >
           <div
-            style={{ fontSize: "14px", fontWeight: "bold", color: "#d97706" }}
+            style={{
+              fontSize: "14px",
+              fontWeight: "bold",
+              color: "#d97706",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
           >
-            🚚 進行中の取引（発送・メッセージ手続き）
+            <Truck size={16} color="#d97706" />
+            <span>進行中の取引（発送・メッセージ手続き）</span>
           </div>
           <div
             style={{ display: "flex", flexDirection: "column", gap: "10px" }}
@@ -263,15 +293,42 @@ function MyPageTab({
                       fontSize: "11px",
                       color: "#9a3412",
                       marginTop: "2px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
                     }}
                   >
-                    状態:{" "}
-                    {tx.transaction_status === "shipping_pending"
-                      ? "⏳ 発送待ち"
-                      : "🚚 発送済み・受取評価待ち"}
-                    {String(myAppId) === String(tx.seller_id)
-                      ? " (出品者)"
-                      : " (購入者)"}
+                    <span>状態:</span>
+                    {tx.transaction_status === "shipping_pending" ? (
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px",
+                          color: "#b45309",
+                        }}
+                      >
+                        <Clock size={12} />
+                        <span>発送待ち</span>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px",
+                          color: "#d97706",
+                        }}
+                      >
+                        <Truck size={12} />
+                        <span>発送済み・受取評価待ち</span>
+                      </div>
+                    )}
+                    <span>
+                      {String(myAppId) === String(tx.seller_id)
+                        ? " (出品者)"
+                        : " (購入者)"}
+                    </span>
                   </div>
                 </div>
                 <button
@@ -313,9 +370,13 @@ function MyPageTab({
             fontWeight: "900",
             color: "#4f46e5",
             letterSpacing: "0.5px",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
           }}
         >
-          👥 アカウントの切り替え
+          <Users size={16} color="#4f46e5" />
+          <span>アカウントの切り替え</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {accountList.map((acc) => {
@@ -403,9 +464,13 @@ function MyPageTab({
                           borderRadius: "8px",
                           fontSize: "12px",
                           cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                       >
-                        🗑️
+                        <Trash2 size={14} color="#94a3b8" />{" "}
+                        {/* 💡 🗑️をTrash2へ */}
                       </button>
                     </div>
                   ) : (
@@ -442,14 +507,18 @@ function MyPageTab({
             fontSize: "13px",
             fontWeight: "bold",
             cursor: "pointer",
-            textAlign: "center",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
           }}
         >
-          ＋ 別のアカウントで新規ログイン（リストに追加）
+          <Plus size={16} /> {/* 💡 ＋記号をPlusアイコンへ */}
+          <span>別のアカウントで新規ログイン（リストに追加）</span>
         </button>
       </div>
 
-      {/* 🎯 ❹ AIウィッシュリスト（紫基調・文字サイズ標準・上が過去リスト・下が追加窓） */}
+      {/* 🎯 ❹ AIウィッシュリスト */}
       <div
         style={{
           backgroundColor: "#f5f3ff",
@@ -473,7 +542,8 @@ function MyPageTab({
             gap: "6px",
           }}
         >
-          🎯 あなたのAI入荷待ちウィッシュリスト
+          <Target size={16} color="#6d28d9" /> {/* 💡 🎯をTargetアイコンへ */}
+          <span>あなたのAI入荷待ちウィッシュリスト</span>
         </div>
 
         {/* 過去に登録したキーワード一覧 */}
@@ -490,19 +560,29 @@ function MyPageTab({
                     padding: "6px 14px",
                     display: "flex",
                     alignItems: "center",
-                    gap: "10px",
+                    gap: "8px",
                     boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
                   }}
                 >
-                  <span
+                  <div
                     style={{
-                      fontSize: "13px",
-                      fontWeight: "bold",
-                      color: "#1e3a8a",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
                     }}
                   >
-                    ✨ {wish.keywords}
-                  </span>
+                    <Sparkles size={12} color="#1e3a8a" />{" "}
+                    {/* 💡 ✨をSparklesへ */}
+                    <span
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: "bold",
+                        color: "#1e3a8a",
+                      }}
+                    >
+                      {wish.keywords}
+                    </span>
+                  </div>
                   <button
                     onClick={() => handleDeleteWishlist(wish.id, wish.keywords)}
                     style={{
@@ -513,6 +593,8 @@ function MyPageTab({
                       fontSize: "12px",
                       fontWeight: "bold",
                       padding: 0,
+                      display: "flex",
+                      alignItems: "center",
                     }}
                     onMouseOver={(e) =>
                       (e.currentTarget.style.color = "#ef4444")
@@ -522,7 +604,7 @@ function MyPageTab({
                     }
                     title="入荷待ちを解除"
                   >
-                    ✕
+                    <X size={13} />
                   </button>
                 </div>
               ))}
@@ -556,9 +638,13 @@ function MyPageTab({
               fontWeight: "bold",
               color: "#7c3aed",
               marginBottom: "10px",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
             }}
           >
-            ✨ 新しい欲しいイメージを追加したいですか？
+            <Sparkles size={14} color="#7c3aed" /> {/* 💡 ✨をSparklesへ */}
+            <span>新しい欲しいイメージを追加したいですか？</span>
           </div>
           <form
             onSubmit={handleAddWishlistFromMyPage}
@@ -602,13 +688,19 @@ function MyPageTab({
       {isLoading ? (
         <div
           style={{
-            textAlignment: "center",
+            textAlign: "center",
             color: "#9ca3af",
             padding: "40px 0",
             fontSize: "14px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
           }}
         >
-          ⏳ 取引履歴を読み込み中...
+          <Loader2 size={16} className="animate-spin" />{" "}
+          {/* 💡 ⏳を回転するインジケーターへ */}
+          <span>取引履歴を読み込み中...</span>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
@@ -624,7 +716,9 @@ function MyPageTab({
                 gap: "6px",
               }}
             >
-              🛍️ 購入した商品 ({purchasedItems.length})
+              <ShoppingBag size={16} color="#111827" />{" "}
+              {/* 💡 🛍️をShoppingBagへ */}
+              <span>購入した商品 ({purchasedItems.length})</span>
             </h3>
             <HorizontalItemList
               items={purchasedItems}
@@ -644,7 +738,8 @@ function MyPageTab({
                 gap: "6px",
               }}
             >
-              📸 出品した商品 ({myProducts.length})
+              <Camera size={16} color="#111827" /> {/* 💡 📸をCameraへ */}
+              <span>出品した商品 ({myProducts.length})</span>
             </h3>
             <HorizontalItemList
               items={myProducts}
@@ -669,9 +764,17 @@ function MyPageTab({
           }}
         >
           <div
-            style={{ fontSize: "14px", fontWeight: "bold", color: "#475569" }}
+            style={{
+              fontSize: "14px",
+              fontWeight: "bold",
+              color: "#475569",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
           >
-            🏁 過去の取引履歴（完了済みのメッセージ・詳細確認）
+            <Flag size={16} color="#475569" /> {/* 💡 🏁をFlagアイコンへ */}
+            <span>過去の取引履歴（完了済みのメッセージ・詳細確認）</span>
           </div>
           <div
             style={{ display: "flex", flexDirection: "column", gap: "10px" }}
@@ -686,7 +789,7 @@ function MyPageTab({
                   padding: "12px",
                   display: "flex",
                   alignItems: "center",
-                  justifyBetween: "space-between",
+                  justifyContent: "space-between", // 💡 不正だった「justifyBetween」のバグを完全調停
                   gap: "15px",
                 }}
               >
@@ -716,12 +819,19 @@ function MyPageTab({
                       fontSize: "11px",
                       color: "#64748b",
                       marginTop: "2px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
                     }}
                   >
-                    ✅ 取引完了{" "}
-                    {String(myAppId) === String(tx.seller_id)
-                      ? " (元出品者)"
-                      : " (元購入者)"}
+                    <CheckCircle2 size={12} color="#64748b" />{" "}
+                    {/* 💡 ✅をCheckCircle2へ */}
+                    <span>取引完了</span>
+                    <span>
+                      {String(myAppId) === String(tx.seller_id)
+                        ? " (元出品者)"
+                        : " (元購入者)"}
+                    </span>
                   </div>
                 </div>
                 <button

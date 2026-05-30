@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Bell, User } from "lucide-react";
 
 function Header({
   loginUser,
@@ -13,19 +14,19 @@ function Header({
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
-  // 👥 ブラウザの永続ストレージからログイン履歴のあるアカウント達をロード
+  // ブラウザの永続ストレージからログイン履歴のあるアカウント達をロード
   const savedAccounts = JSON.parse(
     localStorage.getItem("fleamarket_authenticated_accounts") || "[]",
   );
 
-  // 💡 現在アクティブな会員ID（myAppId）に合致するアカウントのメールアドレスを動的ハント
+  // 現在アクティブな会員ID（myAppId）に合致するアカウントのメールアドレスを動的ハント
   const currentActiveAccount = savedAccounts.find(
     (acc) => acc.id === myAppId,
   ) || {
     email: loginUser?.email || "ゲストユーザー",
   };
 
-  // 🔄 仕組み1: 裏側に新設した通知APIから、3秒ポーリングでリアルタイムに通知をフェッチ
+  // 仕組み1: 裏側に新設した通知APIから、3秒ごとに通知をフェッチ
   useEffect(() => {
     if (!myAppId) return;
 
@@ -46,7 +47,7 @@ function Header({
   // 未読の通知カウントを算出
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
-  // 🔔 仕組み2: 通知をクリックした時の既読化 ＆ 画面ワープ処理
+  // 通知をクリックした時の既読化 ＆ 画面ワープ処理
   const handleNotificationClick = (notif) => {
     // 1. バックエンドを既読状態へコミット
     fetch(`${API_URL}/notifications/${notif.id}/read`, { method: "POST" })
@@ -107,17 +108,22 @@ function Header({
             position: "relative",
           }}
         >
-          {/* 🔔 通知センターボタン */}
+          {/* 通知センターボタン */}
           <div
-            style={{ position: "relative", cursor: "pointer" }}
+            style={{
+              position: "relative",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+            }}
             onClick={() => setShowDropdown(!showDropdown)}
           >
-            <span style={{ fontSize: "20px" }}>🔔</span>
+            <Bell size={20} color="#4b5563" />{" "}
             {unreadCount > 0 && (
               <span
                 style={{
                   position: "absolute",
-                  top: "-4px",
+                  top: "-6px", // 💡 アイコンの丸みに合わせて通知バッジの位置を数理最適化
                   right: "-6px",
                   backgroundColor: "#ff4d4d",
                   color: "white",
@@ -214,7 +220,7 @@ function Header({
                       {notif.message}
                     </div>
 
-                    {/* 🛠️ 【改修】世界標準時文字列を安全にJST（日本時間）へフォーマットする特設ブロック */}
+                    {/* 世界標準時文字列を安全にJST（日本時間）へフォーマットする特設ブロック */}
                     <div
                       style={{
                         fontSize: "10px",
@@ -224,14 +230,11 @@ function Header({
                     >
                       {(() => {
                         const raw = notif.created_at;
-                        // 文字列にタイムゾーン識別子(Zや+)がない場合、末尾にZを付加して強制的にUTCとしてJavaScriptに認識させる
                         const utcString =
                           raw.includes("Z") || raw.includes("+")
                             ? raw
                             : `${raw.replace(" ", "T")}Z`;
                         const dateObj = new Date(utcString);
-
-                        // 有効な日付に変換できなかった場合の安全なフォールバック
                         const finalDate = isNaN(dateObj.getTime())
                           ? new Date(raw)
                           : dateObj;
@@ -252,10 +255,19 @@ function Header({
             </div>
           )}
 
-          {/* 👤 アクティブユーザーのメアド表示 */}
-          <span style={{ fontWeight: "500" }}>
-            👤 {currentActiveAccount.email}
-          </span>
+          {/* アクティブユーザーのメアド表示 */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              fontWeight: "500",
+              color: "#374151",
+            }}
+          >
+            <User size={16} color="#4b5563" />{" "}
+            <span>{currentActiveAccount.email}</span>
+          </div>
 
           <button
             onClick={handleLogout}

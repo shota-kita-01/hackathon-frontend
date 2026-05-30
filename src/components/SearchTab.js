@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from "react";
 import ItemList from "./ItemList";
+import {
+  Search,
+  Sparkles,
+  Bell,
+  Filter,
+  Tag,
+  Sliders,
+  ArrowUpDown,
+  Box,
+  ChevronDown,
+  Loader2,
+} from "lucide-react";
 
-// 📚 検索画面専用：日本語ユーザーの直感に最適化された22カテゴリー
 const AMAZON_CATEGORIES_FOR_SEARCH = [
-  // ✨ 1. ファッション・ビューティー
   {
     value: "Clothing_Shoes_and_Jewelry",
     label: "服・靴・ファッション小物 (Clothing_Shoes_and_Jewelry)",
@@ -15,7 +25,6 @@ const AMAZON_CATEGORIES_FOR_SEARCH = [
   },
   { value: "All_Beauty", label: "ビューティー・コスメ全般 (All_Beauty)" },
 
-  // 📱 2. デジタルガジェット・家電
   {
     value: "Cell_Phones_and_Accessories",
     label: "スマートフォン・携帯アクセサリ (Cell_Phones_and_Accessories)",
@@ -24,7 +33,6 @@ const AMAZON_CATEGORIES_FOR_SEARCH = [
   { value: "Video_Games", label: "テレビゲーム・機材 (Video_Games)" },
   { value: "Appliances", label: "大型家電・家庭用機器 (Appliances)" },
 
-  // 🧸 3. エンタメ・カルチャー・ホビー
   {
     value: "Toys_and_Games",
     label: "おもちゃ・ホビー・ゲーム (Toys_and_Games)",
@@ -38,7 +46,6 @@ const AMAZON_CATEGORIES_FOR_SEARCH = [
   },
   { value: "Handmade_Products", label: "ハンドメイド作品 (Handmade_Products)" },
 
-  // 🏡 4. ライフスタイル・ホーム・暮らし
   {
     value: "Home_and_Kitchen",
     label: "ホーム＆キッチン・家具 (Home_and_Kitchen)",
@@ -50,7 +57,6 @@ const AMAZON_CATEGORIES_FOR_SEARCH = [
     label: "食品・飲料・お酒 (Grocery_and_Gourmet_Food)",
   },
 
-  // 🏃 5. アウトドア・工具・自動車
   {
     value: "Sports_and_Outdoors",
     label: "スポーツ＆アウトドア (Sports_and_Outdoors)",
@@ -66,7 +72,6 @@ const AMAZON_CATEGORIES_FOR_SEARCH = [
   { value: "Automotive", label: "車・バイク用品 (Automotive)" },
 ];
 
-// 🏷️ フリマアプリの標準的な商品の状態
 const ITEM_CONDITIONS = [
   "新品・未使用",
   "未使用に近い",
@@ -118,9 +123,7 @@ function SearchTab({
   const baseItems =
     Array.isArray(homeItems) && homeItems.length > 0 ? homeItems : items;
 
-  // ===================================================
-  // 📡 入荷待ち（潜在空間ウィッシュリスト）登録ロジック
-  // ===================================================
+  // 入荷待ち登録
   const handleAddToWishlist = () => {
     if (!(moodText || "").trim()) {
       alert("欲しい商品のイメージ（キーワード）を入力してください！");
@@ -147,7 +150,7 @@ function SearchTab({
       .then((data) => {
         if (data.status === "success") {
           alert(
-            `🎯 AI入荷待ち登録が完了しました！\n\n今後、他のユーザーから「${moodText.trim()}」の脳内イメージにマッチする商品が出品された瞬間に、右上の🔔通知センターへリアルタイムにアラートが届きます！`,
+            `AI入荷待ち登録が完了しました！\n\n今後、他のユーザーから「${moodText.trim()}」の脳内イメージにマッチする商品が出品された瞬間に、通知センターへリアルタイムにアラートが届きます！`,
           );
         } else {
           alert("入荷待ち登録に失敗しました。");
@@ -196,7 +199,7 @@ function SearchTab({
   });
 
   // ===================================================
-  // ⇅ 並び替えロジック
+  // 並び替えロジック
   // ===================================================
   let sortedItems = [...filteredItems];
   if (sortOrder === "ai_match") {
@@ -215,18 +218,23 @@ function SearchTab({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
+      {/* タイトルセクションのスマート化 */}
       <h2
         style={{
           fontSize: "18px",
           fontWeight: "bold",
           color: "#333",
           margin: "0",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
         }}
       >
-        🔍 商品検索
+        <Search size={20} color="#333" />
+        <span>商品検索</span>
       </h2>
 
-      {/* AI Mood 検索エリア */}
+      {/* 検索エリア */}
       <div
         style={{
           backgroundColor: "white",
@@ -251,7 +259,7 @@ function SearchTab({
               marginBottom: "16px",
             }}
           >
-            <span style={{ fontSize: "22px" }}>✨</span>
+            <Sparkles size={18} color="#4f46e5" />{" "}
             <h3
               style={{
                 margin: 0,
@@ -271,7 +279,7 @@ function SearchTab({
             <div style={{ display: "flex", gap: "10px" }}>
               <input
                 type="text"
-                placeholder="例：週末のカフェに合う落ち着いた服、Macに合う黒いガジェット"
+                placeholder="キーワードを入力（例: レザージャケット）"
                 value={moodText || ""}
                 onChange={(e) => setMoodText(e.target.value)}
                 disabled={isRecommending}
@@ -309,18 +317,31 @@ function SearchTab({
                       : "0 4px 6px rgba(79, 70, 229, 0.3)",
                 }}
               >
-                {isRecommending ? "⏳ 計算中..." : "検索する"}
+                {isRecommending ? (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>計算中...</span>
+                  </span>
+                ) : (
+                  "検索する"
+                )}
               </button>
             </div>
 
-            {/* 🎯 【デザイン改修】ホームとマイページに完全同期させたパープル入荷待ちボード */}
+            {/* AI入荷待ちボードの極限洗練化 */}
             {(moodText || "").trim() && (
               <div
                 style={{
                   marginTop: "8px",
                   padding: "14px 16px",
-                  backgroundColor: "#f5f3ff", // 💜 統一感のあるエモパープル背景
-                  border: "1px solid #ddd6fe", // 💜 紫の細線ボーダー
+                  backgroundColor: "#f5f3ff",
+                  border: "1px solid #ddd6fe",
                   borderRadius: "12px",
                   display: "flex",
                   justifyContent: "space-between",
@@ -332,23 +353,37 @@ function SearchTab({
               >
                 <div
                   style={{
-                    fontSize: "13px",
-                    color: "#6d28d9",
-                    lineHeight: "1.5",
+                    display: "flex",
+                    alignItems: "start",
+                    gap: "10px",
                     flex: 1,
-                    fontWeight: "500",
                   }}
                 >
-                  💡 欲しい商品が見つかりませんか？ このキーワード「
-                  <strong>{moodText}</strong>
-                  」を登録しておくと、条件に合致する品が新しく出品された瞬間に通知します！
+                  {/* 💡 ボードの左端にベルアイコンを置いてインテリジェントに視線誘導 */}
+                  <Bell
+                    size={16}
+                    color="#6d28d9"
+                    style={{ marginTop: "2px", flexShrink: 0 }}
+                  />
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: "#6d28d9",
+                      lineHeight: "1.5",
+                      fontWeight: "500",
+                    }}
+                  >
+                    欲しい商品が見つかりませんか？ このキーワード「
+                    <strong>{moodText}</strong>
+                    」を登録しておくと、条件に合致する品が新しく出品された瞬間に通知します！
+                  </div>
                 </div>
                 <button
                   onClick={handleAddToWishlist}
                   disabled={isWishlisting}
                   style={{
                     padding: "8px 16px",
-                    backgroundColor: isWishlisting ? "#c084fc" : "#7c3aed", // 💜 登録ボタンも美しい紫のグラデーション/単色
+                    backgroundColor: isWishlisting ? "#c084fc" : "#7c3aed",
                     color: "white",
                     border: "none",
                     borderRadius: "10px",
@@ -361,7 +396,7 @@ function SearchTab({
                       : "0 4px 6px rgba(124, 58, 237, 0.2)",
                   }}
                 >
-                  {isWishlisting ? "登録中..." : "🔔 入荷待ち登録"}
+                  {isWishlisting ? "登録中..." : "入荷待ち登録"}
                 </button>
               </div>
             )}
@@ -417,9 +452,14 @@ function SearchTab({
                 color: "#6b7280",
                 letterSpacing: "0.5px",
                 flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
               }}
             >
-              🛒 表示対象
+              <Filter size={14} color="#6b7280" />{" "}
+              {/* 💡 🛒をシャープなフィルターアイコンへ */}
+              <span>表示対象</span>
             </div>
             <div
               style={{
@@ -519,9 +559,13 @@ function SearchTab({
                   fontWeight: "bold",
                   color: "#6b7280",
                   letterSpacing: "0.5px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
                 }}
               >
-                🏷️ カテゴリー
+                <Tag size={13} color="#6b7280" /> {/* 💡 🏷️をタグアイコンへ */}
+                <span>カテゴリー</span>
               </div>
               <select
                 value={categoryFilter}
@@ -562,9 +606,14 @@ function SearchTab({
                   fontWeight: "bold",
                   color: "#6b7280",
                   letterSpacing: "0.5px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
                 }}
               >
-                ✨ 商品の状態
+                <Sliders size={13} color="#6b7280" />{" "}
+                {/* 💡 ✨を調整スライダーアイコンへ */}
+                <span>商品の状態</span>
               </div>
               <select
                 value={conditionFilter}
@@ -637,15 +686,7 @@ function SearchTab({
                 flexShrink: 0,
               }}
             >
-              <span
-                style={{
-                  fontWeight: "bold",
-                  color: "#64748b",
-                  fontSize: "14px",
-                }}
-              >
-                ⇅
-              </span>
+              <ArrowUpDown size={16} color="#64748b" />{" "}
               <select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value)}
@@ -661,10 +702,10 @@ function SearchTab({
                   boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
                 }}
               >
-                <option value="ai_match">🤖 AIおすすめ順</option>
-                <option value="new">🆕 新しい順</option>
-                <option value="price_asc">🪙 安い順</option>
-                <option value="price_desc">💎 高い順</option>
+                <option value="ai_match">AIおすすめ順</option>
+                <option value="new">新しい順</option>
+                <option value="price_asc">安い順</option>
+                <option value="price_desc">高い順</option>
               </select>
             </div>
           </div>
@@ -674,13 +715,27 @@ function SearchTab({
       {/* ─── 検索結果表示エリア ─── */}
       <div>
         <div
-          style={{ fontSize: "13px", color: "#6b7280", marginBottom: "15px" }}
+          style={{
+            fontSize: "13px",
+            color: "#6b7280",
+            marginBottom: "15px",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+          }}
         >
           {sortOrder === "ai_match" &&
           baseItems === homeItems &&
-          homeItems.length > 0
-            ? "✨ 768次元空間ベクトル・マッチ度順: "
-            : "📦 表示中の商品: "}
+          homeItems.length > 0 ? (
+            <>
+              <Sparkles size={14} color="#6b7280" />
+              <span>768次元空間ベクトル・マッチ度順: </span>
+            </>
+          ) : (
+            <>
+              <Box size={14} color="#6b7280" /> <span>表示中の商品: </span>
+            </>
+          )}
           <b style={{ color: "#111827", fontSize: "15px" }}>
             {sortedItems.length}
           </b>{" "}
@@ -726,9 +781,15 @@ function SearchTab({
                     fontSize: "14px",
                     cursor: "pointer",
                     boxShadow: "0 4px 6px rgba(255, 77, 77, 0.1)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
                   }}
                 >
-                  👇 さらに商品を表示する
+                  <ChevronDown size={16} />{" "}
+                  {/* 💡 👇をシャープな下矢印アイコンへ */}
+                  <span>さらに商品を表示する</span>
                 </button>
               </div>
             )}

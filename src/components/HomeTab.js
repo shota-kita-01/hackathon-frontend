@@ -1,5 +1,13 @@
 import React, { useState } from "react";
 import HorizontalItemList from "./HorizontalItemList";
+import {
+  Search,
+  Bell,
+  Sparkles,
+  ShoppingBag,
+  Camera,
+  User,
+} from "lucide-react"; // 💡 Camera と User をハント！
 
 function HomeTab({
   homePersonalized,
@@ -11,16 +19,13 @@ function HomeTab({
   setCurrentTab,
 }) {
   const [localKeyword, setLocalKeyword] = useState("");
-  const [newWishText, setNewWishText] = useState(""); // 💡 【新設】ホーム登録用のState
+  const [newWishText, setNewWishText] = useState("");
 
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
-  // 🥇 1段目（あなたへのおすすめ）の表示用切り分け
   const firstHeroItem = homePersonalized[0];
   const remainingScrollItems = homePersonalized.slice(1);
-
-  // 📡 【新設】ホーム画面から直接入荷待ち（ウィッシュリスト）をコミットする関数
   const handleAddToWishlistFromHome = (e) => {
     e.preventDefault();
     if (!newWishText.trim()) return;
@@ -30,7 +35,7 @@ function HomeTab({
       localStorage.getItem("fleamarket_authenticated_accounts") || "[]",
     );
     const activeAccount = savedAccounts[0];
-    const userId = activeAccount ? activeAccount.id : 1; // フォールバック
+    const userId = activeAccount ? activeAccount.id : 1;
 
     fetch(`${API_URL}/wishlists`, {
       method: "POST",
@@ -44,7 +49,7 @@ function HomeTab({
       .then((data) => {
         if (data.status === "success") {
           alert(
-            `🎯 AI入荷待ち登録が完了しました！\n今後、他のユーザーから「${newWishText.trim()}」にマッチする商品が出品された瞬間に、🔔通知センターへリアルタイムにアラートが届きます！`,
+            `AI入荷待ち登録が完了しました。\n今後、他のユーザーから「${newWishText.trim()}」にマッチする商品が出品された瞬間に、通知センターへ通知が届きます！`,
           );
           setNewWishText(""); // 入力欄をクリア
         }
@@ -56,7 +61,7 @@ function HomeTab({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "45px" }}>
-      {/* 🔍 【AI空間検索コンテナー】 */}
+      {/* AI空間検索コンテナー */}
       <div
         style={{
           backgroundColor: "white",
@@ -70,8 +75,8 @@ function HomeTab({
           marginTop: "-10px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "18px" }}>✨</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Search size={15} color="#312e81" /> {/* 💡 虫眼鏡アイコンをセット */}
           <span
             style={{
               fontSize: "13px",
@@ -80,14 +85,14 @@ function HomeTab({
               letterSpacing: "0.5px",
             }}
           >
-            商品検索
+            商品を探す
           </span>
         </div>
 
         <div style={{ display: "flex", gap: "10px" }}>
           <input
             type="text"
-            placeholder="週末のカフェに合う落ち着いた服、Macに合う黒いガジェット... 🪄"
+            placeholder="キーワードを入力（例: レザージャケット）"
             value={localKeyword}
             onChange={(e) => setLocalKeyword(e.target.value)}
             onKeyDown={(e) => {
@@ -128,7 +133,7 @@ function HomeTab({
         </div>
       </div>
 
-      {/* 📸 出品インフォメーション・特製ワイドバナー */}
+      {/* 出品インフォメーション・特製ワイドバナー */}
       <div
         onClick={() => setCurrentTab("sell")}
         style={{
@@ -152,7 +157,7 @@ function HomeTab({
         }
       >
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span style={{ fontSize: "22px" }}>📸</span>
+          <Camera size={22} color="#166534" />{" "}
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             <span
               style={{ fontSize: "14px", fontWeight: "bold", color: "#166534" }}
@@ -162,7 +167,7 @@ function HomeTab({
             <span
               style={{ fontSize: "11px", color: "#15803d", fontWeight: "500" }}
             >
-              AIが商品説明の自動生成や適正価格の査定をサポートします 🪄
+              AIが商品説明の自動生成や適正価格の査定をサポートします
             </span>
           </div>
         </div>
@@ -178,7 +183,7 @@ function HomeTab({
         </span>
       </div>
 
-      {/* 🎯 【新設】AIウィッシュリスト・ホームアピール窓（お気に入りの紫基調を100%再現・下段登録専用フォーム） */}
+      {/* AIウィッシュリスト・ホームアピール窓 */}
       <div
         style={{
           backgroundColor: "#f5f3ff",
@@ -189,7 +194,7 @@ function HomeTab({
           flexDirection: "column",
           gap: "16px",
           boxShadow: "0 4px 6px -1px rgba(109, 40, 217, 0.03)",
-          marginTop: "-25px", // 上のバナーとのパッケージ感を保つ極上数理マージン
+          marginTop: "-25px",
           marginBottom: "-10px",
         }}
       >
@@ -201,13 +206,14 @@ function HomeTab({
             color: "#6d28d9",
             display: "flex",
             alignItems: "center",
-            gap: "6px",
+            gap: "8px",
           }}
         >
-          🎯 見つからない商品はAI入荷待ちへ登録！
+          <Bell size={16} color="#6d28d9" />{" "}
+          見つからない商品はAI入荷待ちへ登録！
         </div>
 
-        {/* 白抜き追加フォーム（仕様と文字サイズをマイページと完全同期） */}
+        {/* 白抜き追加フォーム */}
         <div
           style={{
             backgroundColor: "white",
@@ -222,10 +228,15 @@ function HomeTab({
               fontWeight: "bold",
               color: "#7c3aed",
               marginBottom: "10px",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
             }}
           >
-            ✨
-            欲しい商品のイメージを登録しておくと、出品された瞬間にリアルタイムでお知らせします
+            <Sparkles size={14} color="#7c3aed" />{" "}
+            <span>
+              欲しい商品のイメージを登録しておくと、出品された瞬間にリアルタイムでお知らせします
+            </span>
           </div>
           <form
             onSubmit={handleAddToWishlistFromHome}
@@ -275,10 +286,11 @@ function HomeTab({
               margin: "0 0 15px 0",
               display: "flex",
               alignItems: "center",
-              gap: "6px",
+              gap: "8px",
             }}
           >
-            👑 <span className="ai-heading-text">あなたへのおすすめ</span>
+            <Sparkles size={18} color="#4f46e5" />{" "}
+            <span className="ai-heading-text">あなたへのおすすめ</span>
           </h3>
 
           {/* 1件目の特製ビッグカード */}
@@ -353,13 +365,11 @@ function HomeTab({
                   color: "#9ca3af",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
                   gap: "4px",
                 }}
               >
-                <span>
-                  👤 出品者: {firstHeroItem.seller_name || "公式出品"}
-                </span>
+                <User size={14} color="#9ca3af" />{" "}
+                <span>出品者: {firstHeroItem.seller_name || "公式出品"}</span>
               </div>
               <p
                 style={{
@@ -450,9 +460,19 @@ function HomeTab({
                         : "0 4px 12px rgba(255, 77, 77, 0.2)",
                   }}
                 >
-                  {firstHeroItem.status === "sold_out"
-                    ? "売り切れ"
-                    : "🛍️ 購入する"}
+                  {firstHeroItem.status === "sold_out" ? (
+                    "売り切れ"
+                  ) : (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <ShoppingBag size={14} /> <span>購入する</span>
+                    </div>
+                  )}
                 </button>
               </div>
             </div>
@@ -468,7 +488,7 @@ function HomeTab({
         </div>
       )}
 
-      {/* 🥈 2段目：あなたに人気のカテゴリー */}
+      {/* あなたに人気のカテゴリー */}
       <div>
         <h3
           style={{
@@ -477,11 +497,12 @@ function HomeTab({
             margin: "0 0 12px 0",
             display: "flex",
             alignItems: "center",
-            gap: "6px",
+            gap: "8px",
             color: "#333",
           }}
         >
-          {homeUserFavorite.title || "👤 あなたに人気のカテゴリー"}
+          <User size={18} color="#333" />{" "}
+          <span>{homeUserFavorite.title || "あなたに人気のカテゴリー"}</span>
         </h3>
         {homeUserFavorite.items && homeUserFavorite.items.length > 0 ? (
           <HorizontalItemList
@@ -503,19 +524,28 @@ function HomeTab({
               lineHeight: "1.6",
             }}
           >
-            <span>
-              🛍️ <b>購入後に表示します</b>
-            </span>
-            <br />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                marginBottom: "4px",
+              }}
+            >
+              <ShoppingBag size={16} color="#9ca3af" />{" "}
+              <span>
+                <b>購入後に表示します</b>
+              </span>
+            </div>
             <span style={{ fontSize: "11px", color: "#cbd5e1" }}>
-              商品を購入したり、お気に入り・閲覧をすると、AIがあなたの好みを数理分析して専用
-              of 特設カテゴリーを自動生成します。
+              商品を購入したり、お気に入り・閲覧をすると、AIがあなたの好みを数理分析して専用の特設カテゴリーを自動生成します。
             </span>
           </div>
         )}
       </div>
 
-      {/* 🥉 3段目：市場全体で人気のカテゴリー */}
+      {/* 市場全体で人気のカテゴリー */}
       {homeMarketFavorite.items && homeMarketFavorite.items.length > 0 && (
         <div>
           <h3
@@ -525,11 +555,12 @@ function HomeTab({
               margin: "0 0 12px 0",
               display: "flex",
               alignItems: "center",
-              gap: "6px",
+              gap: "8px",
               color: "#333",
             }}
           >
-            {homeMarketFavorite.title}
+            <ShoppingBag size={18} color="#333" />{" "}
+            <span>{homeMarketFavorite.title}</span>
           </h3>
           <HorizontalItemList
             items={homeMarketFavorite.items}
