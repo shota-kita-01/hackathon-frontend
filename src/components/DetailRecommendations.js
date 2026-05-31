@@ -1,5 +1,4 @@
 import React from "react";
-// 💡 多次元空間の類似性と確率的遷移を美しく記号化するアイコンを召喚
 import { Brain, TrendingUp, Loader2 } from "lucide-react";
 
 function DetailRecommendations({
@@ -19,7 +18,7 @@ function DetailRecommendations({
         gap: "25px",
       }}
     >
-      {/* 🥇 1段目：空間的類似 */}
+      {/* 1段目：空間的類似 */}
       <div>
         <h4
           style={{
@@ -33,8 +32,7 @@ function DetailRecommendations({
           }}
         >
           <Brain size={14} color="#4f46e5" />{" "}
-          {/* 💡 🧠をシャープなBrainアイコンへ */}
-          <span>この商品と似ているアイテム (空間的類似)</span>
+          <span>この商品と似ているアイテム </span>
         </h4>
         {isCalculating ? (
           <div
@@ -50,8 +48,7 @@ function DetailRecommendations({
             }}
           >
             <Loader2 size={14} className="animate-spin" color="#6b7280" />{" "}
-            {/* 💡 ⏳を滑らかな回転インジケーターへ */}
-            <span>高速空間計算中...</span>
+            <span>高速計算中...</span>
           </div>
         ) : (
           <div style={{ display: "flex", gap: "10px" }}>
@@ -133,7 +130,7 @@ function DetailRecommendations({
         )}
       </div>
 
-      {/* 🥈 2段目：確率的時間遷移 */}
+      {/* 2段目：確率的時間遷移 */}
       <div>
         <h4
           style={{
@@ -147,8 +144,7 @@ function DetailRecommendations({
           }}
         >
           <TrendingUp size={14} color="#10b981" />{" "}
-          {/* 💡 ✨をマルコフ連鎖の流れを示すTrendingUpへ */}
-          <span>この商品を見ている人におすすめ (こんな商品も見ています)</span>
+          <span>この商品を見ている人におすすめ</span>
         </h4>
         {isCalculating ? (
           <div

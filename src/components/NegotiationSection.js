@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-// 💡 ゲーム理論的な調停フェーズや緊迫感をシャープに具現化するアイコン群を召喚
 import {
   Bot,
   AlertTriangle,
@@ -18,7 +17,7 @@ function NegotiationSection({
   currentPrice,
   myAppId,
   onNegotiationSuccess,
-  setIsModalLocked, // 💡 親（ItemDetailModal）の画面拘束スイッチをPropsとしてハント
+  setIsModalLocked,
 }) {
   const [negoMode, setNegoMode] = useState("none");
   const [wishPrice, setWishPrice] = useState("");
@@ -29,17 +28,15 @@ function NegotiationSection({
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
-  // 🔒 安全に交渉状態を抜け出し、モーダルのロックを完全解除する専用ヘルパー
+  // モーダルのロックを完全解除する専用ヘルパー
   const resetNegoMode = () => {
     setNegoMode("none");
-    if (setIsModalLocked) setIsModalLocked(false); // 💡 ユーザーをホールドから解放
+    if (setIsModalLocked) setIsModalLocked(false);
   };
 
   const handleLaunchNegotiation = (e) => {
     e.preventDefault();
     if (!wishPrice || !negoMessage.trim()) return;
-
-    // 💡 通信が始まる「loading」の瞬さに、画面遷移およびモーダルクローズを強制ロック！
     if (setIsModalLocked) setIsModalLocked(true);
     setNegoMode("loading");
 
@@ -54,7 +51,7 @@ function NegotiationSection({
     })
       .then((res) => res.json())
       .then((data) => {
-        // 🔒 【数理制約】サーバーから正常に応答が返ってきた時点で、成否に関わらず「人生で1回きりの権利」をブラウザに永久刻印
+        // サーバーから正常に応答が返ってきた時点で、成否に関わらず「人生で1回きりの権利」をブラウザに永久刻印
         localStorage.setItem(
           `fleamarket_negotiated_${myAppId}_${itemId}`,
           "true",
@@ -493,7 +490,7 @@ function NegotiationSection({
               </div>
               <div style={{ display: "flex", gap: "10px" }}>
                 <button
-                  onClick={resetNegoMode} // 💡 見送り時は安全にロックを解除
+                  onClick={resetNegoMode}
                   style={{
                     flex: 1,
                     padding: "10px",

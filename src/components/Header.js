@@ -215,6 +215,7 @@ function Header({
                         color: "#4b5563",
                         marginTop: "4px",
                         lineHeight: "1.4",
+                        textAlign: "left",
                       }}
                     >
                       {notif.message}
