@@ -266,6 +266,7 @@ function ItemDetailModal({
             justifyContent: "space-between",
             alignItems: "start",
             gap: "10px",
+            textAlign: "left",
             marginBottom: "12px",
           }}
         >
@@ -418,13 +419,14 @@ function ItemDetailModal({
             borderRadius: "8px",
             border: "1px solid #e2e8f0",
             margin: "0 0 15px 0",
+            textAlign: "left",
             lineHeight: "1.6",
           }}
         >
           {selectedItem.description}
         </p>
 
-        {/* 💰 価格 & 今すぐ購入バー */}
+        {/* 価格 & 今すぐ購入バー */}
         <div
           style={{
             display: "flex",

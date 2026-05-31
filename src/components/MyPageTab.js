@@ -178,6 +178,7 @@ function MyPageTab({
           margin: "0",
           display: "flex",
           alignItems: "center",
+          justifyContent: "center",
           gap: "8px",
         }}
       >
@@ -185,7 +186,7 @@ function MyPageTab({
         <span>マイページ</span>
       </h2>
 
-      {/* ❶ プロフィールカード */}
+      {/* プロフィールカード */}
       <div
         style={{
           backgroundColor: "white",
@@ -225,7 +226,7 @@ function MyPageTab({
         </div>
       </div>
 
-      {/* 🚚 ❷ 進行中の取引レーン */}
+      {/* 進行中の取引レーン */}
       {activeTransactions.length > 0 && (
         <div
           style={{
@@ -352,7 +353,7 @@ function MyPageTab({
         </div>
       )}
 
-      {/* 👥 ❸ アカウント切り替えマルチセンター */}
+      {/* アカウント切り替えマルチセンター */}
       <div
         style={{
           backgroundColor: "#f8fafc",
@@ -470,7 +471,6 @@ function MyPageTab({
                         }}
                       >
                         <Trash2 size={14} color="#94a3b8" />{" "}
-                        {/* 💡 🗑️をTrash2へ */}
                       </button>
                     </div>
                   ) : (
@@ -513,12 +513,12 @@ function MyPageTab({
             gap: "6px",
           }}
         >
-          <Plus size={16} /> {/* 💡 ＋記号をPlusアイコンへ */}
+          <Plus size={16} />
           <span>別のアカウントで新規ログイン（リストに追加）</span>
         </button>
       </div>
 
-      {/* 🎯 ❹ AIウィッシュリスト */}
+      {/* AIウィッシュリスト */}
       <div
         style={{
           backgroundColor: "#f5f3ff",
@@ -531,7 +531,6 @@ function MyPageTab({
           boxShadow: "0 4px 6px -1px rgba(109, 40, 217, 0.03)",
         }}
       >
-        {/* メインタイトル */}
         <div
           style={{
             fontSize: "14px",
@@ -542,7 +541,7 @@ function MyPageTab({
             gap: "6px",
           }}
         >
-          <Target size={16} color="#6d28d9" /> {/* 💡 🎯をTargetアイコンへ */}
+          <Target size={16} color="#6d28d9" />
           <span>あなたのAI入荷待ちウィッシュリスト</span>
         </div>
 
@@ -571,8 +570,6 @@ function MyPageTab({
                       gap: "4px",
                     }}
                   >
-                    <Sparkles size={12} color="#1e3a8a" />{" "}
-                    {/* 💡 ✨をSparklesへ */}
                     <span
                       style={{
                         fontSize: "13px",
@@ -684,7 +681,7 @@ function MyPageTab({
         </div>
       </div>
 
-      {/* 🛍️ ❺ 通常の商品履歴レーン */}
+      {/* 通常の商品履歴レーン */}
       {isLoading ? (
         <div
           style={{
@@ -699,7 +696,6 @@ function MyPageTab({
           }}
         >
           <Loader2 size={16} className="animate-spin" />{" "}
-          {/* 💡 ⏳を回転するインジケーターへ */}
           <span>取引履歴を読み込み中...</span>
         </div>
       ) : (
@@ -717,7 +713,6 @@ function MyPageTab({
               }}
             >
               <ShoppingBag size={16} color="#111827" />{" "}
-              {/* 💡 🛍️をShoppingBagへ */}
               <span>購入した商品 ({purchasedItems.length})</span>
             </h3>
             <HorizontalItemList
@@ -738,7 +733,7 @@ function MyPageTab({
                 gap: "6px",
               }}
             >
-              <Camera size={16} color="#111827" /> {/* 💡 📸をCameraへ */}
+              <Camera size={16} color="#111827" />
               <span>出品した商品 ({myProducts.length})</span>
             </h3>
             <HorizontalItemList
@@ -750,7 +745,7 @@ function MyPageTab({
         </div>
       )}
 
-      {/* 🏁 ❻ 過去の取引履歴アーカイブ */}
+      {/* 過去の取引履歴アーカイブ */}
       {completedTransactions.length > 0 && (
         <div
           style={{
@@ -773,7 +768,7 @@ function MyPageTab({
               gap: "6px",
             }}
           >
-            <Flag size={16} color="#475569" /> {/* 💡 🏁をFlagアイコンへ */}
+            <Flag size={16} color="#475569" />
             <span>過去の取引履歴（完了済みのメッセージ・詳細確認）</span>
           </div>
           <div
@@ -789,7 +784,7 @@ function MyPageTab({
                   padding: "12px",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between", // 💡 不正だった「justifyBetween」のバグを完全調停
+                  justifyContent: "space-between",
                   gap: "15px",
                 }}
               >
@@ -825,7 +820,6 @@ function MyPageTab({
                     }}
                   >
                     <CheckCircle2 size={12} color="#64748b" />{" "}
-                    {/* 💡 ✅をCheckCircle2へ */}
                     <span>取引完了</span>
                     <span>
                       {String(myAppId) === String(tx.seller_id)

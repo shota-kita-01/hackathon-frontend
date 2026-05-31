@@ -5,7 +5,6 @@ import {
   SHIPPING_DAYS_OPTIONS,
 } from "./FormConstants";
 import AiNegoFormSection from "./AiNegoFormSection";
-// 💡 出品フォームの高度な機能を洗練されたメタに変換するアイコン群をフル召喚
 import {
   SquarePen,
   Camera,
@@ -43,7 +42,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
   );
   const [priceError, setPriceError] = useState("");
 
-  // 🥊 AI自動交渉管理用のState
+  // AI自動交渉管理用のState
   const [minAcceptablePrice, setMinAcceptablePrice] = useState(
     editingItem ? editingItem.min_acceptable_price : "",
   );
@@ -52,7 +51,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
   );
   const [minPriceError, setMinPriceError] = useState("");
 
-  // 🛡️ AI安全チェック管理用のState（💡 テキスト内から絵文字のノイズを事前に引き算）
+  // AI安全チェック管理用のState
   const [isAiChecked, setIsAiChecked] = useState(editingItem ? true : false);
   const [isCheckingSafety, setIsCheckingSafety] = useState(false);
   const [safetyCheckMessage, setSafetyCheckMessage] = useState(
@@ -64,7 +63,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
   const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
   const [isEstimatingPrice, setIsEstimatingPrice] = useState(false);
 
-  // ✨【連打防止ハック】非同期リクエスト中の多重送信を完全にブロックする防弾State
+  // 非同期リクエスト中の多重送信を完全にブロック
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const BASE_API_URL =
@@ -157,7 +156,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           if (data.is_safe) {
             setIsAiChecked(true);
             setSafetyCheckMessage(
-              "AI規約審査クリア！安全な商品と認定されました。", // 💡 混入していた記号表現を完全クリーン化
+              "AI規約審査クリア！安全な商品と認定されました。",
             );
           } else {
             setIsAiChecked(false);
@@ -362,7 +361,6 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
         boxSizing: "border-box",
       }}
     >
-      {/* 📝 / 📸 の動的見出しタイトルをフレックス整列 */}
       <h2
         style={{
           fontSize: "18px",
@@ -371,6 +369,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           margin: "0 0 20px 0",
           display: "flex",
           alignItems: "center",
+          justifyContent: "center",
           gap: "6px",
         }}
       >
@@ -650,7 +649,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           </label>
           <select
             value={itemCondition}
-            disabled={isSubmitting} // ロック
+            disabled={isSubmitting}
             onChange={(e) => setItemCondition(e.target.value)}
             style={{
               padding: "10px 12px",
@@ -671,7 +670,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           </select>
         </div>
 
-        {/* 💰 AI価格査定ボタン */}
+        {/* AI価格査定ボタン */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <button
             type="button"
@@ -811,7 +810,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           </select>
         </div>
 
-        {/* 🤖 AI自動交渉の設定サブセクション */}
+        {/* AI自動交渉の設定サブセクション */}
         <AiNegoFormSection
           price={price}
           minAcceptablePrice={minAcceptablePrice}
@@ -819,7 +818,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           setSellerStance={setSellerStance}
           minPriceError={minPriceError}
           handleMinPriceChange={handleMinPriceChange}
-          disabled={isSubmitting} // 必要に応じてサブセクション側にも状態を伝播
+          disabled={isSubmitting}
         />
 
         {/* 画像URL */}
@@ -855,7 +854,6 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           />
         </div>
 
-        {/* 🚀 / 📝 メインアクションボタンの動的線画化 */}
         <button
           type="submit"
           disabled={isSubmitDisabled}

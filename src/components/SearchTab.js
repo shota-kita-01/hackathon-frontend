@@ -164,7 +164,7 @@ function SearchTab({
   };
 
   // ===================================================
-  // 🔍 フィルターロジック
+  // フィルターロジック
   // ===================================================
   let filteredItems = baseItems.filter((item) => {
     if (!item) return false;
@@ -227,6 +227,7 @@ function SearchTab({
           margin: "0",
           display: "flex",
           alignItems: "center",
+          justifyContent: "center",
           gap: "8px",
         }}
       >
