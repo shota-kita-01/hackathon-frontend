@@ -6,11 +6,12 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
 
   return (
     <div
+      className="nav-bar-container"
       style={{
         backgroundColor: "white",
         display: "flex",
         justifyContent: "center",
-        gap: "12px",
+        gap: "12px", // 基準値（大画面PC用）
         position: "sticky",
         top: "60px",
         zIndex: 100,
@@ -19,9 +20,35 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
         borderBottom: "1px solid #e5e7eb",
       }}
     >
+      {/* 段階的に少しずつサイズを落とし、中画面での不用意な縮みすぎを完璧に阻止する */}
+      <style>{`
+        @media (max-width: 640px) {
+          .nav-bar-container { gap: 4px !important; }
+          .nav-tab-button { 
+            padding: 14px 6px !important; 
+            font-size: 13.5px !important;
+            gap: 8px !important; 
+          }
+          .nav-tab-button svg { width: 15px !important; height: 15px !important; }
+        }
+
+        @media (max-width: 480px) {
+          .nav-bar-container { gap: 1px !important; }
+          .nav-tab-button { 
+            padding: 14px 4px !important; 
+            font-size: 11px !important; 
+            gap: 3px !important; 
+          }
+          .nav-tab-button svg { width: 14px !important; height: 14px !important; }
+        }
+
+        .nav-tab-button { white-space: nowrap !important; }
+      `}</style>
+
       {/* ホーム */}
       <button
         onClick={() => setCurrentTab("home")}
+        className="nav-tab-button"
         style={{
           padding: "14px 10px",
           backgroundColor: "transparent",
@@ -47,6 +74,7 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
       {/* 検索 */}
       <button
         onClick={() => setCurrentTab("search")}
+        className="nav-tab-button"
         style={{
           padding: "14px 10px",
           backgroundColor: "transparent",
@@ -72,6 +100,7 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
       {/* おすすめ・履歴 */}
       <button
         onClick={() => setCurrentTab("history")}
+        className="nav-tab-button"
         style={{
           padding: "14px 10px",
           backgroundColor: "transparent",
@@ -97,6 +126,7 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
       {/* 出品 */}
       <button
         onClick={() => setCurrentTab("sell")}
+        className="nav-tab-button"
         style={{
           padding: "14px 10px",
           backgroundColor: "transparent",
@@ -122,6 +152,7 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
       {/* マイページ */}
       <button
         onClick={() => setCurrentTab("mypage")}
+        className="nav-tab-button"
         style={{
           padding: "14px 10px",
           backgroundColor: "transparent",

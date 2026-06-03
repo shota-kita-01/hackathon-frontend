@@ -86,12 +86,6 @@ function Header({
       <style>{`
         @media (max-width: 640px) {
           .nav-email-text { display: none !important; } 
-          .nav-logo-text { font-size: 18px !important; } 
-          .nav-logo-icon { width: 30px !important; height: 30px !important; } 
-          .nav-logo-icon span { font-size: 16px !important; }
-          .nav-logo-large-n { font-size: 24px !important; }
-          .nav-right-container { gap: 12px !important; }
-          .nav-dropdown-menu { right: 16px !important; width: 280px !important; }
         }
       `}</style>
 
