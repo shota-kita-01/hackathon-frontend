@@ -61,6 +61,71 @@ function HomeTab({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "45px" }}>
+      {/* 💡 ホーム画面の最上部：中揃え ＆ 2倍スケールアップ版 */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "25px",
+          cursor: "pointer",
+          alignSelf: "center",
+          marginTop: "20px",
+        }}
+        onClick={() => setCurrentTab("home")}
+      >
+        {/* グラデーションアイコン（すべて2倍） */}
+        <div
+          style={{
+            width: "90px",
+            height: "90px",
+            background: "linear-gradient(135deg, #7c3aed 0%, #ff4d4d 100%)",
+            borderRadius: "25px",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 8px 20px rgba(255, 77, 77, 0.2)",
+            flexShrink: 0,
+          }}
+        >
+          <span
+            style={{
+              color: "white",
+              fontStyle: "italic",
+              fontWeight: "900",
+              fontSize: "50px",
+              fontFamily: '"Helvetica Neue", Arial, sans-serif',
+              transform: "translateX(-1px)",
+            }}
+          >
+            N
+          </span>
+        </div>
+
+        <h1
+          style={{
+            margin: 0,
+            fontSize: "60px",
+            fontWeight: "500",
+            fontFamily: '"Helvetica Neue", Arial, system-ui, sans-serif',
+            letterSpacing: "-1px",
+            color: "#605c60e7",
+          }}
+        >
+          <span
+            style={{
+              fontStyle: "italic",
+              fontWeight: "900",
+              fontSize: "80px",
+              color: "#ff4d85db",
+              marginRight: "5px",
+            }}
+          >
+            N
+          </span>
+          -Frima
+        </h1>
+      </div>
+
       {/* AI空間検索コンテナー */}
       <div
         style={{
