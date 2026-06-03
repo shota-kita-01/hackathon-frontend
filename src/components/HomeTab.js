@@ -7,7 +7,7 @@ import {
   ShoppingBag,
   Camera,
   User,
-} from "lucide-react"; // 💡 Camera と User をハント！
+} from "lucide-react";
 
 function HomeTab({
   homePersonalized,
@@ -30,7 +30,6 @@ function HomeTab({
     e.preventDefault();
     if (!newWishText.trim()) return;
 
-    // キャッシュから現在ログイン中の会員IDを動的にハント
     const savedAccounts = JSON.parse(
       localStorage.getItem("fleamarket_authenticated_accounts") || "[]",
     );
@@ -51,7 +50,7 @@ function HomeTab({
           alert(
             `AI入荷待ち登録が完了しました。\n今後、他のユーザーから「${newWishText.trim()}」にマッチする商品が出品された瞬間に、通知センターへ通知が届きます！`,
           );
-          setNewWishText(""); // 入力欄をクリア
+          setNewWishText("");
         }
       })
       .catch((err) =>
@@ -61,8 +60,34 @@ function HomeTab({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "45px" }}>
-      {/* 💡 ホーム画面の最上部：中揃え ＆ 2倍スケールアップ版 */}
+      {/* 仕組み：このファイル内で完結するレスポンシブ用スタイルインジェクション */}
+      <style>{`
+        @media (max-width: 640px) {
+          /* 1. 最上部巨大ロゴのスマホ最適化（はみ出し防止） */
+          .home-logo-container { 
+            gap: 14px !important; 
+            margin-top: 10px !important;
+          } 
+          
+          .home-logo-icon { 
+            width: 46px !important; 
+            height: 46px !important; 
+            border-radius: 12px !important; 
+          }
+          
+          .home-logo-icon span { font-size: 26px !important; }
+          .home-logo-text { font-size: 32px !important; }
+          .home-logo-text-n { font-size: 42px !important; }
+
+          /* 2. 検索窓・登録窓の横潰れを防ぐ縦並び（Column）化 */
+          .responsive-form-block { flex-direction: column !important; gap: 10px !important; }
+          .responsive-form-button { width: 100% !important; padding: 12px 0 !important; height: auto !important; }
+        }
+      `}</style>
+
+      {/* ホーム画面の最上部 */}
       <div
+        className="home-logo-container"
         style={{
           display: "flex",
           alignItems: "center",
@@ -73,8 +98,9 @@ function HomeTab({
         }}
         onClick={() => setCurrentTab("home")}
       >
-        {/* グラデーションアイコン（すべて2倍） */}
+        {/* グラデーションアイコン */}
         <div
+          className="home-logo-icon"
           style={{
             width: "90px",
             height: "90px",
@@ -102,6 +128,7 @@ function HomeTab({
         </div>
 
         <h1
+          className="home-logo-text"
           style={{
             margin: 0,
             fontSize: "60px",
@@ -112,6 +139,7 @@ function HomeTab({
           }}
         >
           <span
+            className="home-logo-text-n"
             style={{
               fontStyle: "italic",
               fontWeight: "900",
@@ -141,7 +169,7 @@ function HomeTab({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Search size={15} color="#312e81" /> {/* 💡 虫眼鏡アイコンをセット */}
+          <Search size={15} color="#312e81" />
           <span
             style={{
               fontSize: "13px",
@@ -154,7 +182,10 @@ function HomeTab({
           </span>
         </div>
 
-        <div style={{ display: "flex", gap: "10px" }}>
+        <div
+          className="responsive-form-block"
+          style={{ display: "flex", gap: "10px" }}
+        >
           <input
             type="text"
             placeholder="キーワードを入力（例: レザージャケット）"
@@ -174,9 +205,12 @@ function HomeTab({
               backgroundColor: "#f8fafc",
               outline: "none",
               color: "#334155",
+              width: "100%",
+              boxSizing: "border-box",
             }}
           />
           <button
+            className="responsive-form-button"
             onClick={() => {
               if (localKeyword.trim()) onHomeSearch(localKeyword);
             }}
@@ -191,6 +225,7 @@ function HomeTab({
               cursor: "pointer",
               boxShadow: "0 4px 14px rgba(79, 70, 229, 0.25)",
               transition: "all 0.2s",
+              whiteSpace: "nowrap",
             }}
           >
             検索する
@@ -222,7 +257,7 @@ function HomeTab({
         }
       >
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <Camera size={22} color="#166534" />{" "}
+          <Camera size={22} color="#166534" />
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             <span
               style={{ fontSize: "14px", fontWeight: "bold", color: "#166534" }}
@@ -263,7 +298,6 @@ function HomeTab({
           marginBottom: "-10px",
         }}
       >
-        {/* メインタイトル */}
         <div
           style={{
             fontSize: "14px",
@@ -278,7 +312,6 @@ function HomeTab({
           見つからない商品はAI入荷待ちへ登録！
         </div>
 
-        {/* 白抜き追加フォーム */}
         <div
           style={{
             backgroundColor: "white",
@@ -298,13 +331,15 @@ function HomeTab({
               gap: "6px",
             }}
           >
-            <Sparkles size={14} color="#7c3aed" />{" "}
+            <Sparkles size={14} color="#7c3aed" />
             <span>
               欲しい商品のイメージを登録しておくと、出品された瞬間にリアルタイムでお知らせします
             </span>
           </div>
+          {/* 入荷待ちのフォームも同様のレスポンス仕様へ調停 */}
           <form
             onSubmit={handleAddToWishlistFromHome}
+            className="responsive-form-block"
             style={{ display: "flex", gap: "10px" }}
           >
             <input
@@ -319,10 +354,13 @@ function HomeTab({
                 border: "1px solid #bfdbfe",
                 outline: "none",
                 fontSize: "13px",
+                width: "100%",
+                boxSizing: "border-box",
               }}
             />
             <button
               type="submit"
+              className="responsive-form-button"
               disabled={!newWishText.trim()}
               style={{
                 padding: "0 18px",
@@ -333,6 +371,7 @@ function HomeTab({
                 fontSize: "13px",
                 fontWeight: "bold",
                 cursor: newWishText.trim() ? "pointer" : "not-allowed",
+                whiteSpace: "nowrap",
               }}
             >
               登録する
@@ -341,7 +380,7 @@ function HomeTab({
         </div>
       </div>
 
-      {/* 🥇 1段目：あなたへのおすすめ（Top 5） */}
+      {/* 🥇 1段目：あなたへのおすすめ */}
       {firstHeroItem && (
         <div>
           <h3
@@ -354,11 +393,10 @@ function HomeTab({
               gap: "8px",
             }}
           >
-            <Sparkles size={18} color="#4f46e5" />{" "}
+            <Sparkles size={18} color="#4f46e5" />
             <span className="ai-heading-text">あなたへのおすすめ</span>
           </h3>
 
-          {/* 1件目の特製ビッグカード */}
           <div
             className="item-card"
             onClick={() => handleCardClick(firstHeroItem)}
@@ -433,7 +471,7 @@ function HomeTab({
                   gap: "4px",
                 }}
               >
-                <User size={14} color="#9ca3af" />{" "}
+                <User size={14} color="#9ca3af" />
                 <span>出品者: {firstHeroItem.seller_name || "公式出品"}</span>
               </div>
               <p
@@ -566,7 +604,7 @@ function HomeTab({
             color: "#333",
           }}
         >
-          <User size={18} color="#333" />{" "}
+          <User size={18} color="#333" />
           <span>{homeUserFavorite.title || "あなたに人気のカテゴリー"}</span>
         </h3>
         {homeUserFavorite.items && homeUserFavorite.items.length > 0 ? (
@@ -598,7 +636,7 @@ function HomeTab({
                 marginBottom: "4px",
               }}
             >
-              <ShoppingBag size={16} color="#9ca3af" />{" "}
+              <ShoppingBag size={16} color="#9ca3af" />
               <span>
                 <b>購入後に表示します</b>
               </span>
@@ -624,7 +662,7 @@ function HomeTab({
               color: "#333",
             }}
           >
-            <ShoppingBag size={18} color="#333" />{" "}
+            <ShoppingBag size={18} color="#333" />
             <span>{homeMarketFavorite.title}</span>
           </h3>
           <HorizontalItemList

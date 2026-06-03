@@ -218,6 +218,14 @@ function SearchTab({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
+      {/* 💡 仕組み：SearchTab内で完結するレスポンシブ防壁スタイルシート */}
+      <style>{`
+        @media (max-width: 640px) {
+          .responsive-search-block { flex-direction: column !important; gap: 10px !important; }
+          .responsive-search-button { width: 100% !important; padding: 12px 0 !important; height: auto !important; }
+        }
+      `}</style>
+
       {/* タイトルセクションのスマート化 */}
       <h2
         style={{
@@ -277,7 +285,11 @@ function SearchTab({
           <div
             style={{ display: "flex", gap: "10px", flexDirection: "column" }}
           >
-            <div style={{ display: "flex", gap: "10px" }}>
+            {/* 💡 クラス名「responsive-search-block」をマウント */}
+            <div
+              className="responsive-search-block"
+              style={{ display: "flex", gap: "10px" }}
+            >
               <input
                 type="text"
                 placeholder="キーワードを入力（例: レザージャケット）"
@@ -292,9 +304,13 @@ function SearchTab({
                   fontSize: "15px",
                   outline: "none",
                   boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)",
+                  width: "100%",
+                  boxSizing: "border-box",
                 }}
               />
+              {/* 💡 クラス名「responsive-search-button」を付与 ＆ whiteSpaceをインジェクション */}
               <button
+                className="responsive-search-button"
                 onClick={handleAiRecommend}
                 disabled={isRecommending || !(moodText || "").trim()}
                 style={{
@@ -316,6 +332,7 @@ function SearchTab({
                     isRecommending || !(moodText || "").trim()
                       ? "none"
                       : "0 4px 6px rgba(79, 70, 229, 0.3)",
+                  whiteSpace: "nowrap", // 改行を絶対に許さない防壁
                 }}
               >
                 {isRecommending ? (
@@ -360,7 +377,6 @@ function SearchTab({
                     flex: 1,
                   }}
                 >
-                  {/* 💡 ボードの左端にベルアイコンを置いてインテリジェントに視線誘導 */}
                   <Bell
                     size={16}
                     color="#6d28d9"
@@ -427,7 +443,7 @@ function SearchTab({
           </div>
         </div>
 
-        {/* 🛠️ 下段：物理フィルターの超整列構造 */}
+        {/* 下段：物理フィルターの超整列構造 */}
         <div
           style={{
             padding: "20px 24px",
@@ -458,9 +474,7 @@ function SearchTab({
                 gap: "6px",
               }}
             >
-              <Filter size={14} color="#6b7280" />{" "}
-              {/* 💡 🛒をシャープなフィルターアイコンへ */}
-              <span>表示対象</span>
+              <Filter size={14} color="#6b7280" /> <span>表示対象</span>
             </div>
             <div
               style={{
@@ -565,7 +579,7 @@ function SearchTab({
                   gap: "6px",
                 }}
               >
-                <Tag size={13} color="#6b7280" /> {/* 💡 🏷️をタグアイコンへ */}
+                <Tag size={13} color="#6b7280" />
                 <span>カテゴリー</span>
               </div>
               <select
@@ -612,8 +626,7 @@ function SearchTab({
                   gap: "6px",
                 }}
               >
-                <Sliders size={13} color="#6b7280" />{" "}
-                {/* 💡 ✨を調整スライダーアイコンへ */}
+                <Sliders size={13} color="#6b7280" />
                 <span>商品の状態</span>
               </div>
               <select
@@ -788,8 +801,7 @@ function SearchTab({
                     gap: "8px",
                   }}
                 >
-                  <ChevronDown size={16} />{" "}
-                  {/* 💡 👇をシャープな下矢印アイコンへ */}
+                  <ChevronDown size={16} />
                   <span>さらに商品を表示する</span>
                 </button>
               </div>
