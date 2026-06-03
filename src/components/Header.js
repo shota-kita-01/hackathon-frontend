@@ -73,7 +73,7 @@ function Header({
       style={{
         backgroundColor: "white",
         borderBottom: "1px solid #f3f4f6",
-        padding: "0 20px",
+        padding: "0 16px", // スマホの端の詰まりを考慮して20pxから16pxに最適化
         height: "60px",
         position: "sticky",
         top: 0,
@@ -83,22 +83,88 @@ function Header({
         alignItems: "center",
       }}
     >
-      <h1
+      <style>{`
+        @media (max-width: 640px) {
+          .nav-email-text { display: none !important; } 
+          .nav-logo-text { font-size: 18px !important; } 
+          .nav-logo-icon { width: 30px !important; height: 30px !important; } 
+          .nav-logo-icon span { font-size: 16px !important; }
+          .nav-logo-large-n { font-size: 24px !important; }
+          .nav-right-container { gap: 12px !important; }
+          .nav-dropdown-menu { right: 16px !important; width: 280px !important; }
+        }
+      `}</style>
+
+      {/* ロゴコンテナ */}
+      <div
         style={{
-          color: "#ff4d4d",
-          margin: 0,
-          fontSize: "22px",
-          fontWeight: "bold",
-          letterSpacing: "1px",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
           cursor: "pointer",
         }}
         onClick={() => setCurrentTab("home")}
       >
-        次世代型フリマアプリ
-      </h1>
+        {/* グラデーションアイコン */}
+        <div
+          className="nav-logo-icon"
+          style={{
+            width: "36px",
+            height: "36px",
+            background: "linear-gradient(135deg, #7c3aed 0%, #ff4d4d 100%)",
+            borderRadius: "10px",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 4px 10px rgba(255, 77, 77, 0.2)",
+            flexShrink: 0,
+          }}
+        >
+          <span
+            style={{
+              color: "white",
+              fontStyle: "italic",
+              fontWeight: "900",
+              fontSize: "20px",
+              fontFamily: '"Helvetica Neue", Arial, sans-serif',
+              transform: "translateX(-0.5px)",
+            }}
+          >
+            N
+          </span>
+        </div>
+
+        {/* テキストロゴ */}
+        <h1
+          className="nav-logo-text"
+          style={{
+            margin: 0,
+            fontSize: "24px",
+            fontWeight: "500",
+            fontFamily: '"Helvetica Neue", Arial, system-ui, sans-serif',
+            letterSpacing: "-0.5px",
+            color: "#4e4a4ee7",
+          }}
+        >
+          <span
+            className="nav-logo-large-n"
+            style={{
+              fontStyle: "italic",
+              fontWeight: "900",
+              fontSize: "32px",
+              color: "#f64574e6",
+              marginRight: "2px",
+            }}
+          >
+            N
+          </span>
+          -Frima
+        </h1>
+      </div>
 
       {loginUser && (
         <div
+          className="nav-right-container"
           style={{
             display: "flex",
             alignItems: "center",
@@ -123,7 +189,7 @@ function Header({
               <span
                 style={{
                   position: "absolute",
-                  top: "-6px", // 💡 アイコンの丸みに合わせて通知バッジの位置を数理最適化
+                  top: "-6px",
                   right: "-6px",
                   backgroundColor: "#ff4d4d",
                   color: "white",
@@ -142,6 +208,7 @@ function Header({
           {/* 通知ドロップダウンメニュー */}
           {showDropdown && (
             <div
+              className="nav-dropdown-menu"
               style={{
                 position: "absolute",
                 top: "35px",
@@ -221,7 +288,6 @@ function Header({
                       {notif.message}
                     </div>
 
-                    {/* 世界標準時文字列を安全にJST（日本時間）へフォーマットする特設ブロック */}
                     <div
                       style={{
                         fontSize: "10px",
@@ -267,7 +333,7 @@ function Header({
             }}
           >
             <User size={16} color="#4b5563" />{" "}
-            <span>{currentActiveAccount.email}</span>
+            <span className="nav-email-text">{currentActiveAccount.email}</span>
           </div>
 
           <button
@@ -281,6 +347,7 @@ function Header({
               cursor: "pointer",
               fontSize: "12px",
               fontWeight: "bold",
+              whiteSpace: "nowrap",
             }}
           >
             ログアウト
