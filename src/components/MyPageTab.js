@@ -131,10 +131,58 @@ function MyPageTab({
   const handleAddAccount = () => {
     if (
       window.confirm(
-        "別のアカウントを追加するために、一時的にサインイン画面へ遷移します。よろしいですか？",
+        "現在のアカウントのログイン情報をリストに保持したまま、別のアカウントを追加しますか？",
       )
     ) {
-      handleLogout();
+      const saved = localStorage.getItem("fleamarket_authenticated_accounts");
+      let currentList = saved ? JSON.parse(saved) : [];
+
+      const currentAccountData = {
+        id: myAppId,
+        name: loginUser?.email ? loginUser.email.split("@")[0] : "ユーザー",
+        email: loginUser?.email || "",
+      };
+
+      if (!currentList.some((acc) => String(acc.id) === String(myAppId))) {
+        currentList.push(currentAccountData);
+        localStorage.setItem(
+          "fleamarket_authenticated_accounts",
+          JSON.stringify(currentList),
+        );
+      }
+
+      handleLogout(false);
+    }
+  };
+
+  const handleActiveAccountLogout = () => {
+    if (
+      !window.confirm(
+        "現在アクティブなこのアカウントのログイン情報を端末から完全に削除しますか？",
+      )
+    )
+      return;
+
+    // 1. ローカルストレージのアカウント配列から、自分(myAppId)を filter で除外
+    const updatedList = accountList.filter(
+      (acc) => String(acc.id) !== String(myAppId),
+    );
+    setAccountList(updatedList);
+    localStorage.setItem(
+      "fleamarket_authenticated_accounts",
+      JSON.stringify(updatedList),
+    );
+
+    // 2. リストの残存数に応じた条件分岐（数理調停）
+    if (updatedList.length > 0) {
+      // A. 他にアカウントが残っているなら、先頭のアカウント(updatedList[0])に自動で切り替える
+      alert(
+        `アカウントを削除しました。残っている「${updatedList[0].name}」のアカウントに自動で切り替えます。`,
+      );
+      setMyAppId(updatedList[0].id);
+    } else {
+      // B. 他に誰も残っていないなら、本当のログアウトを実行してログイン画面へ
+      handleLogout(false); // 二重アラートを防ぐためサイレント化
     }
   };
 
@@ -475,7 +523,7 @@ function MyPageTab({
                     </div>
                   ) : (
                     <button
-                      onClick={handleLogout}
+                      onClick={handleActiveAccountLogout}
                       style={{
                         padding: "6px 14px",
                         backgroundColor: "white",

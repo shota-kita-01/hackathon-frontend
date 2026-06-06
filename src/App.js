@@ -48,9 +48,14 @@ function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(fireAuth, (user) => {
       if (user) {
+        console.log(
+          "① Firebase Authが新しいユーザーを検知しました:",
+          user.email,
+        );
         setLoginUser(user);
         const dummyName = user.displayName || user.email.split("@")[0];
 
+        console.log("② バックエンドの /auth/login へ通信を開始します...");
         fetch(`${API_URL}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -60,14 +65,70 @@ function App() {
             email: user.email,
           }),
         })
-          .then((res) => res.json())
+          .then((res) => {
+            console.log(
+              "③ バックエンドからレスポンスを受信しました。ステータスコード:",
+              res.status,
+            );
+            return res.json();
+          })
           .then((data) => {
+            console.log("④ バックエンドから返ってきたデータの中身:", data);
+
             if (data.status === "success") {
+              console.log("⑤ 照合成功！AppIdをセットします:", data.id);
               setMyAppId(data.id);
               fetchUserLikes(data.id);
+
+              // 💡 LocalStorageのパースエラーを完全に防御する防壁
+              let accountList = [];
+              try {
+                const saved = localStorage.getItem(
+                  "fleamarket_authenticated_accounts",
+                );
+                accountList = saved ? JSON.parse(saved) : [];
+                if (!Array.isArray(accountList)) accountList = [];
+              } catch (e) {
+                console.error(
+                  "⚠️ LocalStorageのパースでエラーが発生したため、安全にリセットしました:",
+                  e,
+                );
+                accountList = [];
+              }
+
+              const newAccountData = {
+                id: data.id,
+                name: dummyName,
+                email: user.email,
+              };
+
+              if (
+                !accountList.some((acc) => String(acc.id) === String(data.id))
+              ) {
+                accountList.push(newAccountData);
+                localStorage.setItem(
+                  "fleamarket_authenticated_accounts",
+                  JSON.stringify(accountList),
+                );
+                console.log("⑥ アカウントリストへの追記・保存が完了しました。");
+              }
+
+              console.log(
+                "🚀 すべての処理が成功。マイページタブ（mypage）へ画面を切り替えます！",
+              );
+              setCurrentTab("mypage");
+            } else {
+              console.warn(
+                "❌ バックエンドの返却ステータスが success ではありませんでした。条件分岐をスキップします。",
+              );
             }
           })
-          .catch((err) => console.error("ユーザー照合エラー:", err));
+          .catch((err) =>
+            console.error(
+              "💥 照合通信、または後続ロジックの実行中に重大なエラーが発生しました:",
+              err,
+            ),
+          );
       } else {
         setLoginUser(null);
         setMyAppId(null);
@@ -225,9 +286,13 @@ function App() {
     setCurrentTab("transaction");
   };
 
-  const handleLogout = () => {
+  const handleLogout = (showAlert = true) => {
     signOut(fireAuth)
-      .then(() => alert("ログアウトしました"))
+      .then(() => {
+        if (showAlert) {
+          alert("ログアウトしました");
+        }
+      })
       .catch((err) => alert(err.message));
   };
 
@@ -286,6 +351,7 @@ function App() {
       <main
         style={{ padding: "40px 20px", maxWidth: "600px", margin: "0 auto" }}
       >
+        {/* 💡 差し戻し：myAppIdの有無だけで判定する、最もシンプルでバグの起きない聖域ロジック */}
         {myAppId ? (
           <div
             style={{ display: "flex", flexDirection: "column", gap: "35px" }}
