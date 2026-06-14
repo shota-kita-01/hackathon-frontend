@@ -1,4 +1,4 @@
-// 📚 日本語ユーザーの直感に最適化された21カテゴリ
+// 日本語ユーザーの直感に最適化された21カテゴリ
 export const AMAZON_CATEGORIES = [
   {
     value: "Clothing_Shoes_and_Jewelry",

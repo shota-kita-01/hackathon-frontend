@@ -105,7 +105,7 @@ function ItemList({ items, handlePurchaseItem }) {
             {item.description}
           </p>
 
-          {/* 【安全防弾ガード】item.tags が文字列のときだけ安全にスプリットしてループを回す */}
+          {/* item.tags が文字列のときだけ安全にスプリットしてループを回す */}
           {item.tags && typeof item.tags === "string" && (
             <div
               style={{
@@ -144,7 +144,6 @@ function ItemList({ items, handlePurchaseItem }) {
               marginTop: "4px",
             }}
           >
-            {/* 🛡️【重要】オプショナルチェーニング (?.) とフォールバック (|| 0) で即死クラッシュを完全無効化 */}
             <span
               style={{
                 fontSize: "18px",
@@ -172,9 +171,7 @@ function ItemList({ items, handlePurchaseItem }) {
                   gap: "4px",
                 }}
               >
-                <XCircle size={14} color="#9ca3af" />{" "}
-                {/* 💡 ❌をXCircleへ変更 */}
-                <span>売り切れ</span>
+                <XCircle size={14} color="#9ca3af" /> <span>売り切れ</span>
               </button>
             ) : (
               <button
@@ -194,9 +191,7 @@ function ItemList({ items, handlePurchaseItem }) {
                   gap: "6px",
                 }}
               >
-                <ShoppingBag size={14} color="white" />{" "}
-                {/* 💡 🛍️をShoppingBagへ変更 */}
-                <span>購入する</span>
+                <ShoppingBag size={14} color="white" /> <span>購入する</span>
               </button>
             )}
           </div>

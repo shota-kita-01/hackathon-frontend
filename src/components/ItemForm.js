@@ -238,7 +238,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
     }
 
     if (sellerStance !== "値下げは考えていない" && minPriceError) {
-      alert("最低許容価格の設定に数理的なエラーがあります。修正してください。");
+      alert("最低許容価格の設定にエラーがあります。修正してください。");
       return;
     }
 
@@ -265,7 +265,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
       return;
     }
 
-    // 🔒 バリデーションをすべて通過した瞬間、送信中フラグを立ててボタンを瞬時にロック！
+    // バリデーションをすべて通過した瞬間、送信中フラグを立ててボタンを瞬時にロック！
     setIsSubmitting(true);
 
     const finalImageUrl = imageUrl.trim();
@@ -325,7 +325,6 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
         console.error("通信エラー:", error);
         alert("通信エラーが発生しました。");
       })
-      // 🔓 成功・失敗・例外処理に関わらず、非同期トランザクションが終了したらロックを完全解除
       .finally(() => {
         setIsSubmitting(false);
       });
@@ -342,7 +341,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
   const isCheckBtnDisabled =
     isCheckingSafety || !name.trim() || !description.trim() || isSubmitting;
 
-  // 【DRY原則集約】既存のバリデーションロジックに加え、「送信中（isSubmitting）」なら無条件でボタンを無効化する
+  // 既存のバリデーションロジックに加え、「送信中（isSubmitting）」なら無条件でボタンを無効化する
   const isSubmitDisabled =
     !isAiChecked ||
     !!priceError ||
@@ -414,7 +413,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           />
         </div>
 
-        {/* 🧠 AI商品説明生成ボタンの記号化 */}
+        {/* AI商品説明生成ボタンの記号化 */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <button
             type="button"
@@ -477,7 +476,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           />
         </div>
 
-        {/* 🛡️ AI規約自動チェック特設セクション */}
+        {/* AI規約自動チェックセクション */}
         <div
           style={{
             display: "flex",
@@ -577,7 +576,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
             </button>
           </div>
 
-          {/* 🔍 審査メッセージボードの条件分岐・アイコン完全統制 */}
+          {/* 審査メッセージボードの条件分岐・アイコン完全統制 */}
           {safetyCheckMessage && (
             <div
               style={{
@@ -839,7 +838,7 @@ function ItemForm({ sellerId, editingItem, onSuccess }) {
           </label>
           <input
             type="text"
-            placeholder="空欄ならAIが最適画像を自動セット！"
+            placeholder="空欄ならAIが最適画像をセットします"
             value={imageUrl}
             disabled={isSubmitting} // ロック
             onChange={(e) => setImageUrl(e.target.value)}

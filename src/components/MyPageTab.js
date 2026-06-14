@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import HorizontalItemList from "./HorizontalItemList";
-// 💡 マイページの豊富なセクションや状態をクリーンに表現するインテリジェントアイコン群
 import {
   User,
   Truck,
@@ -36,7 +35,7 @@ function MyPageTab({
   const [newWishText, setNewWishText] = useState(""); // マイページ直接登録用
   const [isLoading, setIsLoading] = useState(true);
 
-  // 👥 ブラウザの永続ストレージからロード
+  // ブラウザの永続ストレージからロード
   const [accountList, setAccountList] = useState(() => {
     const saved = localStorage.getItem("fleamarket_authenticated_accounts");
     return saved ? JSON.parse(saved) : [];
@@ -113,7 +112,7 @@ function MyPageTab({
           fetchMyPageData();
         }
       })
-      .catch((err) => console.error("ウィッシュリスト登録エラー:", err));
+      .catch((err) => console.error("入荷待ち登録エラー:", err));
   };
 
   const handleDeleteWishlist = (wishlistId, keywords) => {
@@ -173,7 +172,7 @@ function MyPageTab({
       JSON.stringify(updatedList),
     );
 
-    // 2. リストの残存数に応じた条件分岐（数理調停）
+    // 2. リストの残存数に応じた条件分岐
     if (updatedList.length > 0) {
       // A. 他にアカウントが残っているなら、先頭のアカウント(updatedList[0])に自動で切り替える
       alert(
@@ -566,7 +565,7 @@ function MyPageTab({
         </button>
       </div>
 
-      {/* AIウィッシュリスト */}
+      {/* AI入荷待ちリスト */}
       <div
         style={{
           backgroundColor: "#f5f3ff",
@@ -590,7 +589,7 @@ function MyPageTab({
           }}
         >
           <Target size={16} color="#6d28d9" />
-          <span>あなたのAI入荷待ちウィッシュリスト</span>
+          <span>あなたのAI入荷待ちリスト</span>
         </div>
 
         {/* 過去に登録したキーワード一覧 */}
@@ -688,8 +687,8 @@ function MyPageTab({
               gap: "6px",
             }}
           >
-            <Sparkles size={14} color="#7c3aed" /> {/* 💡 ✨をSparklesへ */}
-            <span>新しい欲しいイメージを追加したいですか？</span>
+            <Sparkles size={14} color="#7c3aed" />
+            <span>新しい入荷待ちイメージを追加したいですか？</span>
           </div>
           <form
             onSubmit={handleAddWishlistFromMyPage}

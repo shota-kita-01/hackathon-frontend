@@ -101,7 +101,7 @@ function AiNegoFormSection({
           <Lock size={14} color="#2563eb" />
           <span>値下げは考えていない</span>
         </div>
-        AI代理交渉を完全にオフにします。購入者側の画面に価格交渉ボタン自体が表示されなくなり、固定価格のみでの販売となります。
+        AI自動交渉を完全にオフにします。購入者側の画面に価格交渉ボタン自体が表示されなくなり、固定価格のみでの販売となります。
       </div>
     ),
   };
@@ -133,7 +133,7 @@ function AiNegoFormSection({
               display: "block",
             }}
           >
-            AI代理交渉の設定
+            AI自動交渉の設定
           </span>
         </div>
         <span
@@ -172,7 +172,7 @@ function AiNegoFormSection({
         <div style={{ color: "#6b21a8", paddingLeft: "20px" }}>
           交渉有効時の<strong>「出品スタンス」</strong> および{" "}
           <strong>「最低許容価格」</strong>{" "}
-          は、購入者にはシステム上一切開示されません。これらの情報は、裏側のシステムで行われるAI代理交渉にのみ使用されます。
+          は、購入者にはシステム上一切開示されません。これらの情報は、裏側のシステムで行われるAI自動交渉にのみ使用されます。
         </div>
       </div>
 
@@ -212,7 +212,7 @@ function AiNegoFormSection({
         </select>
       </div>
 
-      {/* 選んだスタンスに応じて、数理的な挙動説明を動的にマウントするエリア */}
+      {/* 選んだスタンスに応じて画面や設定を変更 */}
       {sellerStance && (
         <div style={{ animation: "fadeIn 0.2s ease-out" }}>
           {stanceDescriptions[sellerStance]}
