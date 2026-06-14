@@ -19,14 +19,14 @@ function Header({
     localStorage.getItem("fleamarket_authenticated_accounts") || "[]",
   );
 
-  // 現在アクティブな会員ID（myAppId）に合致するアカウントのメールアドレスを動的ハント
+  // 現在アクティブな会員Iに合致するアカウントのメールアドレスをハント
   const currentActiveAccount = savedAccounts.find(
     (acc) => acc.id === myAppId,
   ) || {
     email: loginUser?.email || "ゲストユーザー",
   };
 
-  // 仕組み1: 裏側に新設した通知APIから、3秒ごとに通知をフェッチ
+  // 裏側に新設した通知APIから、3秒ごとに通知をフェッチ
   useEffect(() => {
     if (!myAppId) return;
 
@@ -73,7 +73,7 @@ function Header({
       style={{
         backgroundColor: "white",
         borderBottom: "1px solid #f3f4f6",
-        padding: "0 16px", // スマホの端の詰まりを考慮して20pxから16pxに最適化
+        padding: "0 16px",
         height: "60px",
         position: "sticky",
         top: 0,

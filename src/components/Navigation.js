@@ -11,7 +11,7 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
         backgroundColor: "white",
         display: "flex",
         justifyContent: "center",
-        gap: "12px", // 基準値（大画面PC用）
+        gap: "12px",
         position: "sticky",
         top: "60px",
         zIndex: 100,
@@ -20,7 +20,6 @@ function Navigation({ myAppId, currentTab, setCurrentTab }) {
         borderBottom: "1px solid #e5e7eb",
       }}
     >
-      {/* 段階的に少しずつサイズを落とし、中画面での不用意な縮みすぎを完璧に阻止する */}
       <style>{`
         @media (max-width: 640px) {
           .nav-bar-container { gap: 4px !important; }

@@ -51,7 +51,6 @@ function NegotiationSection({
     })
       .then((res) => res.json())
       .then((data) => {
-        // サーバーから正常に応答が返ってきた時点で、成否に関わらず「人生で1回きりの権利」をブラウザに永久刻印
         localStorage.setItem(
           `fleamarket_negotiated_${myAppId}_${itemId}`,
           "true",
@@ -89,7 +88,7 @@ function NegotiationSection({
         alert(
           `交渉妥協案（${negoResult.settlement_price.toLocaleString()}円）での購入が確定しました。`,
         );
-        if (setIsModalLocked) setIsModalLocked(false); // 💡 ワープ直前に確実にロックを解除
+        if (setIsModalLocked) setIsModalLocked(false);
         onNegotiationSuccess(data.transaction_id);
       })
       .catch((err) => {
@@ -103,7 +102,6 @@ function NegotiationSection({
     <div
       style={{ width: "100%", boxSizing: "border-box", marginBottom: "15px" }}
     >
-      {/* 交渉開始ボタンの近代化 */}
       {negoMode === "none" && (
         <button
           onClick={() => setNegoMode("input")}
@@ -126,11 +124,11 @@ function NegotiationSection({
           }}
         >
           <Bot size={16} color="white" />
-          <span>AIにおまかせ価格交渉（自動利害調停）</span>
+          <span>AI自動価格交渉</span>
         </button>
       )}
 
-      {/* ❶ 入力フォーム */}
+      {/* 入力フォーム */}
       {negoMode === "input" && (
         <div
           style={{
@@ -156,10 +154,9 @@ function NegotiationSection({
             }}
           >
             <Bot size={16} />
-            <span>AI代理調停システム起動中</span>
+            <span>AI交渉システム起動中</span>
           </div>
 
-          {/* 💡 🚨 総当たりハックを完全封殺する警告バナー */}
           <div
             style={{
               backgroundColor: "#fff1f2",
@@ -195,7 +192,7 @@ function NegotiationSection({
                   fontWeight: "500",
                 }}
               >
-                一度交渉が開始されると、成否（成立・決裂）にかかわらず枠が消費されます。
+                一度交渉が開始されると、交渉の成否（成立・決裂）にかかわらず枠が消費されます。
                 システムをハックする目的の連続打診を防ぐため、
                 <strong>決裂後の再ネゴシエーションは一切できません。</strong>
                 希望価格と熱意文は慎重に入力してください。
@@ -253,10 +250,10 @@ function NegotiationSection({
                 }}
               >
                 <Heart size={13} />
-                <span>商品への熱意・理由（AIが出品者へ提示します）</span>
+                <span>商品への熱意・理由（AIエージェントへ提示します）</span>
               </label>
               <textarea
-                placeholder="例: 大変貴重な商品のため、ぜひ拝読したく思っております。予算の関係上、もし可能であればお値下げの調停をお願いできないでしょうか？"
+                placeholder="例: 大変貴重な商品のため、ぜひ拝読したく思っております。予算の関係上、もし可能であればお値下げいただけないでしょうか？"
                 value={negoMessage}
                 onChange={(e) => setNegoMessage(e.target.value)}
                 required
@@ -322,7 +319,7 @@ function NegotiationSection({
         </div>
       )}
 
-      {/* ❷ ローディング (画面ロック中) */}
+      {/* ローディング (画面ロック中) */}
       {negoMode === "loading" && (
         <div
           style={{
@@ -346,15 +343,15 @@ function NegotiationSection({
           <div
             style={{ fontSize: "14px", fontWeight: "bold", color: "#6d28d9" }}
           >
-            AI代理エージェントが裏側で交渉中...
+            AIエージェントが裏側で交渉中...
           </div>
           <div style={{ fontSize: "12px", color: "#a78bfa", marginTop: "6px" }}>
-            Geminiが出品者の最低価格とスタンスを数理分析しています
+            AIエージェントが出品者の最低価格とスタンスを分析しています
           </div>
         </div>
       )}
 
-      {/* ❸ 結果画面 (保留中は画面ロック継続) */}
+      {/* 結果画面 (保留中は画面ロック継続) */}
       {negoMode === "result" && negoResult && (
         <div
           style={{
@@ -386,7 +383,7 @@ function NegotiationSection({
                 }}
               >
                 <PartyPopper size={16} color="#166534" />
-                <span>交渉一発成立！即時取引が確定しました</span>
+                <span>交渉が成立し、即時取引が確定しました！</span>
               </div>
               <div
                 style={{
@@ -557,7 +554,7 @@ function NegotiationSection({
                 「{negoResult.ai_message}」
               </div>
               <button
-                onClick={resetNegoMode} // 💡 諦めて戻る時に安全にロックを解除
+                onClick={resetNegoMode}
                 style={{
                   width: "100%",
                   padding: "10px",

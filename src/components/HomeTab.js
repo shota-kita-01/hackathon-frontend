@@ -53,9 +53,7 @@ function HomeTab({
           setNewWishText("");
         }
       })
-      .catch((err) =>
-        console.error("ホームからのウィッシュリスト登録エラー:", err),
-      );
+      .catch((err) => console.error("ホームからの入荷待ち登録エラー:", err));
   };
 
   return (
@@ -283,7 +281,7 @@ function HomeTab({
         </span>
       </div>
 
-      {/* AIウィッシュリスト・ホームアピール窓 */}
+      {/* AI入荷待ちリスト・ホームアピール窓 */}
       <div
         style={{
           backgroundColor: "#f5f3ff",
@@ -380,7 +378,7 @@ function HomeTab({
         </div>
       </div>
 
-      {/* 🥇 1段目：あなたへのおすすめ */}
+      {/* 1段目：あなたへのおすすめ */}
       {firstHeroItem && (
         <div>
           <h3
@@ -642,7 +640,7 @@ function HomeTab({
               </span>
             </div>
             <span style={{ fontSize: "11px", color: "#cbd5e1" }}>
-              商品を購入したり、お気に入り・閲覧をすると、AIがあなたの好みを数理分析して専用の特設カテゴリーを自動生成します。
+              商品を購入したり、お気に入り・閲覧をすると、AIがあなたの好みを分析して専用の特設カテゴリーを生成します。
             </span>
           </div>
         )}

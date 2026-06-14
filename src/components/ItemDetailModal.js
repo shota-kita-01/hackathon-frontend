@@ -121,8 +121,8 @@ function ItemDetailModal({
       .then((data) => {
         if (data.status === "success") {
           alert("出品を取り消しました。");
-          setSelectedItem(null); // 1. モーダルを綺麗にクローズ
-          window.location.reload(); // 2. タイムラインのデータを最新状態に再読込
+          setSelectedItem(null);
+          window.location.reload();
         } else {
           alert("削除に失敗しました: " + data.message);
         }
@@ -139,7 +139,7 @@ function ItemDetailModal({
   // 出品スタンスが「値下げは考えていない」に指定されている場合は交渉不可とする判定フラグ
   const isNegotiable = selectedItem.seller_stance !== "値下げは考えていない";
 
-  // この商品の出品者が、今ログインしている自分（myAppId）かどうかを厳格に判定
+  // この商品の出品者が、今ログインしている自分かどうかを厳格に判定
   const isMyItem =
     selectedItem.seller_id &&
     Number(selectedItem.seller_id) === Number(myAppId);
@@ -160,7 +160,6 @@ function ItemDetailModal({
   return (
     <div
       onClick={() => {
-        // 💡 交渉中（モーダルロック時）は背景をクリックしても絶対に閉じないようにガード
         if (isModalLocked) return;
         setSelectedItem(null);
       }}
@@ -192,9 +191,8 @@ function ItemDetailModal({
           overflowY: "auto",
         }}
       >
-        {/* ✕ボタンのモダン線画化 */}
         <button
-          onClick={() => !isModalLocked && setSelectedItem(null)} // 💡 ロック中はクローズ関数を完全遮断
+          onClick={() => !isModalLocked && setSelectedItem(null)} // ロック中はクローズ関数を完全遮断
           disabled={isModalLocked}
           style={{
             position: "absolute",
@@ -500,7 +498,7 @@ function ItemDetailModal({
                 gap: "6px",
               }}
             >
-              {/* 💡 ボタン内の売り切れ・購入絵文字を完全リプレイス */}
+              {/* ボタン内の売り切れ・購入絵文字を完全リプレイス */}
               {isSoldOut ? (
                 <>
                   <XCircle size={16} />
@@ -516,7 +514,7 @@ function ItemDetailModal({
           )}
         </div>
 
-        {/* 🗑️ 出品取り消しセクション */}
+        {/* 出品取り消しセクション */}
         {isMyItem && selectedItem.status === "on_sale" && (
           <div
             style={{
@@ -594,7 +592,7 @@ function ItemDetailModal({
           >
             <AlertTriangle size={14} style={{ flexShrink: 0 }} />{" "}
             <span>
-              この商品に対するあなたのAI代理交渉枠（1人1商品につき1回限定）は既に消費されています。
+              この商品に対するあなたのAI自動交渉枠（1アカウント1商品につき1回限定）は既に消費されています。
             </span>
           </div>
         )}

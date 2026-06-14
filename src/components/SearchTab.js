@@ -150,22 +150,20 @@ function SearchTab({
       .then((data) => {
         if (data.status === "success") {
           alert(
-            `AI入荷待ち登録が完了しました！\n\n今後、他のユーザーから「${moodText.trim()}」の脳内イメージにマッチする商品が出品された瞬間に、通知センターへリアルタイムにアラートが届きます！`,
+            `AI入荷待ち登録が完了しました！\n\n今後、他のユーザーから「${moodText.trim()}」のイメージにマッチする商品が出品された瞬間に、リアルタイムで通知が届きます！`,
           );
         } else {
           alert("入荷待ち登録に失敗しました。");
         }
       })
       .catch((err) => {
-        console.error("ウィッシュリスト登録エラー:", err);
+        console.error("入荷待ち登録エラー:", err);
         alert("通信エラーが発生しました。");
       })
       .finally(() => setIsWishlisting(false));
   };
 
-  // ===================================================
   // フィルターロジック
-  // ===================================================
   let filteredItems = baseItems.filter((item) => {
     if (!item) return false;
 
@@ -198,9 +196,7 @@ function SearchTab({
     return true;
   });
 
-  // ===================================================
   // 並び替えロジック
-  // ===================================================
   let sortedItems = [...filteredItems];
   if (sortOrder === "ai_match") {
     sortedItems.sort((a, b) => {
@@ -218,7 +214,6 @@ function SearchTab({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
-      {/* 💡 仕組み：SearchTab内で完結するレスポンシブ防壁スタイルシート */}
       <style>{`
         @media (max-width: 640px) {
           .responsive-search-block { flex-direction: column !important; gap: 10px !important; }
@@ -308,7 +303,6 @@ function SearchTab({
                   boxSizing: "border-box",
                 }}
               />
-              {/* 💡 クラス名「responsive-search-button」を付与 ＆ whiteSpaceをインジェクション */}
               <button
                 className="responsive-search-button"
                 onClick={handleAiRecommend}
@@ -332,7 +326,7 @@ function SearchTab({
                     isRecommending || !(moodText || "").trim()
                       ? "none"
                       : "0 4px 6px rgba(79, 70, 229, 0.3)",
-                  whiteSpace: "nowrap", // 改行を絶対に許さない防壁
+                  whiteSpace: "nowrap",
                 }}
               >
                 {isRecommending ? (
@@ -443,7 +437,7 @@ function SearchTab({
           </div>
         </div>
 
-        {/* 下段：物理フィルターの超整列構造 */}
+        {/* 下段：物理フィルターの整列構造 */}
         <div
           style={{
             padding: "20px 24px",
@@ -453,7 +447,7 @@ function SearchTab({
             gap: "16px",
           }}
         >
-          {/* ❶ 表示対象 */}
+          {/* 表示対象 */}
           <div
             style={{
               display: "flex",
@@ -558,7 +552,7 @@ function SearchTab({
             }}
           />
 
-          {/* ❷ セレクトボックス群 */}
+          {/* セレクトボックス群 */}
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
             <div
               style={{
@@ -663,7 +657,7 @@ function SearchTab({
             }}
           />
 
-          {/* ❸ キーワード ＆ 並び替え */}
+          {/* キーワード ＆ 並び替え */}
           <div
             style={{
               display: "flex",
@@ -726,7 +720,7 @@ function SearchTab({
         </div>
       </div>
 
-      {/* ─── 検索結果表示エリア ─── */}
+      {/* 検索結果表示エリア */}
       <div>
         <div
           style={{
@@ -743,7 +737,7 @@ function SearchTab({
           homeItems.length > 0 ? (
             <>
               <Sparkles size={14} color="#6b7280" />
-              <span>768次元空間ベクトル・マッチ度順: </span>
+              <span>マッチ度順: </span>
             </>
           ) : (
             <>
