@@ -263,12 +263,19 @@ function MyPageTab({
             ? currentActiveAccount.email[0].toUpperCase()
             : "U"}
         </div>
-        <div>
+        <style>
+          {`
+            .profile-text-container {
+              text-align: left;
+            }
+          `}
+        </style>
+        <div className="profile-text-container">
           <div style={{ fontWeight: "bold", fontSize: "18px", color: "#333" }}>
             {currentActiveAccount.name}
           </div>
           <div style={{ fontSize: "13px", color: "#6b7280", marginTop: "4px" }}>
-            会員ID: 0000{myAppId}
+            会員ID: {String(myAppId).padStart(5, "0")}
           </div>
         </div>
       </div>

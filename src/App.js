@@ -169,6 +169,7 @@ function App() {
     if (myAppId) {
       fetchAllItems();
       fetchHomeRecommendations(myAppId);
+      fetchUserLikes(myAppId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myAppId, filterStatus, recommendMode]);
