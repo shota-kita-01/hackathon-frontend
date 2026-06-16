@@ -21,7 +21,35 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
   const API_URL =
     "https://hackathon-backend-63005122361.us-central1.run.app/api";
 
-  // 📡 仕組み: 取引基本情報とメッセージ履歴をフェッチ
+  // UTCの時刻文字列をJSTに変換
+  const formatToJstTime = (dateStr) => {
+    if (!dateStr) return "";
+
+    let normalizedStr = dateStr;
+    if (
+      typeof dateStr === "string" &&
+      !dateStr.includes("Z") &&
+      !dateStr.includes("+")
+    ) {
+      normalizedStr = dateStr.replace(" ", "T") + "Z";
+    }
+
+    const date = new Date(normalizedStr);
+
+    // パースに失敗した場合は安全に文字列の時刻部分だけを切り出すフォールバック
+    if (isNaN(date.getTime())) {
+      return typeof dateStr === "string" ? dateStr.substring(11, 16) : "";
+    }
+
+    // 日本の24時間表記で抽出
+    return date.toLocaleTimeString("ja-JP", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  };
+
+  // 仕組み: 取引基本情報とメッセージ履歴をフェッチ
   useEffect(() => {
     if (!transactionId) return;
 
@@ -46,14 +74,14 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
     return () => clearInterval(timer);
   }, [transactionId]);
 
-  // 📜 仕組み: メッセージ更新時に最下部へ自動スクロール
+  // 仕組み: メッセージ更新時に最下部へ自動スクロール
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
-  // ✉️ 仕組み: メッセージ送信
+  // 仕組み: メッセージ送信
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!inputText.trim() || isSending) return;
@@ -74,17 +102,16 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
       .finally(() => setIsSending(false));
   };
 
-  // 🚀 仕組み: 取引ステータスを次のステップへ（発送・受取評価）
+  // 仕組み: 取引ステータスを次のステップへ（発送・受取評価）
   const handleProgressStep = () => {
     if (!txData) return;
 
-    // 💡 公式カタログ品（seller_idが無い）の場合は、倉庫ロボットが出荷するストーリーにする
     const isOfficial = !txData.seller_id;
 
     const confirmMsg =
       txData.transaction_status === "shipping_pending"
         ? isOfficial
-          ? "【デモ操作】倉庫から商品を即時出荷させますか？"
+          ? "倉庫から商品を即時出荷させますか？"
           : "商品の発送を完了しましたか？（購入者へ通知されます）"
         : "商品を受け取り、中身を確認しましたか？（取引が完了します）";
 
@@ -118,11 +145,11 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
 
   const isSeller = myAppId === txData.seller_id;
   const isBuyer = myAppId === txData.buyer_id;
-  const isOfficialItem = !txData.seller_id; // 公式カタログ品かどうかの判定フラグ
+  const isOfficialItem = !txData.seller_id;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      {/* 🔙 戻るボタンの近代化 */}
+      {/* 戻るボタン */}
       <button
         onClick={() => setCurrentTab("home")}
         style={{
@@ -142,7 +169,7 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
         <span>ホームへ戻る</span>
       </button>
 
-      {/* 📦 商品情報ヘッダー */}
+      {/* 商品情報ヘッダー */}
       <div
         style={{
           backgroundColor: "white",
@@ -175,7 +202,6 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
               marginBottom: "2px",
             }}
           >
-            {/* 💡 取引種別に応じてアイコンを美麗にスイッチ */}
             {isOfficialItem ? (
               <Store size={13} color="#6b7280" />
             ) : (
@@ -199,17 +225,16 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
         </div>
       </div>
 
-      {/* 🚥 取引ステータス・アクションエリア */}
+      {/* 取引ステータス・アクションエリア */}
       <div
         style={{
-          backgroundColor: isOfficialItem ? "#f5f3ff" : "#fff9f9", // 公式品なら上品な紫台座に
+          backgroundColor: isOfficialItem ? "#f5f3ff" : "#fff9f9",
           border: isOfficialItem ? "1px solid #ddd6fe" : "1px solid #ffcccc",
           padding: "20px",
           borderRadius: "16px",
           textAlign: "center",
         }}
       >
-        {/* 状態見出しの記号化 */}
         <h3
           style={{
             margin: "0 0 10px 0",
@@ -252,7 +277,7 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
         >
           {txData.transaction_status === "shipping_pending" &&
             (isOfficialItem
-              ? "公式カタログ品のため、システムが自動で発送準備を行っています。"
+              ? "公式出品の商品のため、システムが自動で発送準備を行っています。"
               : isSeller
                 ? "商品を発送し、発送通知を送ってください。"
                 : "出品者からの発送通知をお待ちください。")}
@@ -264,7 +289,6 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
             "この取引は無事に完了しました。ご利用ありがとうございました！"}
         </div>
 
-        {/* 権利に応じたダイナミックボタンの線画化 */}
         {txData.transaction_status === "shipping_pending" &&
           (isSeller || (isOfficialItem && isBuyer)) && (
             <button
@@ -272,7 +296,7 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
               style={{
                 width: "100%",
                 padding: "12px",
-                backgroundColor: isOfficialItem ? "#7c3aed" : "#ff4d4d", // 公式品ならメカニカルな紫
+                backgroundColor: isOfficialItem ? "#7c3aed" : "#ff4d4d",
                 color: "white",
                 border: "none",
                 borderRadius: "8px",
@@ -290,7 +314,7 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
               {isOfficialItem ? (
                 <>
                   <Zap size={16} fill="white" />
-                  <span>【デモ用】倉庫から即時出荷する</span>
+                  <span>倉庫から即時出荷する</span>
                 </>
               ) : (
                 "商品の発送を通知する"
@@ -322,7 +346,7 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
         )}
       </div>
 
-      {/* 💬 チャットエリア */}
+      {/* チャットエリア */}
       <div
         style={{
           backgroundColor: "white",
@@ -364,10 +388,9 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
           }}
         >
           {messages.map((msg, idx) => {
-            const isBot = msg.sender_id === 0; // 公式システムBot判定
+            const isBot = msg.sender_id === 0;
             const isMe = msg.sender_id === myAppId;
 
-            // 🤖 公式システムBotからの通知バブルのスマート化
             if (isBot) {
               return (
                 <div
@@ -397,7 +420,6 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
               );
             }
 
-            // 👤 通常のユーザー間チャットバブル
             return (
               <div
                 key={idx}
@@ -428,10 +450,8 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
                     marginTop: "4px",
                   }}
                 >
-                  {new Date(msg.created_at).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {/* ヘルパー関数を使って、表示時にUTCからJST（日本時間）に時差をパース変換 */}
+                  {formatToJstTime(msg.created_at)}
                 </div>
               </div>
             );
@@ -455,7 +475,7 @@ function TransactionTab({ transactionId, myAppId, setCurrentTab }) {
           )}
         </div>
 
-        {/* 送信フォームのボタン線画化 */}
+        {/* 送信フォーム */}
         {txData.transaction_status !== "completed" && (
           <form
             onSubmit={handleSendMessage}
