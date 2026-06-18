@@ -154,7 +154,7 @@ function NegotiationSection({
             }}
           >
             <Bot size={16} />
-            <span>AI交渉システム起動中</span>
+            <span>AI自動交渉システム起動中</span>
           </div>
 
           <div
@@ -221,7 +221,7 @@ function NegotiationSection({
               </label>
               <input
                 type="number"
-                placeholder="例: 4500"
+                placeholder="金額を入力"
                 value={wishPrice}
                 onChange={(e) => setWishPrice(e.target.value)}
                 max={currentPrice - 1}
@@ -253,7 +253,7 @@ function NegotiationSection({
                 <span>商品への熱意・理由（AIエージェントへ提示します）</span>
               </label>
               <textarea
-                placeholder="例: 大変貴重な商品のため、ぜひ拝読したく思っております。予算の関係上、もし可能であればお値下げいただけないでしょうか？"
+                placeholder="熱意文を入力してください"
                 value={negoMessage}
                 onChange={(e) => setNegoMessage(e.target.value)}
                 required
