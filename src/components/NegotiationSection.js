@@ -232,7 +232,7 @@ function NegotiationSection({
                   borderRadius: "8px",
                   border: "1px solid #ddd6fe",
                   outline: "none",
-                  fontSize: "14px",
+                  fontSize: "13px",
                   boxSizing: "border-box",
                 }}
               />
